@@ -1,0 +1,87 @@
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ---- Logs ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+debug.log
+
+# ---- Environment files (keep example) ----
+.env
+.env.*
+!.env.example
+
+# ================= FRONTEND (Node/Next/Electron) =================
+# Packages
+frontend/node_modules/
+
+# Next.js / build outputs
+frontend/.next/
+frontend/out/
+frontend/dist/
+
+# Electron build outputs
+frontend/electron/dist/
+frontend/electron/out/
+
+# Frontend env files
+frontend/.env
+frontend/.env.*
+
+# Frontend caches
+frontend/.cache/
+frontend/tmp/
+frontend/temp/
+
+# ================= BACKEND (Python) =================
+# Virtual environments
+backend/.venv/
+backend/venv/
+backend/env/
+
+# Python cache
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/.pytest_cache/
+backend/.mypy_cache/
+
+# Backend env files
+backend/.env
+backend/.env.*
+
+# Coverage / test artifacts
+backend/.coverage
+backend/coverage.xml
+backend/htmlcov/
+
+# ================= Project-wide caches/coverage =================
+**/__pycache__/
+coverage/
+.nyc_output/
+.coverage
+coverage.lcov
+.cache/
+.tmp/
+tmp/
+
+# ================= Misc =================
+# Build artifacts (if any at repo root)
+dist/
+build/
+release/
+
+# Backend env files
+mail_reference/.env
+mail_reference/.env.*
+
+mail/
+data/taaze_mail/
