@@ -18,6 +18,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   readFileBase64: (filePath) => ipcRenderer.invoke('read-file-base64', filePath),
 
+  // Extended file operations
+  writeFile: (filePath, content, encoding) => ipcRenderer.invoke('write-file', filePath, content, encoding),
+  createFile: (filePath, content, encoding) => ipcRenderer.invoke('create-file', filePath, content, encoding),
+  deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
+  editFileLines: (filePath, startLine, endLine, newContent) => ipcRenderer.invoke('edit-file-lines', filePath, startLine, endLine, newContent),
+
 
 
   // Browser Control APIs (簡化版，只保留必要的API)

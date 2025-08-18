@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
-import { AttachFile, Image, Headset, Article, Extension, Psychology, Send } from '@mui/icons-material';
+import { AttachFile, Image, Headset, Article, Extension, Psychology, Send, Edit } from '@mui/icons-material';
+import { useRouter } from 'next/router';
 import ResultPanel from './ResultPanel';
+import { sessionManager, FileContext } from '@/utils/sessionManager';
 
 type PanelMode = 'result' | 'rules' | 'skills';
 
@@ -35,6 +37,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   onTopHeightChange,
   onDragStateChange,
 }) => {
+  const router = useRouter();
   const [input, setInput] = useState('');
   const [panelMode, setPanelMode] = useState<PanelMode>('result');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,10 +45,59 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   const [currentRule, setCurrentRule] = useState<string | null>(null);
   const [usedTools, setUsedTools] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [fileContext, setFileContext] = useState<FileContext | null>(null);
+
+  // 刷新 session 功能
+  const handleRefreshSession = () => {
+    // 創建新的 session
+    const newSessionId = sessionManager.createNewSession();
+
+    // 清空當前狀態
+    setMessages([]);
+    setStreamResponse('');
+    setCurrentRule(null);
+    setUsedTools([]);
+    setInput('');
+
+    console.log(`🔄 已創建新 session: ${newSessionId}`);
+  };
 
   // 內部百分比狀態（可被 props 初始化）
   const [heightPct, setHeightPct] = useState(75);  // 預設上面 75%，下面輸入框 25%
   useEffect(() => { setHeightPct(clamp(topHeight || 75, 70, 85)); }, [topHeight]);
+
+  // 檢測當前模式和文件上下文
+  useEffect(() => {
+    const updateContext = () => {
+      const { mode, file, path } = router.query;
+
+      // 更新 session manager 的模式
+      if (mode === 'local') {
+        sessionManager.setMode('local');
+        // 檢查 file 或 path 參數
+        const filePath = file || path;
+        if (filePath && typeof filePath === 'string') {
+          sessionManager.setCurrentFile(filePath);
+          console.log('📁 設置文件路徑:', filePath);
+        }
+      } else {
+        sessionManager.setMode('browser');
+      }
+
+      // 更新本地狀態
+      setFileContext(sessionManager.getCurrentContext());
+      console.log('🔄 更新上下文:', sessionManager.getCurrentContext());
+    };
+
+    updateContext();
+
+    // 監聽路由變化
+    router.events?.on('routeChangeComplete', updateContext);
+
+    return () => {
+      router.events?.off('routeChangeComplete', updateContext);
+    };
+  }, [router.query, router.events]);
 
   // 移除瀏覽器輪詢邏輯，現在直接使用 Electron HTTP API
 
@@ -243,27 +295,40 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         return;
       }
 
-      // 獲取當前頁面資料 - 使用 Electron API
-      let pageData = null;
-      try {
-        if (typeof window !== 'undefined' && window.electronAPI?.browserControl?.getPageData) {
-          const pageResult = await window.electronAPI.browserControl.getPageData();
-          console.log('📄 完整的頁面結果:', pageResult);
+      // 獲取當前頁面資料或文件上下文
+      let contextData = null;
+      const currentContext = sessionManager.getCurrentContext();
 
-          if (pageResult.success) {
-            // 新的返回格式：pageResult.data 包含 { url, content }
-            pageData = pageResult.data;
-            console.log('📄 獲取到真實頁面資料:', pageData);
-            console.log('📄 頁面URL:', pageData?.url);
-            console.log('📄 內容長度:', pageData?.content?.length);
+      if (currentContext.mode === 'local' && currentContext.current_file) {
+        // Local file 模式：使用文件上下文
+        contextData = {
+          type: 'file',
+          file_path: currentContext.current_file,
+          file_summary: currentContext.file_summary
+        };
+        console.log('📁 使用文件上下文:', contextData);
+      } else {
+        // Browser 模式：獲取頁面資料
+        try {
+          if (typeof window !== 'undefined' && window.electronAPI?.browserControl?.getPageData) {
+            const pageResult = await window.electronAPI.browserControl.getPageData();
+            console.log('📄 完整的頁面結果:', pageResult);
+
+            if (pageResult.success) {
+              contextData = {
+                type: 'page',
+                ...pageResult.data
+              };
+              console.log('📄 獲取到真實頁面資料:', contextData);
+            } else {
+              console.warn('⚠️ 獲取頁面資料失敗:', pageResult.error);
+            }
           } else {
-            console.warn('⚠️ 獲取頁面資料失敗:', pageResult.error);
+            console.warn('⚠️ Electron API 不可用');
           }
-        } else {
-          console.warn('⚠️ Electron API 不可用');
+        } catch (error) {
+          console.warn('⚠️ 獲取頁面資料失敗:', error);
         }
-      } catch (error) {
-        console.warn('⚠️ 獲取頁面資料失敗:', error);
       }
 
       const response = await fetch('http://localhost:8000/api/agent/stream', {
@@ -274,7 +339,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         body: JSON.stringify({
           message: message,
           user_id: 'default_user',
-          page_data: pageData
+          session_id: sessionManager.getSessionId(),
+          context_data: contextData
         }),
       });
 
@@ -419,7 +485,33 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           zIndex: 1, // 確保面板有正確的層級
         }}
       >
-        {/* Toggle */}
+        {/* 刷新按鈕 - 左上角 */}
+        <Box sx={{
+          position: 'absolute',
+          top: 8,
+          left: 10,
+          zIndex: 10,
+          bgcolor: 'rgba(240, 244, 248, 0.95)',
+          borderRadius: '6px',
+          padding: '4px',
+          border: '1px solid rgba(226, 232, 240, 0.5)'
+        }}>
+          <IconButton
+            size="small"
+            onClick={handleRefreshSession}
+            sx={{
+              color: '#64748b',
+              '&:hover': { bgcolor: '#f1f5f9' },
+              width: 24,
+              height: 24
+            }}
+            title="新建 Session"
+          >
+            <Edit sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Box>
+
+        {/* Toggle - 右上角 */}
         <Box sx={{
           position: 'absolute',
           top: 8,
@@ -468,6 +560,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           >
             <Psychology sx={{ fontSize: 14 }} />
           </IconButton>
+
         </Box>
 
         <ResultPanel

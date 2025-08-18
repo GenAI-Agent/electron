@@ -1,0 +1,653 @@
+"""
+Data Analysis Tools
+
+提供通用的數據分析方法工具，由 Agent 指定具體的列名和參數。
+"""
+
+import os
+import json
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Tuple
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class DataAnalysisTools:
+    """通用數據分析工具集"""
+
+    def __init__(self):
+        pass
+    
+    async def load_data_file(self, file_path: str) -> Dict[str, Any]:
+        """
+        加載數據文件，以 JSON 格式為主
+
+        Args:
+            file_path: 文件路徑
+
+        Returns:
+            包含數據和元信息的字典
+        """
+        file_ext = Path(file_path).suffix.lower()
+
+        try:
+            result = {
+                "file_path": file_path,
+                "file_type": file_ext,
+                "data": None,
+                "metadata": {}
+            }
+
+            if file_ext == '.json':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                result["data"] = data
+                result["metadata"]["original_format"] = "json"
+
+            elif file_ext == '.csv':
+                # CSV 轉換為 JSON 格式
+                df = pd.read_csv(file_path)
+                result["data"] = df.to_dict('records')
+                result["metadata"]["original_format"] = "csv"
+                result["metadata"]["columns"] = list(df.columns)
+                result["metadata"]["shape"] = df.shape
+
+            elif file_ext in ['.xlsx', '.xls']:
+                # Excel 轉換為 JSON 格式
+                df = pd.read_excel(file_path)
+                result["data"] = df.to_dict('records')
+                result["metadata"]["original_format"] = "excel"
+                result["metadata"]["columns"] = list(df.columns)
+                result["metadata"]["shape"] = df.shape
+
+            else:
+                raise ValueError(f"不支持的數據文件格式: {file_ext}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"加載數據文件失敗 {file_path}: {e}")
+            raise
+    
+    async def group_by_analysis(self, file_path: str, group_column: str, value_column: str,
+                               session_id: str = "default") -> Dict[str, Any]:
+        """
+        通用分組分析工具（基於 JSON 數據）
+
+        Args:
+            file_path: 數據文件路徑
+            group_column: 分組列名
+            value_column: 數值列名
+            session_id: 會話ID
+
+        Returns:
+            分組分析結果
+        """
+        try:
+            data_result = await self.load_data_file(file_path)
+            data_list = data_result["data"]
+
+            # 檢查數據格式
+            if not isinstance(data_list, list) or not data_list:
+                return {
+                    "success": False,
+                    "error": "數據格式不正確，需要是包含對象的數組"
+                }
+
+            # 檢查必要的列
+            first_item = data_list[0]
+            if group_column not in first_item or value_column not in first_item:
+                available_keys = list(first_item.keys()) if isinstance(first_item, dict) else []
+                return {
+                    "success": False,
+                    "error": f"缺少必要的列: {group_column} 或 {value_column}",
+                    "available_columns": available_keys
+                }
+
+            # 手動進行分組分析
+            groups = {}
+            total_value = 0
+
+            for item in data_list:
+                if not isinstance(item, dict):
+                    continue
+
+                group_val = str(item.get(group_column, "未知"))
+                value_val = item.get(value_column, 0)
+
+                # 嘗試轉換為數字
+                try:
+                    value_val = float(value_val)
+                except (ValueError, TypeError):
+                    value_val = 0
+
+                if group_val not in groups:
+                    groups[group_val] = []
+
+                groups[group_val].append(value_val)
+                total_value += value_val
+
+            # 計算統計
+            result = {
+                "success": True,
+                "analysis_type": "group_by_analysis",
+                "session_id": session_id,
+                "group_column": group_column,
+                "value_column": value_column,
+                "results": {}
+            }
+
+            for group_val, values in groups.items():
+                if values:
+                    values_array = np.array(values)
+                    result["results"][group_val] = {
+                        "count": len(values),
+                        "sum": float(np.sum(values_array)),
+                        "mean": float(np.mean(values_array)),
+                        "median": float(np.median(values_array)),
+                        "std": float(np.std(values_array)),
+                        "min": float(np.min(values_array)),
+                        "max": float(np.max(values_array))
+                    }
+
+            # 計算總體統計和佔比
+            result["summary"] = {
+                "total_value": float(total_value),
+                "group_percentages": {}
+            }
+
+            for group_val in result["results"]:
+                if total_value > 0:
+                    percentage = (result["results"][group_val]["sum"] / total_value) * 100
+                    result["summary"]["group_percentages"][group_val] = round(percentage, 2)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"分組分析失敗 {file_path}: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def threshold_analysis(self, file_path: str, value_column: str, threshold: float,
+                                comparison: str = "greater", session_id: str = "default") -> Dict[str, Any]:
+        """
+        通用閾值分析工具
+
+        Args:
+            file_path: 數據文件路徑
+            value_column: 數值列名
+            threshold: 閾值
+            comparison: 比較方式 ('greater', 'less', 'equal')
+            session_id: 會話ID
+
+        Returns:
+            閾值分析結果
+        """
+        try:
+            data_result = await self.load_data_file(file_path)
+            data_list = data_result["data"]
+
+            # 檢查數據格式
+            if not isinstance(data_list, list) or not data_list:
+                return {
+                    "success": False,
+                    "error": "數據格式不正確，需要是包含對象的數組"
+                }
+
+            # 檢查列是否存在
+            first_item = data_list[0] if data_list else {}
+            if value_column not in first_item:
+                available_keys = list(first_item.keys()) if isinstance(first_item, dict) else []
+                return {
+                    "success": False,
+                    "error": f"缺少列 '{value_column}'",
+                    "available_columns": available_keys
+                }
+
+            # 手動篩選數據
+            filtered_items = []
+            total_value = 0
+            filtered_value = 0
+
+            for item in data_list:
+                if not isinstance(item, dict) or value_column not in item:
+                    continue
+
+                try:
+                    value = float(item[value_column])
+                    total_value += value
+
+                    # 根據比較方式判斷
+                    meets_condition = False
+                    if comparison == "greater":
+                        meets_condition = value > threshold
+                        condition_desc = f"大於 {threshold}"
+                    elif comparison == "less":
+                        meets_condition = value < threshold
+                        condition_desc = f"小於 {threshold}"
+                    elif comparison == "equal":
+                        meets_condition = value == threshold
+                        condition_desc = f"等於 {threshold}"
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"不支持的比較方式: {comparison}"
+                        }
+
+                    if meets_condition:
+                        filtered_items.append(item)
+                        filtered_value += value
+
+                except (ValueError, TypeError):
+                    continue
+
+            # 計算統計
+            total_records = len(data_list)
+            filtered_count = len(filtered_items)
+
+            # 計算佔比
+            count_percentage = (filtered_count / total_records) * 100 if total_records > 0 else 0
+            value_percentage = (filtered_value / total_value) * 100 if total_value > 0 else 0
+
+            return {
+                "success": True,
+                "analysis_type": "threshold_analysis",
+                "session_id": session_id,
+                "value_column": value_column,
+                "threshold": threshold,
+                "comparison": comparison,
+                "condition": condition_desc,
+                "results": {
+                    "total_records": total_records,
+                    "total_value": float(total_value),
+                    "filtered_records": filtered_count,
+                    "filtered_value": float(filtered_value),
+                    "count_percentage": round(count_percentage, 2),
+                    "value_percentage": round(value_percentage, 2)
+                },
+                "filtered_data": filtered_items[:20]  # 只返回前20個結果
+            }
+
+        except Exception as e:
+            logger.error(f"閾值分析失敗 {file_path}: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def correlation_analysis(self, file_path: str, x_column: str, y_column: str,
+                                  session_id: str = "default") -> Dict[str, Any]:
+        """
+        通用相關性分析工具
+
+        Args:
+            file_path: 數據文件路徑
+            x_column: X軸變量列名
+            y_column: Y軸變量列名
+            session_id: 會話ID
+
+        Returns:
+            相關性分析結果
+        """
+        try:
+            data_result = await self.load_data_file(file_path)
+            data_list = data_result["data"]
+
+            # 檢查數據格式
+            if not isinstance(data_list, list) or not data_list:
+                return {
+                    "success": False,
+                    "error": "數據格式不正確，需要是包含對象的數組"
+                }
+
+            # 檢查列是否存在
+            first_item = data_list[0] if data_list else {}
+            required_cols = [x_column, y_column]
+            missing_cols = [col for col in required_cols if col not in first_item]
+            if missing_cols:
+                available_keys = list(first_item.keys()) if isinstance(first_item, dict) else []
+                return {
+                    "success": False,
+                    "error": f"缺少必要的列: {missing_cols}",
+                    "available_columns": available_keys
+                }
+
+            # 提取數值數據
+            x_values = []
+            y_values = []
+
+            for item in data_list:
+                if not isinstance(item, dict):
+                    continue
+
+                try:
+                    x_val = float(item.get(x_column, 0))
+                    y_val = float(item.get(y_column, 0))
+                    x_values.append(x_val)
+                    y_values.append(y_val)
+                except (ValueError, TypeError):
+                    continue
+
+            if len(x_values) < 2 or len(y_values) < 2:
+                return {
+                    "success": False,
+                    "error": "有效數據點不足，無法進行相關性分析"
+                }
+
+            # 轉換為 numpy 數組
+            x_array = np.array(x_values)
+            y_array = np.array(y_values)
+
+            # 計算相關係數
+            correlation = np.corrcoef(x_array, y_array)[0, 1]
+
+            # 進行線性回歸
+            X = x_array.reshape(-1, 1)
+            y = y_array
+
+            model = LinearRegression()
+            model.fit(X, y)
+
+            # 計算 R²
+            r_squared = model.score(X, y)
+
+            # 統計檢驗
+            correlation_test = stats.pearsonr(x_array, y_array)
+
+            return {
+                "success": True,
+                "analysis_type": "correlation_analysis",
+                "session_id": session_id,
+                "x_column": x_column,
+                "y_column": y_column,
+                "results": {
+                    "correlation": round(correlation, 4),
+                    "p_value": round(correlation_test[1], 4),
+                    "r_squared": round(r_squared, 4),
+                    "slope": round(model.coef_[0], 4),
+                    "intercept": round(model.intercept_, 4),
+                    "regression_equation": f"{y_column} = {round(model.coef_[0], 4)} × {x_column} + {round(model.intercept_, 4)}"
+                },
+                "interpretation": self._interpret_correlation(correlation),
+                "model_params": {
+                    "slope": float(model.coef_[0]),
+                    "intercept": float(model.intercept_)
+                },
+                "data_points": len(clean_df)
+            }
+
+        except Exception as e:
+            logger.error(f"相關性分析失敗 {file_path}: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def linear_prediction(self, file_path: str, x_column: str, y_column: str,
+                               target_x_value: float, session_id: str = "default") -> Dict[str, Any]:
+        """
+        通用線性預測工具
+
+        Args:
+            file_path: 數據文件路徑
+            x_column: 自變量列名
+            y_column: 因變量列名
+            target_x_value: 目標自變量值
+            session_id: 會話ID
+
+        Returns:
+            預測結果
+        """
+        try:
+            df = await self.load_data_file(file_path)
+
+            required_cols = [x_column, y_column]
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            if missing_cols:
+                return {
+                    "success": False,
+                    "error": f"缺少必要的列: {missing_cols}",
+                    "available_columns": list(df.columns)
+                }
+
+            # 確保兩列都是數字類型
+            try:
+                df[x_column] = pd.to_numeric(df[x_column], errors='coerce')
+                df[y_column] = pd.to_numeric(df[y_column], errors='coerce')
+            except:
+                return {
+                    "success": False,
+                    "error": f"列 '{x_column}' 或 '{y_column}' 無法轉換為數字類型"
+                }
+
+            # 移除缺失值
+            clean_df = df[[x_column, y_column]].dropna()
+
+            if len(clean_df) < 2:
+                return {
+                    "success": False,
+                    "error": "有效數據點不足，無法進行預測"
+                }
+
+            # 訓練模型
+            X = clean_df[[x_column]]
+            y = clean_df[y_column]
+
+            model = LinearRegression()
+            model.fit(X, y)
+
+            # 預測
+            predicted_value = model.predict([[target_x_value]])[0]
+
+            # 計算預測區間（簡化版）
+            residuals = y - model.predict(X)
+            mse = np.mean(residuals ** 2)
+            std_error = np.sqrt(mse)
+
+            # 95% 預測區間
+            confidence_interval = 1.96 * std_error
+            lower_bound = predicted_value - confidence_interval
+            upper_bound = predicted_value + confidence_interval
+
+            # 找到相似值的實際數據
+            value_range = abs(target_x_value * 0.1)  # ±10%
+            similar_data = clean_df[
+                (clean_df[x_column] >= target_x_value - value_range) &
+                (clean_df[x_column] <= target_x_value + value_range)
+            ]
+
+            return {
+                "success": True,
+                "analysis_type": "linear_prediction",
+                "session_id": session_id,
+                "x_column": x_column,
+                "y_column": y_column,
+                "target_x_value": target_x_value,
+                "prediction": {
+                    "predicted_value": round(predicted_value, 4),
+                    "confidence_interval_lower": round(lower_bound, 4),
+                    "confidence_interval_upper": round(upper_bound, 4),
+                    "confidence_interval": f"{round(lower_bound, 4)} - {round(upper_bound, 4)}"
+                },
+                "model_info": {
+                    "regression_equation": f"{y_column} = {round(model.coef_[0], 4)} × {x_column} + {round(model.intercept_, 4)}",
+                    "r_squared": round(model.score(X, y), 4),
+                    "standard_error": round(std_error, 4)
+                },
+                "reference_data": {
+                    "similar_range": f"{target_x_value - value_range:.2f} - {target_x_value + value_range:.2f}",
+                    "similar_count": len(similar_data),
+                    "similar_mean": round(similar_data[y_column].mean(), 4) if len(similar_data) > 0 else None,
+                    "similar_range_values": f"{similar_data[y_column].min():.2f} - {similar_data[y_column].max():.2f}" if len(similar_data) > 0 else None
+                },
+                "data_points": len(clean_df)
+            }
+
+        except Exception as e:
+            logger.error(f"線性預測失敗 {file_path}: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    def _interpret_correlation(self, correlation: float) -> str:
+        """解釋相關係數"""
+        abs_corr = abs(correlation)
+        
+        if abs_corr >= 0.8:
+            strength = "非常強"
+        elif abs_corr >= 0.6:
+            strength = "強"
+        elif abs_corr >= 0.4:
+            strength = "中等"
+        elif abs_corr >= 0.2:
+            strength = "弱"
+        else:
+            strength = "非常弱"
+        
+        direction = "正" if correlation > 0 else "負"
+        
+        return f"{direction}相關，相關強度：{strength}"
+    
+    async def get_data_info(self, file_path: str, session_id: str = "default") -> Dict[str, Any]:
+        """
+        獲取數據文件基本信息（基於 JSON 數據）
+
+        Args:
+            file_path: 數據文件路徑
+            session_id: 會話ID
+
+        Returns:
+            數據文件信息
+        """
+        try:
+            data_result = await self.load_data_file(file_path)
+            data_list = data_result["data"]
+
+            # 檢查數據格式
+            if not isinstance(data_list, list) or not data_list:
+                return {
+                    "success": False,
+                    "error": "數據格式不正確，需要是包含對象的數組"
+                }
+
+            # 分析數據結構
+            first_item = data_list[0] if data_list else {}
+            if not isinstance(first_item, dict):
+                return {
+                    "success": False,
+                    "error": "數據項目格式不正確，需要是對象"
+                }
+
+            # 基本信息
+            columns = list(first_item.keys())
+            row_count = len(data_list)
+
+            info = {
+                "success": True,
+                "session_id": session_id,
+                "file_path": file_path,
+                "shape": [row_count, len(columns)],
+                "columns": columns,
+                "sample_data": data_list[:3]
+            }
+
+            # 分析列類型和統計
+            numeric_columns = []
+            categorical_columns = []
+            column_stats = {}
+
+            for col in columns:
+                values = [item.get(col) for item in data_list if col in item]
+                non_null_values = [v for v in values if v is not None and v != ""]
+
+                # 嘗試判斷是否為數值列
+                numeric_values = []
+                for v in non_null_values:
+                    try:
+                        numeric_values.append(float(v))
+                    except (ValueError, TypeError):
+                        break
+
+                if len(numeric_values) == len(non_null_values) and numeric_values:
+                    # 數值列
+                    numeric_columns.append(col)
+                    column_stats[col] = {
+                        "type": "numeric",
+                        "count": len(numeric_values),
+                        "mean": np.mean(numeric_values),
+                        "std": np.std(numeric_values),
+                        "min": np.min(numeric_values),
+                        "max": np.max(numeric_values)
+                    }
+                else:
+                    # 分類列
+                    categorical_columns.append(col)
+                    value_counts = {}
+                    for v in non_null_values:
+                        str_v = str(v)
+                        value_counts[str_v] = value_counts.get(str_v, 0) + 1
+
+                    # 取前5個最常見的值
+                    top_values = dict(sorted(value_counts.items(), key=lambda x: x[1], reverse=True)[:5])
+
+                    column_stats[col] = {
+                        "type": "categorical",
+                        "count": len(non_null_values),
+                        "unique_count": len(value_counts),
+                        "top_values": top_values
+                    }
+
+            info["numeric_columns"] = numeric_columns
+            info["categorical_columns"] = categorical_columns
+            info["column_stats"] = column_stats
+
+            return info
+
+        except Exception as e:
+            logger.error(f"獲取數據信息失敗 {file_path}: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+
+# 全局工具實例
+data_analysis_tools = DataAnalysisTools()
+
+
+# 通用分析工具函數，供 Agent 調用
+async def get_data_info_tool(file_path: str, session_id: str = "default") -> Dict[str, Any]:
+    """獲取數據文件信息的工具函數"""
+    return await data_analysis_tools.get_data_info(file_path, session_id)
+
+
+async def group_by_analysis_tool(file_path: str, group_column: str, value_column: str,
+                                session_id: str = "default") -> Dict[str, Any]:
+    """分組分析工具函數"""
+    return await data_analysis_tools.group_by_analysis(file_path, group_column, value_column, session_id)
+
+
+async def threshold_analysis_tool(file_path: str, value_column: str, threshold: float,
+                                 comparison: str = "greater", session_id: str = "default") -> Dict[str, Any]:
+    """閾值分析工具函數"""
+    return await data_analysis_tools.threshold_analysis(file_path, value_column, threshold, comparison, session_id)
+
+
+async def correlation_analysis_tool(file_path: str, x_column: str, y_column: str,
+                                   session_id: str = "default") -> Dict[str, Any]:
+    """相關性分析工具函數"""
+    return await data_analysis_tools.correlation_analysis(file_path, x_column, y_column, session_id)
+
+
+async def linear_prediction_tool(file_path: str, x_column: str, y_column: str,
+                                target_x_value: float, session_id: str = "default") -> Dict[str, Any]:
+    """線性預測工具函數"""
+    return await data_analysis_tools.linear_prediction(file_path, x_column, y_column, target_x_value, session_id)

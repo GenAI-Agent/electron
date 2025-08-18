@@ -239,6 +239,122 @@ ipcMain.handle('read-file-base64', async (event, filePath) => {
   }
 });
 
+// 新增：寫入文件
+ipcMain.handle('write-file', async (event, filePath, content, encoding = 'utf-8') => {
+  try {
+    await fs.promises.writeFile(filePath, content, encoding);
+    return {
+      success: true,
+      message: '文件寫入成功'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 新增：創建新文件
+ipcMain.handle('create-file', async (event, filePath, content = '', encoding = 'utf-8') => {
+  try {
+    // 檢查文件是否已存在
+    try {
+      await fs.promises.access(filePath);
+      return {
+        success: false,
+        error: '文件已存在'
+      };
+    } catch {
+      // 文件不存在，可以創建
+    }
+
+    // 確保目錄存在
+    const dir = path.dirname(filePath);
+    await fs.promises.mkdir(dir, { recursive: true });
+
+    // 創建文件
+    await fs.promises.writeFile(filePath, content, encoding);
+
+    return {
+      success: true,
+      message: '文件創建成功',
+      path: filePath
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 新增：刪除文件
+ipcMain.handle('delete-file', async (event, filePath) => {
+  try {
+    const stats = await fs.promises.stat(filePath);
+
+    if (stats.isDirectory()) {
+      return {
+        success: false,
+        error: '無法刪除目錄，請使用刪除目錄功能'
+      };
+    }
+
+    await fs.promises.unlink(filePath);
+
+    return {
+      success: true,
+      message: '文件刪除成功'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 新增：按行編輯文件
+ipcMain.handle('edit-file-lines', async (event, filePath, startLine, endLine, newContent) => {
+  try {
+    // 讀取原文件內容
+    const originalContent = await fs.promises.readFile(filePath, 'utf-8');
+    const lines = originalContent.split('\n');
+
+    // 驗證行號範圍
+    if (startLine < 1 || endLine < startLine || startLine > lines.length) {
+      return {
+        success: false,
+        error: '無效的行號範圍'
+      };
+    }
+
+    // 替換指定行範圍的內容
+    const newLines = newContent.split('\n');
+    const beforeLines = lines.slice(0, startLine - 1);
+    const afterLines = lines.slice(endLine);
+
+    const updatedLines = [...beforeLines, ...newLines, ...afterLines];
+    const updatedContent = updatedLines.join('\n');
+
+    // 寫回文件
+    await fs.promises.writeFile(filePath, updatedContent, 'utf-8');
+
+    return {
+      success: true,
+      message: `成功編輯第 ${startLine}-${endLine} 行`,
+      linesChanged: endLine - startLine + 1,
+      newLineCount: newLines.length
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
 // 輔助函數：獲取MIME類型
 function getMimeType(ext) {
   const mimeTypes = {

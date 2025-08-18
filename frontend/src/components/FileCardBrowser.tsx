@@ -99,7 +99,7 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
   const loadDirectory = async (path: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       if (window.electronAPI?.readDirectory) {
         const result = await window.electronAPI.readDirectory(path);
@@ -112,6 +112,9 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
           });
           setItems(sortedItems);
           setCurrentPath(path);
+
+          // 更新 URL 以反映當前路徑，這樣標題欄也會更新
+          router.push(`/browser?path=${encodeURIComponent(path)}&mode=local`, undefined, { shallow: true });
         } else {
           setError(result.error || '無法讀取目錄');
         }

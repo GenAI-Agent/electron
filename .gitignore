@@ -80,8 +80,6 @@ build/
 release/
 
 # Backend env files
-mail_reference/.env
-mail_reference/.env.*
-
-mail/
+task_memory/
+temp/
 data/taaze_mail/

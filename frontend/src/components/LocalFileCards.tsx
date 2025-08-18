@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   DesktopWindows,
   Folder,
   Storage,
-  FolderOpen
+  FolderOpen,
+  Refresh
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
@@ -91,26 +92,29 @@ const LocalFileCards: React.FC = () => {
     documents: 'Documents',
     drives: 'C:\\'
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadPaths = async () => {
+    setIsRefreshing(true);
+    try {
+      if (window.electronAPI?.getDesktopPath) {
+        const desktopPath = await window.electronAPI.getDesktopPath();
+        const documentsPath = await window.electronAPI.getDocumentsPath();
+
+        setPaths({
+          desktop: desktopPath,
+          documents: documentsPath,
+          drives: process.platform === 'win32' ? 'C:\\' : '/'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load system paths:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    // 獲取實際系統路徑
-    const loadPaths = async () => {
-      try {
-        if (window.electronAPI?.getDesktopPath) {
-          const desktopPath = await window.electronAPI.getDesktopPath();
-          const documentsPath = await window.electronAPI.getDocumentsPath();
-
-          setPaths({
-            desktop: desktopPath,
-            documents: documentsPath,
-            drives: process.platform === 'win32' ? 'C:\\' : '/'
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load system paths:', error);
-      }
-    };
-
     loadPaths();
   }, []);
 
@@ -136,25 +140,62 @@ const LocalFileCards: React.FC = () => {
   ];
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 3,
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        mt: 2,
-      }}
-    >
-      {cards.map((card, index) => (
-        <FileCard
-          key={index}
-          title={card.title}
-          icon={card.icon}
-          path={card.path}
-          description={card.description}
-        />
-      ))}
+    <Box>
+      {/* 標題和刷新按鈕 */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+          px: 2
+        }}
+      >
+        <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600 }}>
+          本地文件
+        </Typography>
+        <Tooltip title="刷新文件列表">
+          <IconButton
+            onClick={loadPaths}
+            disabled={isRefreshing}
+            sx={{
+              color: '#6b7280',
+              '&:hover': { color: '#374151' }
+            }}
+          >
+            <Refresh sx={{
+              fontSize: 20,
+              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' }
+              }
+            }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* 文件卡片 */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 3,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          mt: 2,
+        }}
+      >
+        {cards.map((card, index) => (
+          <FileCard
+            key={index}
+            title={card.title}
+            icon={card.icon}
+            path={card.path}
+            description={card.description}
+          />
+        ))}
+      </Box>
     </Box>
   );
 };

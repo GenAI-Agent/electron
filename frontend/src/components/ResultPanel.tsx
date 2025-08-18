@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Chip, CircularProgress } from '@mui/material';
 import RulesPanel from './RulesPanel';
+import ChartViewer from './ChartViewer';
 
 interface ChatMessage {
   id: string;
@@ -166,6 +167,8 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
           技能管理功能開發中...
         </Box>
       )}
+
+
     </Box>
   );
 };

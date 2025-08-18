@@ -37,7 +37,45 @@ declare global {
         };
         error?: string;
       }>;
-      readFile: (filePath: string) => Promise<string>;
+      readFile: (filePath: string) => Promise<{
+        type: 'text' | 'pdf' | 'binary' | 'presentation';
+        content?: string;
+        filePath?: string;
+        size?: number;
+        extension?: string;
+      }>;
+      readFileBase64: (filePath: string) => Promise<{
+        success: boolean;
+        data?: string;
+        mimeType?: string;
+        size?: number;
+        error?: string;
+      }>;
+
+      // Extended file operations
+      writeFile: (filePath: string, content: string, encoding?: string) => Promise<{
+        success: boolean;
+        message?: string;
+        error?: string;
+      }>;
+      createFile: (filePath: string, content?: string, encoding?: string) => Promise<{
+        success: boolean;
+        message?: string;
+        path?: string;
+        error?: string;
+      }>;
+      deleteFile: (filePath: string) => Promise<{
+        success: boolean;
+        message?: string;
+        error?: string;
+      }>;
+      editFileLines: (filePath: string, startLine: number, endLine: number, newContent: string) => Promise<{
+        success: boolean;
+        message?: string;
+        linesChanged?: number;
+        newLineCount?: number;
+        error?: string;
+      }>;
       oauth: {
         startFlow: (config: {
           clientId: string;

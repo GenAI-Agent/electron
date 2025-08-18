@@ -17,6 +17,24 @@ const BrowserPage: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState(url as string || '');
   const isLocalMode = mode === 'local';
 
+  // 動態生成標題
+  const getTitle = () => {
+    if (isLocalMode) {
+      if (file) {
+        // 如果有文件參數，顯示文件名
+        const fileName = typeof file === 'string' ? file.split(/[/\\]/).pop() : '';
+        return fileName || 'Local File';
+      } else if (path) {
+        // 如果有路徑參數，顯示路徑
+        return typeof path === 'string' ? path : 'Local Files';
+      } else {
+        return 'Local Files';
+      }
+    } else {
+      return currentUrl || (url as string) || 'Browser';
+    }
+  };
+
   const handleUrlChange = (newUrl: string) => {
     setCurrentUrl(newUrl);
     // 導航到新的 URL
@@ -52,7 +70,7 @@ const BrowserPage: React.FC = () => {
     >
       {/* Title Bar */}
       <TitleBar
-        title={isLocalMode ? (path as string || 'Local Files') : (currentUrl || url as string || 'Browser')}
+        title={getTitle()}
         showHomeButton={true}
         showUrlInput={!isLocalMode}
         onUrlChange={handleUrlChange}

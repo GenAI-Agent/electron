@@ -165,29 +165,37 @@ class SupervisorAgent:
         init_time = time.time() - init_start
         logger.info(f"✅ Supervisor Agent 初始化完成，耗時 {init_time:.2f}秒")
 
-    def setup_tools_for_query(self, tool_names: List[str] = None):
+    def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
         """為當前查詢動態設置工具"""
         logger.info(f"🔧 開始動態設置工具，規則工具: {tool_names}")
 
         # 開始設置工具
         self.current_tools = []
 
-        # 1. 動態導入並添加默認瀏覽器工具
-        try:
-            from ..tools.langchain_browser_tools import get_langchain_browser_tools
-            browser_tools = get_langchain_browser_tools()
+        # 如果有外部提供的工具列表，優先使用
+        if available_tools:
+            self.current_tools = available_tools
+            logger.info(f"📁 使用外部提供的工具，共 {len(available_tools)} 個")
+            for tool in available_tools:
+                tool_name = getattr(tool, 'name', str(tool))
+                logger.info(f"🔧 添加工具: {tool_name}")
+        else:
+            # 否則使用默認瀏覽器工具（向後兼容）
+            try:
+                from ..tools.langchain_browser_tools import get_langchain_browser_tools
+                browser_tools = get_langchain_browser_tools()
 
-            for tool in browser_tools:
-                self.current_tools.append(tool)
-                logger.info(f"🌐 添加默認瀏覽器工具: {tool.name}")
+                for tool in browser_tools:
+                    self.current_tools.append(tool)
+                    logger.info(f"🌐 添加默認瀏覽器工具: {tool.name}")
 
-        except Exception as e:
-            logger.warning(f"⚠️ 瀏覽器工具導入失敗: {e}")
+            except Exception as e:
+                logger.warning(f"⚠️ 瀏覽器工具導入失敗: {e}")
 
-        # 2. 根據規則添加額外的瀏覽器工具（如果需要）
+        # 根據規則添加額外工具（如果需要）
         if tool_names:
             logger.info(f"📋 規則指定的工具: {tool_names}")
-            # 目前所有工具都是瀏覽器工具，已經在上面載入了
+            # 這裡可以根據 tool_names 添加額外的工具
 
         # 綁定工具到 LLM
         if self.current_tools:
@@ -380,7 +388,184 @@ class SupervisorAgent:
 
     def _get_system_prompt(self, rule_id: Optional[str], context: Dict[str, Any]) -> str:
         """獲取系統提示"""
-        base_browser_instructions = """
+
+        # 檢查是否是文件處理模式
+        context_data = context.get('context_data', {}) if context else {}
+        is_file_mode = context_data.get('type') == 'file'
+
+        if is_file_mode:
+            # 文件處理模式的系統提示
+            file_path = context_data.get('file_path', '未知文件')
+            current_time = context.get('current_time', '未知時間')
+
+            # 檢查是否有文件 summary（優先從 context_data 中獲取）
+            file_summary_info = ""
+            summary = None
+
+            # 優先從 context_data 中獲取 file_summary
+            if context_data and context_data.get('file_summary'):
+                summary = context_data['file_summary']
+                logger.info("📋 從 context_data 中獲取到文件 summary")
+            # 備用方案：從 context 中獲取
+            elif context.get('file_summary'):
+                summary = context['file_summary']
+                logger.info("📋 從 context 中獲取到文件 summary")
+
+            if summary:
+                file_type = summary.get('type', 'unknown')
+
+                if file_type == 'data':
+                    data_info = summary.get('data_info', {})
+                    data_shape = data_info.get('data_shape', [0, 0])
+                    file_summary_info = f"""
+📊 **文件 Summary 已載入**:
+- 文件類型: 數據文件 ({summary.get('file_extension', 'unknown')})
+- 數據形狀: {data_shape[0]} 行 × {data_shape[1]} 列
+- 處理時間: {summary.get('processed_at', 'unknown')}
+- 數值列: {data_info.get('numeric_columns', [])}
+- 分類列: {data_info.get('categorical_columns', [])}
+- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
+"""
+                elif file_type == 'text':
+                    # 檢查是否是新的簡潔摘要格式
+                    if 'content_sections' in summary and 'file_path' in summary:
+                        # 新的簡潔摘要格式
+                        file_path = summary.get('file_path', 'unknown')
+                        content_sections = summary.get('content_sections', [])
+
+                        file_summary_info = f"""
+📄 **文件摘要**:
+文件路徑: {file_path}
+
+📋 **內容段落**:
+"""
+                        # 添加段落摘要 - 使用你要的格式
+                        for section in content_sections:
+                            start_line = section.get('start_line', 0)
+                            end_line = section.get('end_line', 0)
+                            summary_text = section.get('summary', '無摘要')
+
+                            if start_line == end_line:
+                                file_summary_info += f"\n**第{start_line}行**: {summary_text}"
+                            else:
+                                file_summary_info += f"\n**第{start_line}-{end_line}行**: {summary_text}"
+
+                    # 檢查是否是智能摘要格式
+                    elif 'file_info' in summary and 'content_sections' in summary:
+                        # 智能摘要格式
+                        file_info = summary.get('file_info', {})
+                        content_sections = summary.get('content_sections', [])
+
+                        file_summary_info = f"""
+📄 **文件摘要**:
+文件路徑: {file_info.get('path', 'unknown')}
+
+📋 **內容段落**:
+"""
+                        # 添加段落摘要 - 使用你要的格式
+                        for section in content_sections:
+                            section_number = section.get('section_number', 0)
+                            line_range = section.get('line_range', '')
+                            title = section.get('title', '無標題')
+
+                            file_summary_info += f"\n**第{line_range}行**: {title}"
+
+                    else:
+                        # 舊的摘要格式
+                        text_summary = summary.get('text_summary', {})
+                        if text_summary and text_summary.get('success'):
+                            summary_data = text_summary.get('summary', {})
+                            file_info = summary_data.get('file_info', {})
+                            segments = summary_data.get('segments', [])
+                            overall_stats = summary_data.get('overall_stats', {})
+
+                            file_summary_info = f"""
+📄 **文件 Summary 已載入**:
+- 文件類型: 文本文件 ({summary.get('file_extension', 'unknown')})
+- 文件大小: {file_info.get('size', 0)} bytes
+- 行數: {file_info.get('lines', 0)}
+- 編碼: {file_info.get('encoding', 'unknown')}
+- 摘要段落數: {len(segments)}
+- 關鍵詞: {overall_stats.get('unique_keywords', [])}
+- 預估閱讀時間: {overall_stats.get('estimated_reading_time', {}).get('reading_time_minutes', 0):.1f} 分鐘
+
+📋 **文件內容摘要**:
+"""
+                            # 添加段落摘要
+                            for i, segment in enumerate(segments[:5], 1):  # 只顯示前5個段落
+                                file_summary_info += f"\n{i}. 第{segment.get('start_line', 0)}-{segment.get('end_line', 0)}行: {segment.get('summary', '無摘要')}"
+
+                            if len(segments) > 5:
+                                file_summary_info += f"\n... 還有 {len(segments) - 5} 個段落"
+                        else:
+                            file_summary_info = f"""
+📄 **文件 Summary 已載入**:
+- 文件類型: 文本文件 ({summary.get('file_extension', 'unknown')})
+- 處理狀態: 摘要生成失敗
+- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
+"""
+                else:
+                    file_summary_info = f"""
+📄 **文件 Summary 已載入**:
+- 文件類型: 原始文本 ({summary.get('file_extension', 'unknown')})
+- 字符數: {summary.get('char_count', 0)}
+- 行數: {summary.get('line_count', 0)}
+- 處理時間: {summary.get('processed_at', 'unknown')}
+- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
+"""
+
+            base_instructions = f"""
+📁 **文件處理模式 - Session 記憶系統** (當前時間: {current_time}):
+你正在處理文件: {file_path}
+
+🧠 **Session 記憶系統**:
+- 這是一個持續的 session，文件的所有修改都會累積在記憶中
+- 以下 Summary 是當前 session 中文件的最新狀態
+- 每次文件修改後，你必須更新這個 Summary
+- 這個 Summary 是你對文件的完整記憶，包含所有歷史修改
+
+{file_summary_info}
+🔧 **可用工具** (共15個)：
+
+**文件操作工具**:
+1. **read_file_with_summary_tool**: 重新讀取文件並生成摘要
+2. **edit_file_by_lines_tool**: 按行編輯文件
+3. **highlight_file_sections_tool**: 高亮文件區域
+4. **save_file_tool**: 保存文件
+5. **create_file_tool**: 創建新文件
+6. **delete_file_tool**: 刪除文件
+
+**數據文件工具**:
+7. **read_data_file_tool**: 讀取數據文件
+8. **edit_data_file_tool**: 編輯數據文件 (添加/刪除/修改行)
+
+**數據分析工具**:
+9. **get_data_info_tool**: 獲取數據基本信息
+10. **group_by_analysis_tool**: 分組分析
+11. **threshold_analysis_tool**: 閾值分析
+12. **correlation_analysis_tool**: 相關性分析
+13. **linear_prediction_tool**: 線性預測
+
+💡 **執行策略 - Session 記憶管理**：
+- **優先使用 Session 記憶**: 始終基於當前 Summary (Session 記憶) 回答問題
+- **摘要請求**: 直接使用 Summary 中的最新信息，無需調用工具
+- **數據分析**: 基於 Summary 進行分析，必要時使用分析工具
+- **文件編輯**:
+  1. 執行編輯操作
+  2. **立即更新 Summary** (這是關鍵！)
+  3. 確保 Session 記憶保持最新狀態
+- **Session 持續性**: 同一 session 內的所有操作都基於累積的記憶
+
+⚠️ **Session 記憶系統重要規則**:
+1. **永遠基於 Summary 回答** - 這是你對文件的完整記憶
+2. **任何文件修改都必須更新 Summary** - 保持記憶同步
+3. **Summary 是持續累積的** - 包含所有歷史修改信息
+4. **每次操作後檢查 Summary 是否需要更新** - 確保記憶準確性
+
+"""
+        else:
+            # 瀏覽器模式的系統提示
+            base_instructions = """
 🌐 **瀏覽器操作指南**:
 你已連接到前端 Puppeteer 瀏覽器，可以執行以下操作：
 
@@ -394,12 +579,12 @@ class SupervisorAgent:
 
 """
 
-        # 添加當前頁面資料到系統提示中
-        page_data_context = ""
-        if context and "page_data" in context:
+        # 添加上下文資料
+        context_info = ""
+        if not is_file_mode and context and "page_data" in context:
             page_data = context["page_data"]
             if page_data:
-                page_data_context = f"""
+                context_info = f"""
 📄 **當前頁面資訊**:
 - URL: {page_data.get('url', 'N/A')}
 - 標題: {page_data.get('title', 'N/A')}
@@ -414,10 +599,10 @@ class SupervisorAgent:
             rule_data = self._load_rule(rule_id)
             if rule_data and rule_data.get("prompt"):
                 logger.info(f"📋 使用規則提示: {rule_data.get('name', rule_id)}")
-                return base_browser_instructions + page_data_context + "\n" + rule_data["prompt"]
+                return base_instructions + context_info + "\n" + rule_data["prompt"]
 
         # 預設系統提示
-        return base_browser_instructions + page_data_context + """你是一個智能的任務執行助手，具備以下能力：
+        return base_instructions + context_info + """你是一個智能的任務執行助手，具備以下能力：
 
 🎯 **核心職責**：
 - 分析用戶需求，制定執行計劃
@@ -430,12 +615,27 @@ class SupervisorAgent:
 2. 🌐 瀏覽器自動化：browser_navigate_tool, browser_click_tool, browser_type_tool, browser_scroll_tool, browser_screenshot_tool, browser_execute_script_tool
 3. 📚 Taaze.ai測試：taaze_navigate_to_bestsellers_tool, taaze_click_first_book_tool, taaze_find_qa_section_tool, taaze_ask_question_tool, taaze_get_ai_response_tool, taaze_complete_workflow_tool
 4. 🧪 測試工具：test_tool
+5. 🧠 任務記憶管理：create_batch_task_tool, get_task_status_tool, save_temp_data_tool, load_temp_data_tool, list_session_tasks_tool, pause_task_tool, resume_task_tool, generate_task_report_tool
+6. 🚀 智能批次處理：smart_batch_processor_tool, get_batch_processing_status_tool
+7. 📊 繪圖可視化：create_line_chart_tool, create_bar_chart_tool, create_scatter_plot_tool, create_pie_chart_tool, list_session_plots_tool
+8. 📁 文件操作：read_file_with_summary_tool, edit_file_by_lines_tool, save_file_tool, create_file_tool, delete_file_tool
+9. 📈 數據分析：read_data_file_tool, get_data_info_tool, group_by_analysis_tool, threshold_analysis_tool, correlation_analysis_tool, linear_prediction_tool
 
 💡 **執行策略**：
 - 如果任務需要多個步驟，請逐步執行，每次調用必要的工具
 - 根據工具執行結果評估是否需要調用更多工具
 - 避免重複調用相同工具（除非參數不同）
 - 當收集到足夠信息時，提供完整的最終回答
+
+🔄 **大量數據處理策略**：
+- 當遇到需要處理大量數據（>100項）時，優先使用 smart_batch_processor_tool
+- 該工具會自動創建批次任務、循環處理、保存中間結果到 tmp 空間
+- 所有 tool results 會自動累積，無需手動管理
+- 使用 get_batch_processing_status_tool 查詢處理進度
+
+📊 **可視化策略**：
+- 數據分析完成後，使用繪圖工具創建相應的圖表
+- 圖表會自動保存到會話目錄，用戶可以查看和下載
 
 🎯 **決策原則**：
 - 優先使用最相關的工具
@@ -560,7 +760,7 @@ class SupervisorAgent:
             "messages": [AIMessage(content=response_content)]
         }
 
-    async def run(self, query: str, rule_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def run(self, query: str, rule_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None, available_tools: List = None) -> Dict[str, Any]:
         """執行查詢並返回回應"""
         logger.info(f"🚀 開始處理查詢: {query}")
         logger.info(f"🔍 詳細參數:")
@@ -579,12 +779,15 @@ class SupervisorAgent:
         if rule_data:
             tool_names = rule_data.get("tools", [])
             logger.info(f"🔧 規則中的工具: {tool_names}")
-            self.setup_tools_for_query(tool_names)
+            self.setup_tools_for_query(tool_names, available_tools)
             logger.info(f"📋 使用規則: {rule_data.get('name', rule_id)}，規則工具: {tool_names}")
         else:
-            # 沒有規則，只使用默認瀏覽器工具
-            self.setup_tools_for_query([])
-            logger.info("💬 使用預設模式（只有瀏覽器工具）")
+            # 沒有規則，使用外部提供的工具或默認工具
+            self.setup_tools_for_query([], available_tools)
+            if available_tools:
+                logger.info("📁 使用外部提供的 Local File Use Tools")
+            else:
+                logger.info("💬 使用預設模式（瀏覽器工具）")
 
         # 使用原始查詢作為處理內容
         parsed_query = query

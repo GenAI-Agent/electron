@@ -19,8 +19,10 @@ sys.path.insert(0, str(project_root / "backend" / "src"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import json
 
-from api.routers import agent, rules
+from api.routers import agent, rules, file_processor, task_memory
 from supervisor_agent.core.supervisor_agent import SupervisorAgent
 from supervisor_agent.utils.logger import get_logger, setup_logging
 
@@ -32,11 +34,23 @@ setup_logging({
 
 logger = get_logger(__name__)
 
+# 自定義 JSON 響應類，確保 UTF-8 編碼
+class UTF8JSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
 # 創建 FastAPI 應用
 app = FastAPI(
     title="Supervisor Agent API",
     description="基於 LangGraph 的智能助手",
-    version="1.0.0"
+    version="1.0.0",
+    default_response_class=UTF8JSONResponse
 )
 
 # 添加 CORS 中間件
@@ -79,6 +93,8 @@ async def startup_event():
 # 註冊路由
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
 app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
+app.include_router(file_processor.router, prefix="/api/file", tags=["file_processor"])
+app.include_router(task_memory.router, prefix="/api/task", tags=["task_memory"])
 
 
 @app.get("/")
