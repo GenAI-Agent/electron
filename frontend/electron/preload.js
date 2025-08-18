@@ -27,5 +27,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     testNavigate: (url) => ipcRenderer.invoke('browser-test-navigate', url),
     testClick: (selector) => ipcRenderer.invoke('browser-test-click', selector),
     testType: (selector, text) => ipcRenderer.invoke('browser-test-type', selector, text)
+  },
+
+  // OAuth APIs
+  oauth: {
+    startFlow: (config) => ipcRenderer.invoke('oauth-start-flow', config),
+    exchangeToken: (config) => ipcRenderer.invoke('oauth-exchange-token', config),
+    refreshToken: (config) => ipcRenderer.invoke('oauth-refresh-token', config),
+    stopFlow: () => ipcRenderer.invoke('oauth-stop-flow')
   }
 });

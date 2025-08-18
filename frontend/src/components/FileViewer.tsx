@@ -206,23 +206,8 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       };
 
       return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ p: 1, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f8f9fa' }}>
-            <Typography variant="body2" color="text.secondary">
-              📄 PDF文件 ({(fileContent.size! / 1024 / 1024).toFixed(2)} MB)
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<OpenInNew />}
-              onClick={handleOpenWithSystem}
-            >
-              用外部程式打開
-            </Button>
-          </Box>
-          <Box sx={{ flex: 1, position: 'relative', bgcolor: '#f5f5f5' }}>
-            {renderPdfViewer()}
-          </Box>
+        <Box sx={{ height: '100%', position: 'relative', bgcolor: '#f5f5f5' }}>
+          {renderPdfViewer()}
         </Box>
       );
     }
@@ -377,13 +362,15 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 文件標題欄 */}
-      <Box sx={{ 
-        p: 1, 
-        borderBottom: '1px solid #e2e8f0', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <Box sx={{
+        px: 1,
+        py: 0.5,
+        borderBottom: '1px solid #e2e8f0',
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
-        bgcolor: '#f8fafc'
+        bgcolor: '#f8fafc',
+        minHeight: '40px'
       }}>
         <IconButton size="small" onClick={handleBack}>
           <ArrowBack />
@@ -391,6 +378,24 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
         <Typography variant="subtitle2" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {filePath.split(/[/\\]/).pop()}
         </Typography>
+
+        {/* PDF文件信息和操作按鈕 */}
+        {fileContent?.type === 'pdf' && (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ mx: 1 }}>
+              📄 ({(fileContent.size! / 1024 / 1024).toFixed(2)} MB)
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<OpenInNew />}
+              onClick={handleOpenWithSystem}
+              sx={{ minWidth: 'auto', px: 1 }}
+            >
+              外部打開
+            </Button>
+          </>
+        )}
       </Box>
 
       {/* 文件內容 */}

@@ -2,8 +2,11 @@ const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const OAuthUtils = require('./oauth-utils');
 
 let mainWindow;
+let oauthUtils;
+let authWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -16,8 +19,10 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true
     },
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 15, y: 15 }
+    titleBarStyle: 'hiddenInset',  // 隱藏標題欄但保留窗口控制按鈕
+    autoHideMenuBar: true,  // 隱藏菜單欄
+    title: '',  // 移除窗口標題
+    trafficLightPosition: { x: 15, y: 15 }  // 調整窗口控制按鈕位置
   });
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -29,6 +34,9 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+
+    // 完全移除菜單欄
+    mainWindow.setMenuBarVisibility(false);
 
     if (process.platform === 'darwin') {
       mainWindow.setWindowButtonVisibility(false);
@@ -445,8 +453,8 @@ async function internalGetPageData() {
     const urlInfo = await extractRealWebviewUrl(webContents);
     const targetUrl = urlInfo.url;
 
-    // 從 webview 提取真實內容
-    const webviewContent = await extractWebviewContent(webContents);
+    // 從 webview 提取真實內容 - 使用完整的提取腳本
+    const webviewContent = await extractWebviewContentWithFullScript(webContents);
 
     if (!webviewContent || webviewContent.error) {
       throw new Error(`Webview 內容提取失敗: ${webviewContent?.error || '未知錯誤'}`);
@@ -662,6 +670,327 @@ async function extractWebviewContent(webContents) {
   }
 }
 
+/**
+ * 使用完整腳本從 webview 提取內容並轉換為 YAML 格式
+ */
+async function extractWebviewContentWithFullScript(webContents) {
+  try {
+    console.log('📄 開始使用完整腳本從 webview 提取內容...');
+
+    // 首先檢查 webview 是否存在
+    const webviewExists = await webContents.executeJavaScript(`
+      !!document.querySelector('webview')
+    `);
+
+    if (!webviewExists) {
+      console.error('❌ webview 元素不存在');
+      return { error: 'webview not found' };
+    }
+
+    // 通過 webview 的 executeJavaScript 方法獲取內容，使用內嵌的完整腳本
+    try {
+      const contentData = await webContents.executeJavaScript(`
+        (async function() {
+          const webview = document.querySelector('webview');
+          if (!webview) {
+            return { error: 'webview not found' };
+          }
+
+          try {
+            // 直接在這裡定義完整的提取腳本，避免字符串轉義問題
+            const result = await webview.executeJavaScript(\`
+              (function() {
+                try {
+                  // YAML 字符串轉義函數
+                  function escapeYamlString(str) {
+                    if (!str) return '';
+                    return str.replace(/"/g, '\\\\"').replace(/\\\\n/g, '\\\\\\\\n').replace(/\\\\r/g, '\\\\\\\\r');
+                  }
+
+                  // 清理文本函數
+                  function cleanText(text) {
+                    if (!text) return '';
+                    return text.trim().replace(/\\\\s+/g, ' ').substring(0, 200);
+                  }
+
+                  // 檢查元素是否隱藏
+                  function isElementHidden(element) {
+                    const style = window.getComputedStyle(element);
+                    return style.display === 'none' ||
+                           style.visibility === 'hidden' ||
+                           style.opacity === '0' ||
+                           element.offsetWidth === 0 ||
+                           element.offsetHeight === 0;
+                  }
+
+                  // 檢查元素是否不需要
+                  function isElementUnwanted(element) {
+                    const tagName = element.tagName.toLowerCase();
+                    const unwantedTags = ['script', 'style', 'meta', 'link', 'noscript', 'br', 'hr'];
+                    return unwantedTags.includes(tagName);
+                  }
+
+                  // 生成精確的選擇器
+                  function generatePreciseSelector(element) {
+                    if (element.id) {
+                      return '#' + element.id;
+                    }
+
+                    if (element.className) {
+                      // 處理 className 可能是 DOMTokenList 或字符串的情況
+                      const classNameStr = typeof element.className === 'string' ? element.className : element.className.toString();
+                      const classes = classNameStr.split(' ').filter(c => c.trim());
+                      if (classes.length > 0) {
+                        return '.' + classes[0];
+                      }
+                    }
+
+                    const tagName = element.tagName.toLowerCase();
+                    const parent = element.parentElement;
+
+                    if (parent) {
+                      const siblings = Array.from(parent.children).filter(child => child.tagName === element.tagName);
+                      if (siblings.length > 1) {
+                        const index = siblings.indexOf(element) + 1;
+                        return tagName + ':nth-of-type(' + index + ')';
+                      }
+                    }
+
+                    return tagName;
+                  }
+
+                  // 檢查元素是否可操作
+                  function isInteractiveElement(element) {
+                    const tagName = element.tagName.toLowerCase();
+
+                    // 明確的互動元素
+                    if (['button', 'a', 'input', 'textarea', 'select', 'option'].includes(tagName)) {
+                      return true;
+                    }
+
+                    // 有點擊事件的元素
+                    if (element.onclick || element.getAttribute('onclick')) {
+                      return true;
+                    }
+
+                    // 有特定屬性的元素
+                    if (element.getAttribute('role') === 'button' ||
+                        element.getAttribute('role') === 'link' ||
+                        element.getAttribute('tabindex') ||
+                        element.style.cursor === 'pointer') {
+                      return true;
+                    }
+
+                    // 有 data-* 屬性可能表示互動元素
+                    for (let attr of element.attributes) {
+                      if (attr.name.startsWith('data-') &&
+                          (attr.name.includes('click') || attr.name.includes('action') || attr.name.includes('handler'))) {
+                        return true;
+                      }
+                    }
+
+                    return false;
+                  }
+
+                  // 檢查元素是否有有意義的內容
+                  function hasContentValue(element) {
+                    const tagName = element.tagName.toLowerCase();
+
+                    // 圖片元素
+                    if (tagName === 'img' && (element.src || element.alt)) {
+                      return true;
+                    }
+
+                    // 有文字內容的元素
+                    const text = cleanText(element.textContent);
+                    if (text && text.length > 2) {
+                      return true;
+                    }
+
+                    // 表單元素即使沒有文字也有價值
+                    if (['input', 'textarea', 'select'].includes(tagName)) {
+                      return true;
+                    }
+
+                    return false;
+                  }
+
+                  // 提取可操作和有內容的元素
+                  function extractAllElementsAsYAML() {
+                    let yamlContent = '';
+
+                    // 頁面基本信息
+                    const pageTitle = document.title || 'Untitled Page';
+                    const currentUrl = window.location.href;
+
+                    yamlContent += 'page_info:\\\\n';
+                    yamlContent += '  title: "' + escapeYamlString(cleanText(pageTitle)) + '"\\\\n';
+                    yamlContent += '  url: "' + escapeYamlString(currentUrl) + '"\\\\n\\\\n';
+
+                    yamlContent += 'content:\\\\n';
+
+                    // 按順序遍歷所有元素，專注於可操作和有內容的元素
+                    const allElements = document.body.querySelectorAll('*');
+                    let count = 0;
+
+                    for (let i = 0; i < allElements.length && count < 300; i++) {
+                      const element = allElements[i];
+
+                      // 跳過不可見或不需要的元素
+                      if (isElementHidden(element) || isElementUnwanted(element)) continue;
+
+                      // 只處理可操作的元素或有內容價值的元素
+                      if (!isInteractiveElement(element) && !hasContentValue(element)) continue;
+
+                      const tagName = element.tagName.toLowerCase();
+                      const text = cleanText(element.textContent);
+                      const selector = generatePreciseSelector(element);
+
+                      // 處理連結
+                      if (tagName === 'a' && element.href) {
+                        yamlContent += '  - type: link\\\\n';
+                        yamlContent += '    text: "' + escapeYamlString(text || 'Link') + '"\\\\n';
+                        yamlContent += '    href: "' + escapeYamlString(element.href) + '"\\\\n';
+                        yamlContent += '    action: click\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理按鈕
+                      else if (tagName === 'button' || element.getAttribute('role') === 'button') {
+                        yamlContent += '  - type: button\\\\n';
+                        yamlContent += '    text: "' + escapeYamlString(text || element.getAttribute('aria-label') || 'Button') + '"\\\\n';
+                        yamlContent += '    action: click\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理輸入框
+                      else if (tagName === 'input' && element.type !== 'hidden') {
+                        const inputType = element.type || 'text';
+                        const inputLabel = cleanText(element.placeholder || element.name || element.id || element.getAttribute('aria-label') || 'Input');
+                        yamlContent += '  - type: input\\\\n';
+                        yamlContent += '    input_type: "' + inputType + '"\\\\n';
+                        yamlContent += '    label: "' + escapeYamlString(inputLabel) + '"\\\\n';
+                        if (element.value) {
+                          yamlContent += '    current_value: "' + escapeYamlString(element.value) + '"\\\\n';
+                        }
+                        yamlContent += '    action: ' + (inputType === 'submit' || inputType === 'button' ? 'click' : 'type') + '\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理文字區域
+                      else if (tagName === 'textarea') {
+                        const textareaLabel = cleanText(element.placeholder || element.name || element.id || element.getAttribute('aria-label') || 'Textarea');
+                        yamlContent += '  - type: textarea\\\\n';
+                        yamlContent += '    label: "' + escapeYamlString(textareaLabel) + '"\\\\n';
+                        if (element.value) {
+                          yamlContent += '    current_value: "' + escapeYamlString(element.value.substring(0, 200)) + '"\\\\n';
+                        }
+                        yamlContent += '    action: type\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理下拉選單
+                      else if (tagName === 'select') {
+                        const selectLabel = cleanText(element.name || element.id || element.getAttribute('aria-label') || 'Select');
+                        const options = Array.from(element.options || []).map(opt => cleanText(opt.text));
+                        yamlContent += '  - type: select\\\\n';
+                        yamlContent += '    label: "' + escapeYamlString(selectLabel) + '"\\\\n';
+                        if (options.length > 0) {
+                          yamlContent += '    options:\\\\n';
+                          options.slice(0, 10).forEach(opt => {
+                            yamlContent += '      - "' + escapeYamlString(opt) + '"\\\\n';
+                          });
+                        }
+                        yamlContent += '    action: select\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理圖片
+                      else if (tagName === 'img') {
+                        yamlContent += '  - type: image\\\\n';
+                        yamlContent += '    alt: "' + escapeYamlString(element.alt || 'Image') + '"\\\\n';
+                        if (element.src) {
+                          yamlContent += '    src: "' + escapeYamlString(element.src) + '"\\\\n';
+                        }
+                        if (isInteractiveElement(element)) {
+                          yamlContent += '    action: click\\\\n';
+                          yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n';
+                        }
+                        yamlContent += '\\\\n';
+                        count++;
+                      }
+                      // 處理標題
+                      else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName) && text && text.length > 0) {
+                        yamlContent += '  - type: heading\\\\n';
+                        yamlContent += '    level: ' + tagName.charAt(1) + '\\\\n';
+                        yamlContent += '    text: "' + escapeYamlString(text) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理可點擊的元素
+                      else if (isInteractiveElement(element) && text && text.length > 0) {
+                        yamlContent += '  - type: clickable_element\\\\n';
+                        yamlContent += '    element_type: ' + tagName + '\\\\n';
+                        yamlContent += '    text: "' + escapeYamlString(text.substring(0, 150)) + '"\\\\n';
+                        yamlContent += '    action: click\\\\n';
+                        yamlContent += '    selector: "' + escapeYamlString(selector) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                      // 處理重要的文字內容（段落等）
+                      else if (['p', 'span', 'div'].includes(tagName) && text && text.length > 10) {
+                        // 只提取較長的文字內容，避免太多碎片
+                        yamlContent += '  - type: text\\\\n';
+                        yamlContent += '    content: "' + escapeYamlString(text.substring(0, 200)) + '"\\\\n\\\\n';
+                        count++;
+                      }
+                    }
+
+                    // 限制最大字數
+                    if (yamlContent.length > 50000) {
+                      yamlContent = yamlContent.substring(0, 50000) + '\\\\n\\\\n# [內容已截斷，總長度超過 50000 字]';
+                    }
+
+                    return {
+                      content: yamlContent
+                    };
+                  }
+
+                  // 執行提取
+                  return extractAllElementsAsYAML();
+                } catch (e) {
+                  return { error: 'extraction execution failed: ' + e.message + ' at ' + e.stack };
+                }
+              })();
+            \`);
+
+            return result;
+          } catch (e) {
+            return { error: 'failed to execute full script in webview: ' + e.message };
+          }
+        })();
+      `);
+
+      if (contentData.error) {
+        console.error('❌ webview 完整腳本內容提取失敗:', contentData.error);
+        // 如果完整腳本失敗，回退到簡化版本
+        return await extractWebviewContent(webContents);
+      }
+
+      console.log('✅ webview 完整腳本內容提取成功');
+      return contentData;
+
+    } catch (error) {
+      console.error('❌ webview 完整腳本 executeJavaScript 失敗:', error);
+      // 如果完整腳本失敗，回退到簡化版本
+      return await extractWebviewContent(webContents);
+    }
+
+  } catch (error) {
+    console.error('❌ webview 完整腳本內容提取異常:', error);
+    // 如果完整腳本失敗，回退到簡化版本
+    return await extractWebviewContent(webContents);
+  }
+}
+
 // IPC handler for getting page data
 ipcMain.handle('browser-get-page-data', async () => {
   return await internalGetPageData();
@@ -687,6 +1016,101 @@ ipcMain.handle('browser-test-type', async (event, selector, text) => {
   return await internalType(selector, text);
 });
 
+// IPC handler for testing full page data extraction
+ipcMain.handle('browser-test-full-page-data', async () => {
+  return await internalGetPageData();
+});
+
 // HTTP服務器已刪除，現在只使用內部函數
+
+// OAuth IPC handlers
+ipcMain.handle('oauth-start-flow', async (event, config) => {
+  try {
+    if (!oauthUtils) {
+      oauthUtils = new OAuthUtils();
+    }
+
+    // 建立授權 URL
+    const authUrl = oauthUtils.buildAuthorizationUrl(config);
+
+    // 啟動回調服務器
+    const callbackPromise = oauthUtils.startCallbackServer();
+
+    // 在系統瀏覽器中打開授權 URL
+    oauthUtils.openInBrowser(authUrl);
+
+    // 等待回調
+    const result = await callbackPromise;
+
+    return {
+      success: true,
+      code: result.code,
+      state: result.state
+    };
+  } catch (error) {
+    console.error('OAuth start flow error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('oauth-exchange-token', async (event, config) => {
+  try {
+    if (!oauthUtils) {
+      throw new Error('OAuth flow not started');
+    }
+
+    const tokens = await oauthUtils.exchangeCodeForToken(config);
+
+    return {
+      success: true,
+      tokens
+    };
+  } catch (error) {
+    console.error('OAuth token exchange error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('oauth-refresh-token', async (event, config) => {
+  try {
+    if (!oauthUtils) {
+      oauthUtils = new OAuthUtils();
+    }
+
+    const tokens = await oauthUtils.refreshAccessToken(config);
+
+    return {
+      success: true,
+      tokens
+    };
+  } catch (error) {
+    console.error('OAuth token refresh error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('oauth-stop-flow', async (event) => {
+  try {
+    if (oauthUtils) {
+      oauthUtils.stopCallbackServer();
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('OAuth stop flow error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
 
 module.exports = { internalClick, internalScroll, internalGetPageData };

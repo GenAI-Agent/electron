@@ -265,11 +265,72 @@ class OAuthUtils {
   }
 
   /**
-   * Open URL in system default browser
+   * Open URL in system default browser as a popup window
    * @param {string} url URL to open
    */
   openInBrowser(url) {
-    shell.openExternal(url);
+    const { spawn } = require('child_process');
+    const os = require('os');
+    const path = require('path');
+
+    // 根據作業系統選擇不同的打開方式
+    const platform = os.platform();
+
+    try {
+      if (platform === 'win32') {
+        // Windows: 嘗試使用 Chrome 的彈出視窗模式
+        const chromeArgs = [
+          '--new-window',
+          '--window-size=500,600',
+          '--window-position=400,200',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          url
+        ];
+
+        // 嘗試找到 Chrome 的路徑
+        const possibleChromePaths = [
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe'),
+          path.join(process.env.PROGRAMFILES, 'Google\\Chrome\\Application\\chrome.exe'),
+          path.join(process.env['PROGRAMFILES(X86)'], 'Google\\Chrome\\Application\\chrome.exe')
+        ];
+
+        let chromePath = null;
+        const fs = require('fs');
+
+        for (const chromePath_candidate of possibleChromePaths) {
+          if (chromePath_candidate && fs.existsSync(chromePath_candidate)) {
+            chromePath = chromePath_candidate;
+            break;
+          }
+        }
+
+        if (chromePath) {
+          console.log('Opening OAuth popup with Chrome:', chromePath);
+          spawn(chromePath, chromeArgs, { detached: true, stdio: 'ignore' });
+        } else {
+          console.log('Chrome not found, using default browser');
+          shell.openExternal(url);
+        }
+
+      } else if (platform === 'darwin') {
+        // macOS: 使用 open 命令打開新視窗
+        spawn('open', ['-n', '-a', 'Google Chrome', '--args', '--new-window', url], { detached: true });
+      } else {
+        // Linux: 使用 google-chrome 或回退到默認瀏覽器
+        try {
+          spawn('google-chrome', ['--new-window', '--window-size=500,600', url], { detached: true });
+        } catch {
+          shell.openExternal(url);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open popup window, falling back to default browser:', error);
+      // 如果彈出視窗失敗，回退到默認方式
+      shell.openExternal(url);
+    }
   }
 }
 
