@@ -91,7 +91,7 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
       'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
       'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv',
       'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a',
-      'pdf'
+      'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'
     ];
     return previewableExtensions.includes(ext);
   };

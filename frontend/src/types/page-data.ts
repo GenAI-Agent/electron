@@ -98,30 +98,41 @@ export interface PageMetadata {
 }
 
 /**
- * 頁面資料主介面
+ * 簡化的頁面資料介面（只包含url和content）
+ */
+export interface SimplePageData {
+  /** 當前 URL */
+  url: string;
+
+  /** 頁面內容（YAML 格式，包含所有可操作元素） */
+  content: string;
+}
+
+/**
+ * 頁面資料主介面（保留原有完整格式，用於向後兼容）
  */
 export interface PageData {
   /** 當前 URL */
   url: string;
-  
+
   /** 頁面標題 */
   title: string;
-  
+
   /** 頁面內容（Markdown 格式） */
   content: string;
-  
+
   /** 原始 HTML（可選，用於調試） */
   rawHtml?: string;
-  
+
   /** 可互動元素列表 */
   interactiveElements: InteractiveElement[];
-  
+
   /** 頁面元數據 */
   metadata: PageMetadata;
-  
+
   /** 頁面截圖（base64 編碼，可選） */
   screenshot?: string;
-  
+
   /** 提取錯誤（如果有） */
   extractionErrors?: string[];
 }

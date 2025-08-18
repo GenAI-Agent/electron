@@ -130,14 +130,132 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     setUsedTools([]);
 
     try {
+      // 檢查是否是測試命令
+      const testCommands = {
+        'test_slide': { action: 'scroll', params: ['down', 300], description: '向下滑動300px' },
+        'test_navigate': { action: 'navigate', params: ['https://www.google.com'], description: '導覽到Google' },
+        'test_click': { action: 'click', params: ['button'], description: '點擊第一個按鈕' },
+        'test_input': { action: 'type', params: ['input[type="text"]', 'Hello World'], description: '在文字輸入框輸入Hello World' }
+      };
+
+      const lowerMessage = message.trim().toLowerCase();
+      const testCommand = testCommands[lowerMessage];
+
+      if (testCommand) {
+        console.log(`🧪 檢測到測試命令: ${lowerMessage}`);
+
+        try {
+          let result;
+          const { action, params, description } = testCommand;
+
+          if (typeof window !== 'undefined' && window.electronAPI?.browserControl) {
+            switch (action) {
+              case 'scroll':
+                if (window.electronAPI.browserControl.testScroll) {
+                  result = await window.electronAPI.browserControl.testScroll(params[0], params[1]);
+                } else {
+                  throw new Error('testScroll 函數不存在');
+                }
+                break;
+
+              case 'navigate':
+                if (window.electronAPI.browserControl.testNavigate) {
+                  result = await window.electronAPI.browserControl.testNavigate(params[0]);
+                } else {
+                  throw new Error('testNavigate 函數不存在');
+                }
+                break;
+
+              case 'click':
+                if (window.electronAPI.browserControl.testClick) {
+                  result = await window.electronAPI.browserControl.testClick(params[0]);
+                } else {
+                  throw new Error('testClick 函數不存在');
+                }
+                break;
+
+              case 'type':
+                if (window.electronAPI.browserControl.testType) {
+                  result = await window.electronAPI.browserControl.testType(params[0], params[1]);
+                } else {
+                  throw new Error('testType 函數不存在');
+                }
+                break;
+
+              default:
+                throw new Error(`不支援的測試動作: ${action}`);
+            }
+
+            if (result && result.success) {
+              const testMessage = `✅ 測試${description}成功！`;
+              setStreamResponse(testMessage);
+
+              if (messageId) {
+                setMessages(prev => prev.map(msg =>
+                  msg.id === messageId
+                    ? { ...msg, content: testMessage, isLoading: false }
+                    : msg
+                ));
+              }
+            } else {
+              const errorMessage = `❌ 測試${description}失敗: ${result?.error || '未知錯誤'}`;
+              setStreamResponse(errorMessage);
+
+              if (messageId) {
+                setMessages(prev => prev.map(msg =>
+                  msg.id === messageId
+                    ? { ...msg, content: errorMessage, isLoading: false }
+                    : msg
+                ));
+              }
+            }
+          } else {
+            const errorMessage = '❌ Electron API 不可用';
+            setStreamResponse(errorMessage);
+            console.error('electronAPI狀態:', {
+              electronAPI: typeof window !== 'undefined' ? !!window.electronAPI : 'window undefined',
+              browserControl: typeof window !== 'undefined' && window.electronAPI ? !!window.electronAPI.browserControl : 'no electronAPI'
+            });
+
+            if (messageId) {
+              setMessages(prev => prev.map(msg =>
+                msg.id === messageId
+                  ? { ...msg, content: errorMessage, isLoading: false }
+                  : msg
+              ));
+            }
+          }
+        } catch (error) {
+          const errorMessage = `❌ 測試${testCommand.description}請求失敗: ${error.message}`;
+          setStreamResponse(errorMessage);
+          console.error('測試錯誤:', error);
+
+          if (messageId) {
+            setMessages(prev => prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, content: errorMessage, isLoading: false }
+                : msg
+            ));
+          }
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
       // 獲取當前頁面資料 - 使用 Electron API
       let pageData = null;
       try {
         if (typeof window !== 'undefined' && window.electronAPI?.browserControl?.getPageData) {
           const pageResult = await window.electronAPI.browserControl.getPageData();
+          console.log('📄 完整的頁面結果:', pageResult);
+
           if (pageResult.success) {
-            pageData = pageResult.pageData;
+            // 新的返回格式：pageResult.data 包含 { url, content }
+            pageData = pageResult.data;
             console.log('📄 獲取到真實頁面資料:', pageData);
+            console.log('📄 頁面URL:', pageData?.url);
+            console.log('📄 內容長度:', pageData?.content?.length);
           } else {
             console.warn('⚠️ 獲取頁面資料失敗:', pageResult.error);
           }

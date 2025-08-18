@@ -132,8 +132,8 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
       'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv',
       // 音頻文件
       'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a',
-      // PDF
-      'pdf'
+      // PDF和Office文件
+      'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'
     ];
     return previewableExtensions.includes(ext);
   };
