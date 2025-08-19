@@ -139,23 +139,11 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    
-    # 檢查環境變量
-    logger.info("檢查環境變量...")
-    if os.getenv("AZURE_OPENAI_ENDPOINT") and os.getenv("AZURE_OPENAI_API_KEY"):
-        logger.info("✅ Azure OpenAI 配置已設置")
-    else:
-        logger.warning("⚠️ 未設置 Azure OpenAI 配置，將使用 Mock LLM")
-    
     # 檢查規則目錄
     rules_dir = Path(__file__).parent.parent / "data" / "rules"
     if rules_dir.exists():
         rule_files = list(rules_dir.glob("*.json"))
         logger.info(f"✅ 找到 {len(rule_files)} 個規則文件")
-    else:
-        logger.warning(f"⚠️ 規則目錄不存在: {rules_dir}")
-    
-    logger.info("🚀 啟動 API 服務器...")
     
     uvicorn.run(
         app,
