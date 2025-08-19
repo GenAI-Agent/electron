@@ -4,6 +4,9 @@ const fs = require('fs');
 const os = require('os');
 const OAuthUtils = require('./oauth-utils');
 
+// 加載環境變量
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 let mainWindow;
 let oauthUtils;
 let authWindow;
@@ -65,6 +68,12 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  // 清理 OAuth 服務器
+  if (oauthUtils) {
+    oauthUtils.stopCallbackServer().catch(console.error);
+    oauthUtils = null;
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -73,6 +82,21 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  }
+});
+
+// 應用退出前清理
+app.on('before-quit', async (event) => {
+  if (oauthUtils) {
+    event.preventDefault();
+    try {
+      await oauthUtils.stopCallbackServer();
+      oauthUtils = null;
+    } catch (error) {
+      console.error('Error cleaning up OAuth server:', error);
+    } finally {
+      app.quit();
+    }
   }
 });
 
@@ -1179,9 +1203,13 @@ ipcMain.handle('browser-test-full-page-data', async () => {
 // OAuth IPC handlers
 ipcMain.handle('oauth-start-flow', async (event, config) => {
   try {
-    if (!oauthUtils) {
-      oauthUtils = new OAuthUtils();
+    // 確保先清理任何現有的 OAuth 實例
+    if (oauthUtils) {
+      await oauthUtils.stopCallbackServer();
     }
+    
+    // 創建新的 OAuth 實例
+    oauthUtils = new OAuthUtils();
 
     // 建立授權 URL
     const authUrl = oauthUtils.buildAuthorizationUrl(config);
@@ -1215,7 +1243,19 @@ ipcMain.handle('oauth-exchange-token', async (event, config) => {
       throw new Error('OAuth flow not started');
     }
 
-    const tokens = await oauthUtils.exchangeCodeForToken(config);
+    // 從環境變量獲取 Client Secret（安全地在主進程中處理）
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    
+    if (!clientSecret || !clientId) {
+      throw new Error('Missing Google OAuth credentials in environment variables');
+    }
+
+    const tokens = await oauthUtils.exchangeCodeForToken({
+      clientId,
+      clientSecret,
+      code: config.code
+    });
 
     return {
       success: true,
@@ -1236,7 +1276,19 @@ ipcMain.handle('oauth-refresh-token', async (event, config) => {
       oauthUtils = new OAuthUtils();
     }
 
-    const tokens = await oauthUtils.refreshAccessToken(config);
+    // 從環境變量獲取 Client Secret（安全地在主進程中處理）
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    
+    if (!clientSecret || !clientId) {
+      throw new Error('Missing Google OAuth credentials in environment variables');
+    }
+
+    const tokens = await oauthUtils.refreshAccessToken({
+      clientId,
+      clientSecret,
+      refreshToken: config.refreshToken
+    });
 
     return {
       success: true,
@@ -1254,11 +1306,469 @@ ipcMain.handle('oauth-refresh-token', async (event, config) => {
 ipcMain.handle('oauth-stop-flow', async (event) => {
   try {
     if (oauthUtils) {
-      oauthUtils.stopCallbackServer();
+      await oauthUtils.stopCallbackServer();
+      oauthUtils = null; // 清除實例引用
     }
     return { success: true };
   } catch (error) {
     console.error('OAuth stop flow error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 直接注入 access token 到 webview
+ipcMain.handle('sync-google-cookies', async (event, tokens) => {
+  try {
+    console.log('🎯 直接設置 webview 認證狀態...');
+    
+    if (!tokens || !tokens.access_token) {
+      throw new Error('No access token provided');
+    }
+    
+    // 先獲取用戶信息
+    const https = require('https');
+    const userInfoResponse = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'www.googleapis.com',
+        path: '/oauth2/v2/userinfo',
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${tokens.access_token}`,
+          'User-Agent': 'Electron-App/1.0'
+        }
+      };
+      
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            resolve(JSON.parse(data));
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+          }
+        });
+      });
+      
+      req.on('error', reject);
+      req.setTimeout(10000, () => reject(new Error('Request timeout')));
+      req.end();
+    });
+    
+    console.log('✅ 用戶信息已獲取:', userInfoResponse.email);
+    
+    // 找到 webview 並直接注入 access token
+    const webviewSession = require('electron').session.fromPartition('persist:browser');
+    
+    // 直接在 webview 中注入全局 access token
+    if (mainWindow && mainWindow.webContents) {
+      try {
+        // 向所有 webview 注入 access token
+        await mainWindow.webContents.executeJavaScript(`
+          // 為所有現有和未來的 webview 設置 access token
+          window.GOOGLE_ACCESS_TOKEN = '${tokens.access_token}';
+          window.GOOGLE_USER_INFO = ${JSON.stringify(userInfoResponse)};
+          console.log('🎯 Global access token 已注入到主窗口');
+          
+          // 如果有 webview 元素，直接注入
+          const webviews = document.querySelectorAll('webview');
+          webviews.forEach((webview, index) => {
+            if (webview && webview.executeJavaScript) {
+              webview.addEventListener('dom-ready', () => {
+                webview.executeJavaScript(\`
+                  window.GOOGLE_ACCESS_TOKEN = '${tokens.access_token}';
+                  window.GOOGLE_USER_INFO = ${JSON.stringify(userInfoResponse)};
+                  localStorage.setItem('google_access_token', '${tokens.access_token}');
+                  localStorage.setItem('google_user_info', '${JSON.stringify(userInfoResponse)}');
+                  console.log('🎯 Access token 已直接注入到 webview #' + ${index});
+                \`);
+              });
+            }
+          });
+          
+          true; // 返回成功
+        `);
+        
+        console.log('✅ Access token 已注入到主窗口和 webview');
+      } catch (injectionError) {
+        console.warn('主窗口注入失敗:', injectionError);
+      }
+    }
+    
+    return {
+      success: true,
+      userInfo: userInfoResponse,
+      message: `Access token 已直接注入 - ${userInfoResponse.email}`,
+      access_token: tokens.access_token
+    };
+    
+  } catch (error) {
+    console.error('直接注入 access token 失敗:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 新增：專用的 webview token 注入 handler
+ipcMain.handle('inject-webview-token', async (event, tokenData) => {
+  try {
+    console.log('💉 注入 token 到 webview...');
+    
+    if (!mainWindow || !mainWindow.webContents) {
+      throw new Error('Main window not available');
+    }
+    
+    // 執行注入腳本
+    const result = await mainWindow.webContents.executeJavaScript(`
+      (async function() {
+        try {
+          const webviews = document.querySelectorAll('webview');
+          let injectedCount = 0;
+          
+          for (let i = 0; i < webviews.length; i++) {
+            const webview = webviews[i];
+            if (webview && webview.executeJavaScript) {
+              try {
+                await webview.executeJavaScript(\`
+                  // 設置全局 access token
+                  window.GOOGLE_ACCESS_TOKEN = '${tokenData.access_token}';
+                  window.GOOGLE_USER_INFO = ${JSON.stringify(tokenData.user_info)};
+                  
+                  // 設置 localStorage
+                  localStorage.setItem('google_access_token', '${tokenData.access_token}');
+                  localStorage.setItem('google_user_info', '${JSON.stringify(tokenData.user_info)}');
+                  localStorage.setItem('google_authenticated', 'true');
+                  localStorage.setItem('google_auth_expires', '${tokenData.expires_at}');
+                  
+                  // 設置 sessionStorage  
+                  sessionStorage.setItem('google_signed_in', 'true');
+                  sessionStorage.setItem('user_email', '${tokenData.user_info.email}');
+                  
+                  // 如果在 Google 域名上，創建視覺指示器
+                  if (window.location.hostname.includes('google.com')) {
+                    const existing = document.getElementById('token-auth-indicator');
+                    if (existing) existing.remove();
+                    
+                    const indicator = document.createElement('div');
+                    indicator.id = 'token-auth-indicator';
+                    indicator.style.cssText = \\\`
+                      position: fixed !important;
+                      top: 20px !important;
+                      right: 20px !important;
+                      z-index: 999999 !important;
+                      background: #0f9d58 !important;
+                      color: white !important;
+                      padding: 12px 18px !important;
+                      border-radius: 25px !important;
+                      font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;
+                      font-size: 14px !important;
+                      font-weight: 500 !important;
+                      box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                      cursor: pointer !important;
+                      border: 2px solid white !important;
+                      animation: slideIn 0.3s ease-out !important;
+                    \\\`;
+                    
+                    indicator.innerHTML = \\\`
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">🎯</span>
+                        <div>
+                          <div>Access Token 已啟用</div>
+                          <div style="font-size: 11px; opacity: 0.9; margin-top: 1px;">
+                            ${tokenData.user_info.email}
+                          </div>
+                        </div>
+                      </div>
+                    \\\`;
+                    
+                    indicator.onclick = function() {
+                      const tokenInfo = \\\`
+🎯 Google Access Token 已啟用！
+
+用戶: ${tokenData.user_info.email}
+Token: ${tokenData.access_token.substring(0, 40)}...
+過期: \\\${new Date(${tokenData.expires_at}).toLocaleString()}
+
+✅ 這個 access token 可以直接用於：
+• Google API 調用
+• Gmail 操作  
+• 其他 Google 服務
+
+你可以通過 window.GOOGLE_ACCESS_TOKEN 訪問此 token。
+                      \\\`.trim();
+                      alert(tokenInfo);
+                    };
+                    
+                    // 添加動畫
+                    const style = document.createElement('style');
+                    style.textContent = \\\`
+                      @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                      }
+                    \\\`;
+                    document.head.appendChild(style);
+                    document.body.appendChild(indicator);
+                    
+                    console.log('🎯 Token 指示器已顯示');
+                  }
+                  
+                  console.log('💉 Access token 已成功注入到 webview', window.location.href);
+                  return { success: true, url: window.location.href };
+                \`);
+                
+                injectedCount++;
+              } catch (webviewError) {
+                console.warn('注入到 webview ' + i + ' 失敗:', webviewError);
+              }
+            }
+          }
+          
+          return { success: true, injectedCount, totalWebviews: webviews.length };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      })();
+    `);
+    
+    console.log('💉 Token 注入結果:', result);
+    return { success: true, result };
+    
+  } catch (error) {
+    console.error('Token 注入失敗:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 在 webview 中注入認證狀態
+ipcMain.handle('inject-google-auth', async (event, authData) => {
+  try {
+    if (!mainWindow) {
+      throw new Error('Main window not available');
+    }
+    
+    console.log('💉 Injecting Google authentication state into webview...');
+    
+    // 在 webview 中執行 JavaScript 來設置認證狀態
+    const injectionScript = `
+      (function() {
+        try {
+          // 設置 localStorage 中的認證信息
+          localStorage.setItem('google_auth_token', '${authData.access_token}');
+          localStorage.setItem('google_user_info', JSON.stringify(${JSON.stringify(authData.user_info)}));
+          localStorage.setItem('google_auth_expires', '${authData.expires_at}');
+          localStorage.setItem('google_authenticated', 'true');
+          
+          // 設置 sessionStorage
+          sessionStorage.setItem('google_signed_in', 'true');
+          sessionStorage.setItem('user_email', '${authData.user_info.email}');
+          
+          // 嘗試設置一些 Google 特有的標記
+          if (window.location.hostname.includes('google.com')) {
+            // 觸發 Google 的認證狀態檢查
+            window.dispatchEvent(new CustomEvent('google-auth-injected', {
+              detail: {
+                authenticated: true,
+                email: '${authData.user_info.email}'
+              }
+            }));
+          }
+          
+          console.log('✅ Google auth state injected successfully');
+          return { success: true };
+        } catch (error) {
+          console.error('❌ Error injecting auth state:', error);
+          return { success: false, error: error.message };
+        }
+      })();
+    `;
+    
+    // 執行注入腳本
+    const result = await mainWindow.webContents.executeJavaScript(`
+      (async function() {
+        const webview = document.querySelector('webview');
+        if (webview) {
+          try {
+            const result = await webview.executeJavaScript(\`${injectionScript.replace(/`/g, '\\`')}\`);
+            return { success: true, injectionResult: result };
+          } catch (error) {
+            return { success: false, error: error.message };
+          }
+        } else {
+          return { success: false, error: 'Webview not found' };
+        }
+      })();
+    `);
+    
+    console.log('Auth injection result:', result);
+    
+    return {
+      success: true,
+      message: 'Google authentication state injected into webview',
+      result
+    };
+  } catch (error) {
+    console.error('Auth injection error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 在 webview 中啟動 Google 登入流程
+ipcMain.handle('start-webview-google-login', async (event) => {
+  try {
+    if (!mainWindow) {
+      throw new Error('Main window not available');
+    }
+    
+    console.log('🔗 Starting Google login in webview...');
+    
+    // 在 webview 中導航到 Google 登入頁面
+    const result = await mainWindow.webContents.executeJavaScript(`
+      (function() {
+        const webview = document.querySelector('webview');
+        if (!webview) {
+          return { success: false, error: 'Webview not found' };
+        }
+        
+        // 導航到 Google 登入頁面
+        const loginUrl = 'https://accounts.google.com/signin/v2/identifier?continue=https://mail.google.com/mail/&service=mail';
+        webview.src = loginUrl;
+        
+        console.log('🔗 Navigating webview to Google login:', loginUrl);
+        
+        return { 
+          success: true, 
+          url: loginUrl,
+          message: '請在 webview 中完成 Google 登入流程' 
+        };
+      })();
+    `);
+    
+    return result;
+  } catch (error) {
+    console.error('Start webview login error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 檢查 webview 登入狀態
+ipcMain.handle('check-webview-login-status', async (event) => {
+  try {
+    if (!mainWindow) {
+      throw new Error('Main window not available');
+    }
+    
+    const result = await mainWindow.webContents.executeJavaScript(`
+      (async function() {
+        const webview = document.querySelector('webview');
+        if (!webview) {
+          return { success: false, error: 'Webview not found' };
+        }
+        
+        try {
+          const loginStatus = await webview.executeJavaScript(\`
+            (function() {
+              const url = window.location.href;
+              const hostname = window.location.hostname;
+              
+              // 檢查是否在 Gmail 頁面
+              const isOnGmail = hostname.includes('mail.google.com');
+              
+              // 檢查是否有登入指示器
+              const hasUserAvatar = document.querySelector('[data-email], .gb_A, .gb_d, .go3jq, [aria-label*="帳戶"]');
+              const hasAccountMenu = document.querySelector('[data-ved], .gb_B, .gb_e');
+              
+              // 檢查 URL 是否表示已登入
+              const urlIndicatesLogin = !url.includes('signin') && !url.includes('login');
+              
+              return {
+                url: url,
+                hostname: hostname,
+                isOnGmail: isOnGmail,
+                hasUserElements: !!hasUserAvatar,
+                hasAccountMenu: !!hasAccountMenu,
+                urlIndicatesLogin: urlIndicatesLogin,
+                likelyLoggedIn: (isOnGmail && urlIndicatesLogin) || !!(hasUserAvatar || hasAccountMenu)
+              };
+            })();
+          \`);
+          
+          return { success: true, status: loginStatus };
+        } catch (webviewError) {
+          return { success: false, error: 'Failed to check login status in webview: ' + webviewError.message };
+        }
+      })();
+    `);
+    
+    return result;
+  } catch (error) {
+    console.error('Check login status error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 調試：檢查 webview cookies
+ipcMain.handle('debug-webview-cookies', async (event) => {
+  try {
+    const { session } = require('electron');
+    const webviewSession = session.fromPartition('persist:browser');
+    
+    console.log('🔍 Checking webview cookies...');
+    
+    const googleDomains = ['.google.com', '.accounts.google.com', '.gmail.com'];
+    const allCookies = {};
+    
+    for (const domain of googleDomains) {
+      const cookies = await webviewSession.cookies.get({ domain });
+      allCookies[domain] = cookies.map(c => ({
+        name: c.name,
+        value: c.value.substring(0, 20) + (c.value.length > 20 ? '...' : ''),
+        domain: c.domain,
+        path: c.path,
+        httpOnly: c.httpOnly,
+        secure: c.secure
+      }));
+    }
+    
+    console.log('Webview cookies:', allCookies);
+    
+    // 檢查重要的 Google 認證 Cookie
+    const authCookies = [];
+    for (const domain in allCookies) {
+      const cookies = allCookies[domain];
+      for (const cookie of cookies) {
+        if (['SID', 'HSID', 'SSID', 'LSID', 'SAPISID', 'APISID', 'COMPASS', '1P_JAR'].includes(cookie.name)) {
+          authCookies.push({
+            domain,
+            name: cookie.name,
+            hasValue: !!cookie.value
+          });
+        }
+      }
+    }
+    
+    return {
+      success: true,
+      cookies: allCookies,
+      authCookies,
+      hasGoogleAuth: authCookies.length > 0
+    };
+  } catch (error) {
+    console.error('Cookie debug error:', error);
     return {
       success: false,
       error: error.message

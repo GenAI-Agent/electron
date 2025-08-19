@@ -9,6 +9,7 @@ const GmailAuthPage: React.FC = () => {
       <TitleBar
         title="Google OAuth 登入"
         showHomeButton={true}
+        showNavigation={true}
       />
 
       {/* Main Content */}

@@ -63,6 +63,7 @@ const BrowserPage: React.FC = () => {
         title={getTitle()}
         showHomeButton={true}
         showUrlInput={!isLocalMode}
+        showNavigation={true}
         onUrlChange={handleUrlChange}
       />
 

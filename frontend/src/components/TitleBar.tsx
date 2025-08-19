@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Folder, Search } from 'lucide-react';
+import { Globe, Folder, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 
@@ -13,20 +13,18 @@ declare module 'react' {
 interface TitleBarProps {
   title?: string;
   showModeSwitch?: boolean;
-  isWebMode?: boolean;
-  onModeChange?: (isWebMode: boolean) => void;
   showHomeButton?: boolean;
   showUrlInput?: boolean;
+  showNavigation?: boolean;
   onUrlChange?: (url: string) => void;
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
   title = 'Lens',
   showModeSwitch = false,
-  isWebMode = true,
-  onModeChange,
   showHomeButton = false,
   showUrlInput = false,
+  showNavigation = false,
   onUrlChange,
 }) => {
   const router = useRouter();
@@ -60,7 +58,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
   return (
     <div
-      className="title-bar h-8 bg-gray-700 flex items-center px-3 relative z-[1000] border-b border-gray-600"
+      className="title-bar h-10 bg-secondary flex items-center px-3 relative z-[1000] border-b border-border"
       style={{ WebkitAppRegion: 'drag' }}
     >
       {/* Traffic Lights */}
@@ -115,37 +113,26 @@ const TitleBar: React.FC<TitleBarProps> = ({
         )}
       </div>
 
-      {/* Mode Switch */}
-      {showModeSwitch && (
-        <div
-          className="ml-2"
-          style={{ WebkitAppRegion: 'no-drag' }}
+      {/* Navigation Arrows */}
+      <div
+        className="flex items-center gap-1 ml-2"
+        style={{ WebkitAppRegion: 'no-drag' }}
+      >
+        <button
+          onClick={() => router.back()}
+          className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+          title="上一頁"
         >
-          <label className="flex items-center gap-1 text-gray-300 text-[10px]">
-            <input
-              type="checkbox"
-              checked={isWebMode}
-              onChange={(e) => onModeChange?.(e.target.checked)}
-              className="sr-only"
-            />
-            <div className={cn(
-              "relative inline-block w-6 h-3 rounded-full transition-colors",
-              isWebMode ? "bg-blue-500" : "bg-gray-600"
-            )}>
-              <div className={cn(
-                "absolute top-0.5 w-2 h-2 bg-white rounded-full transition-transform",
-                isWebMode ? "translate-x-3.5" : "translate-x-0.5"
-              )} />
-            </div>
-            <div className="flex items-center gap-1">
-              {isWebMode ? <Globe className="w-3 h-3" /> : <Folder className="w-3 h-3" />}
-              <span className="text-[10px] text-gray-300">
-                {isWebMode ? 'Web' : 'Local'}
-              </span>
-            </div>
-          </label>
-        </div>
-      )}
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => window.history.forward()}
+          className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+          title="下一頁"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* Title Display / URL Input - 絕對置中，佔頁面寬度的一半 */}
       <div
@@ -165,11 +152,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 onBlur={() => setIsEditing(false)}
                 autoFocus
                 placeholder="輸入網址..."
-                className="w-full h-5 bg-gray-600 rounded-[10px] text-[10px] text-gray-300 px-2 pr-6 border border-gray-500 hover:border-gray-400 focus:border-blue-500 focus:outline-none placeholder:text-gray-500"
+                className="w-full h-5 bg-background rounded-[10px] text-xs text-foreground px-2 pr-6 border border-border hover:border-ring focus:border-ring focus:outline-none placeholder:text-muted-foreground"
               />
               <button
                 type="submit"
-                className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 p-0.5"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-foreground hover:text-foreground p-0.5"
               >
                 <Search className="w-3 h-3" />
               </button>
@@ -183,8 +170,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
               e.stopPropagation();
             }}
             className={cn(
-              "h-4 bg-gray-600 rounded-lg flex items-center justify-center text-gray-300 text-[10px] font-normal px-3 min-w-[200px] w-full overflow-hidden text-ellipsis whitespace-nowrap pointer-events-auto",
-              showUrlInput ? "cursor-pointer border border-transparent hover:bg-gray-500 hover:border-gray-400" : "cursor-default"
+              "h-5 bg-background rounded-lg border border-border font-semibold flex items-center justify-center text-foreground text-xs px-3 min-w-[200px] w-full overflow-hidden text-ellipsis whitespace-nowrap pointer-events-auto",
+              showUrlInput ? "cursor-pointer border border-transparent hover:bg-background hover:border-border" : "cursor-default"
             )}
             style={{ WebkitAppRegion: 'no-drag' }}
           >

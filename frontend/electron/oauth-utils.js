@@ -144,8 +144,8 @@ class OAuthUtils {
         }
 
         // Close server after handling request
-        setTimeout(() => {
-          this.stopCallbackServer();
+        setTimeout(async () => {
+          await this.stopCallbackServer();
         }, 1000);
       } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -173,11 +173,29 @@ class OAuthUtils {
    * Stop the callback server
    */
   stopCallbackServer() {
-    if (this.server) {
-      this.server.close();
-      this.server = null;
-      console.log('OAuth callback server stopped');
-    }
+    return new Promise((resolve) => {
+      if (this.server && this.server.listening) {
+        this.server.close((err) => {
+          if (err && err.code !== 'ERR_SERVER_NOT_RUNNING') {
+            console.error('Error closing OAuth server:', err);
+          } else {
+            console.log('OAuth callback server stopped');
+          }
+          this.server = null;
+          // 重置端口到默認值
+          this.redirectPort = 8080;
+          this.redirectUri = `http://127.0.0.1:${this.redirectPort}/callback`;
+          resolve();
+        });
+      } else {
+        // 服務器未運行或已關閉
+        this.server = null;
+        this.redirectPort = 8080;
+        this.redirectUri = `http://127.0.0.1:${this.redirectPort}/callback`;
+        console.log('OAuth callback server already stopped');
+        resolve();
+      }
+    });
   }
 
   /**
