@@ -78,8 +78,3 @@ tmp/
 dist/
 build/
 release/
-
-# Backend env files
-task_memory/
-temp/
-data/taaze_mail/

@@ -1,0 +1,59 @@
+{
+  "data_id": "accumulated_results_batch_task_default_2342",
+  "session_id": "default",
+  "created_at": "2025-08-19T16:50:08.305403",
+  "data": {
+    "total_processed": 2,
+    "total_items": 2,
+    "completion_percentage": 100.0,
+    "accumulated_results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "column": "預先申請金額",
+          "operator": "<",
+          "value": 20000
+        },
+        "processed_result": {
+          "success": true,
+          "action": "default_processing",
+          "result": "已處理: {'column': '預先申請金額', 'operator': '<', 'value': 20000}",
+          "method": "batch_processing",
+          "timestamp": "2025-08-19T16:50:08.285364"
+        },
+        "status": "success",
+        "processing_time": 1755593408.2853646
+      },
+      {
+        "item_index": 1,
+        "original_item": {
+          "column": "實際報銷金額",
+          "operator": ">",
+          "value": 20000
+        },
+        "processed_result": {
+          "success": true,
+          "action": "default_processing",
+          "result": "已處理: {'column': '實際報銷金額', 'operator': '>', 'value': 20000}",
+          "method": "batch_processing",
+          "timestamp": "2025-08-19T16:50:08.300263"
+        },
+        "status": "success",
+        "processing_time": 1755593408.3002634
+      }
+    ],
+    "batch_summaries": [
+      {
+        "batch_number": 1,
+        "items_count": 2,
+        "success_count": 2,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "統計未達預算控制的項目數量及部門分布",
+        "task_description": "分析預算控制效果"
+      }
+    ],
+    "success_count": 2,
+    "error_count": 0
+  }
+}

@@ -263,7 +263,11 @@ class SupervisorAgent:
 
     def compress_tool_messages(self, messages: List, max_tool_results: int = 3) -> List:
         """
-        壓縮工具消息，只保留最近的幾個工具結果
+        改進的工具消息壓縮方法
+        - 保留完整的 SystemMessage 和 HumanMessage
+        - 保留最新一個 tool result 的完整內容
+        - 壓縮中間的 tool results 成結構化摘要
+        - 重要信息（如文件路徑）完整保留
 
         Args:
             messages: 消息列表
@@ -272,71 +276,196 @@ class SupervisorAgent:
         Returns:
             壓縮後的消息列表
         """
+        # 追蹤壓縮次數
+        if not hasattr(self, '_compression_count'):
+            self._compression_count = 0
+        self._compression_count += 1
+
+        # 分類消息
+        system_messages = []
+        human_messages = []
+        ai_messages = []
+        tool_messages = []
+
+        for msg in messages:
+            if isinstance(msg, SystemMessage):
+                system_messages.append(msg)
+            elif isinstance(msg, HumanMessage):
+                human_messages.append(msg)
+            elif isinstance(msg, AIMessage):
+                ai_messages.append(msg)
+            elif isinstance(msg, ToolMessage):
+                tool_messages.append(msg)
+
+        # 如果沒有工具消息，直接返回原消息
+        if not tool_messages:
+            return messages
+
+        # 構建壓縮後的消息列表
         compressed_messages = []
-        tool_message_count = 0
 
-        # 從後往前遍歷，保留最近的工具結果
-        for msg in reversed(messages):
-            if isinstance(msg, ToolMessage):
-                if tool_message_count < max_tool_results:
-                    # 壓縮工具結果內容
-                    content = str(msg.content)
-                    if len(content) > 500:  # 如果內容太長，截斷
-                        try:
-                            import json
-                            parsed = json.loads(content)
-                            if isinstance(parsed, dict):
-                                # 保留關鍵信息，移除大數據字段
-                                compressed_parsed = {
-                                    "success": parsed.get("success", True),
-                                    "message": parsed.get("message", ""),
-                                    "summary": f"工具執行結果已壓縮 (原長度: {len(content)} 字符)"
-                                }
-                                # 保留關鍵統計信息
-                                for key in ["total_rows", "filtered_rows", "analysis_type", "results_count"]:
-                                    if key in parsed:
-                                        compressed_parsed[key] = parsed[key]
+        # 1. 保留完整的系統消息和用戶消息
+        compressed_messages.extend(system_messages)
+        compressed_messages.extend(human_messages)
 
-                                # 保留重要的工作進度信息
-                                important_keys = [
-                                    "temp_file_path", "temp_file_created", "current_data_updated",
-                                    "operation", "file_path", "columns", "results"
-                                ]
-                                for key in important_keys:
-                                    if key in parsed:
-                                        if key == "results" and isinstance(parsed[key], dict):
-                                            # 保留結果摘要，不保留詳細數據
-                                            compressed_parsed[key + "_summary"] = {
-                                                k: v for k, v in parsed[key].items()
-                                                if not isinstance(v, (list, dict)) or k in ["count", "mean", "sum"]
-                                            }
-                                        else:
-                                            compressed_parsed[key] = parsed[key]
+        # 2. 保留最近的 AI 消息
+        if ai_messages:
+            # 保留最後一個 AI 消息
+            compressed_messages.append(ai_messages[-1])
 
-                                content = json.dumps(compressed_parsed, ensure_ascii=False)
-                        except:
-                            # 如果不是JSON，直接截斷
-                            content = content[:500] + "... (內容已截斷)"
+        # 3. 處理工具消息
+        if len(tool_messages) <= max_tool_results:
+            # 如果工具消息數量不多，直接保留
+            compressed_messages.extend(tool_messages)
+        else:
+            # 需要壓縮：保留最新一個完整，壓縮其他
+            latest_tool = tool_messages[-1]  # 最新的工具結果
+            middle_tools = tool_messages[:-1]  # 中間的工具結果
 
-                    compressed_msg = ToolMessage(
-                        content=content,
-                        tool_call_id=msg.tool_call_id,
-                        name=msg.name
-                    )
-                    compressed_messages.insert(0, compressed_msg)
-                    tool_message_count += 1
-                else:
-                    # 超過限制的工具消息用摘要替代
-                    summary_msg = ToolMessage(
-                        content=f"工具 {msg.name} 執行完成 (結果已省略)",
-                        tool_call_id=msg.tool_call_id,
-                        name=msg.name
-                    )
-                    compressed_messages.insert(0, summary_msg)
-            else:
-                compressed_messages.insert(0, msg)
+            # 創建壓縮摘要
+            compression_summary = self._create_compression_summary(middle_tools)
+
+            # 將壓縮摘要作為 SystemMessage 插入（避免 tool_call_id 驗證問題）
+            compression_system_msg = SystemMessage(
+                content=f"📋 記憶壓縮摘要:\n{compression_summary}"
+            )
+
+            # 添加壓縮摘要和最新工具結果
+            compressed_messages.append(compression_system_msg)
+            compressed_messages.append(latest_tool)
 
         return compressed_messages
+
+    def _create_compression_summary(self, tool_messages: List) -> str:
+        """
+        創建工具消息的壓縮摘要
+
+        Args:
+            tool_messages: 要壓縮的工具消息列表
+
+        Returns:
+            結構化的壓縮摘要字符串
+        """
+        import json
+        from datetime import datetime
+
+        summary_parts = [
+            f"🧠 第 {self._compression_count} 次記憶壓縮",
+            f"📊 壓縮時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"📋 原始工具消息數: {len(tool_messages)}",
+            "",
+            "📝 工具執行摘要:"
+        ]
+
+        for i, tool_msg in enumerate(tool_messages, 1):
+            tool_name = tool_msg.name
+            content = str(tool_msg.content)
+
+            # 提取重要內容
+            important_info = self._extract_important_content(content, tool_name)
+
+            summary_parts.extend([
+                f"",
+                f"第{i}個 tool: {tool_name}",
+                f"tool裡面的重要內容:",
+                important_info,
+                "---"
+            ])
+
+        summary_parts.extend([
+            "",
+            "💡 注意: 以上為壓縮摘要，最新的工具結果保持完整。",
+            "🔄 如需詳細信息，請參考最新的工具執行結果。"
+        ])
+
+        return "\n".join(summary_parts)
+
+    def _extract_important_content(self, content: str, tool_name: str) -> str:
+        """
+        從工具結果中提取重要內容
+
+        Args:
+            content: 工具結果內容
+            tool_name: 工具名稱
+
+        Returns:
+            提取的重要內容
+        """
+        try:
+            import json
+
+            # 嘗試解析 JSON 內容
+            if content.startswith('<tool') and content.endswith('</tool>'):
+                # 提取 XML 標籤內的內容
+                start = content.find('>') + 1
+                end = content.rfind('<')
+                json_content = content[start:end].strip()
+            else:
+                json_content = content
+
+            parsed = json.loads(json_content)
+
+            if isinstance(parsed, dict):
+                important_info = []
+
+                # 基本狀態信息
+                if "success" in parsed:
+                    status = "✅ 成功" if parsed["success"] else "❌ 失敗"
+                    important_info.append(f"執行狀態: {status}")
+
+                # 錯誤信息
+                if "error" in parsed and parsed["error"]:
+                    important_info.append(f"錯誤信息: {parsed['error']}")
+
+                # 文件路徑信息（完整保留）
+                file_path_keys = ["file_path", "temp_file_path", "current_file", "output_file"]
+                for key in file_path_keys:
+                    if key in parsed and parsed[key]:
+                        important_info.append(f"{key}: {parsed[key]}")
+
+                # 數據統計信息
+                stats_keys = ["total_rows", "filtered_rows", "original_rows", "processed_items", "success_count", "error_count"]
+                for key in stats_keys:
+                    if key in parsed and parsed[key] is not None:
+                        important_info.append(f"{key}: {parsed[key]}")
+
+                # 操作信息
+                operation_keys = ["operation", "analysis_type", "tool_type", "message"]
+                for key in operation_keys:
+                    if key in parsed and parsed[key]:
+                        value = str(parsed[key])
+                        if len(value) > 100:
+                            value = value[:100] + "..."
+                        important_info.append(f"{key}: {value}")
+
+                # 結果摘要
+                if "results" in parsed and isinstance(parsed["results"], dict):
+                    results_summary = []
+                    for k, v in parsed["results"].items():
+                        if isinstance(v, (int, float, str)) and len(str(v)) < 50:
+                            results_summary.append(f"{k}: {v}")
+                        elif isinstance(v, dict) and "value" in v:
+                            results_summary.append(f"{k}: {v['value']}")
+
+                    if results_summary:
+                        important_info.append(f"結果摘要: {', '.join(results_summary[:5])}")
+
+                # 如果沒有提取到重要信息，使用消息內容
+                if not important_info and "message" in parsed:
+                    msg = str(parsed["message"])
+                    important_info.append(f"消息: {msg[:200]}{'...' if len(msg) > 200 else ''}")
+
+                return "\n".join(f"  • {info}" for info in important_info) if important_info else "  • 無重要信息提取"
+
+        except (json.JSONDecodeError, Exception):
+            # 如果不是 JSON 或解析失敗，提取前200字符
+            clean_content = content.replace('\n', ' ').strip()
+            if len(clean_content) > 200:
+                return f"  • 內容摘要: {clean_content[:200]}..."
+            else:
+                return f"  • 內容: {clean_content}"
+
+        return "  • 無法提取內容"
 
     def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
         """為當前查詢動態設置工具"""
@@ -471,7 +600,7 @@ class SupervisorAgent:
         logger.info(f"📊 當前上下文Token數: {current_tokens}")
 
         # 智能記憶管理
-        if current_tokens > 8000:  # 如果token數量過多，進行壓縮
+        if current_tokens > 12000:  # 如果token數量過多，進行壓縮
             logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
             messages = self.compress_tool_messages(messages, max_tool_results=3)
             compressed_tokens = self.calculate_messages_tokens(messages)
@@ -510,12 +639,13 @@ class SupervisorAgent:
             # 構建系統提示
             system_prompt = self._get_system_prompt(rule_id, context)
 
+            # 構建包含 context 的用戶查詢
+            has_rule = rule_id is not None
+            context_query = self._build_context_query(query, context, has_rule)
+
             # 構建消息
             llm_messages = [SystemMessage(content=system_prompt)]
-
-            # 添加用戶查詢
-            if query:
-                llm_messages.append(HumanMessage(content=query))
+            llm_messages.append(HumanMessage(content=context_query))
 
         else:
             # 這是工具執行後的重新評估
@@ -526,7 +656,7 @@ class SupervisorAgent:
 
             # 檢查是否已經執行了太多工具（防止無限循環）
             tool_count = len([msg for msg in messages if isinstance(msg, ToolMessage)])
-            if tool_count >= 8:
+            if tool_count >= 12:
                 logger.info(f"🛑 已執行 {tool_count} 個工具，停止並生成回答")
                 # 直接生成回答，不再調用工具
                 final_prompt = f"""基於已執行的工具結果，請直接回答用戶的問題：
@@ -603,238 +733,18 @@ class SupervisorAgent:
     def _get_system_prompt(self, rule_id: Optional[str], context: Dict[str, Any]) -> str:
         """獲取系統提示"""
 
-        # 檢查是否是文件處理模式
-        context_data = context.get('context_data', {}) if context else {}
-        is_file_mode = context_data.get('type') == 'file'
-
-        # 檢查是否有自定義的system_prompt
-        custom_system_prompt = context_data.get('system_prompt')
-        if custom_system_prompt:
-            logger.info("📋 使用自定義system_prompt")
-            return custom_system_prompt
-
-        if is_file_mode:
-            # 文件處理模式的系統提示
-            file_path = context_data.get('file_path', '未知文件')
-            current_time = context.get('current_time', '未知時間')
-
-            # 檢查是否有文件 summary（優先從 context_data 中獲取）
-            file_summary_info = ""
-            summary = None
-
-            # 優先從 context_data 中獲取 file_summary
-            if context_data and context_data.get('file_summary'):
-                summary = context_data['file_summary']
-                logger.info("📋 從 context_data 中獲取到文件 summary")
-            # 備用方案：從 context 中獲取
-            elif context.get('file_summary'):
-                summary = context['file_summary']
-                logger.info("📋 從 context 中獲取到文件 summary")
-
-            if summary:
-                file_type = summary.get('type', 'unknown')
-
-                if file_type == 'data':
-                    data_info = summary.get('data_info', {})
-                    data_shape = data_info.get('data_shape', [0, 0])
-                    file_summary_info = f"""
-📊 **文件 Summary 已載入**:
-- 文件類型: 數據文件 ({summary.get('file_extension', 'unknown')})
-- 數據形狀: {data_shape[0]} 行 × {data_shape[1]} 列
-- 處理時間: {summary.get('processed_at', 'unknown')}
-- 數值列: {data_info.get('numeric_columns', [])}
-- 分類列: {data_info.get('categorical_columns', [])}
-- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
-"""
-                elif file_type == 'text':
-                    # 檢查是否是新的簡潔摘要格式
-                    if 'content_sections' in summary and 'file_path' in summary:
-                        # 新的簡潔摘要格式
-                        file_path = summary.get('file_path', 'unknown')
-                        content_sections = summary.get('content_sections', [])
-
-                        file_summary_info = f"""
-📄 **文件摘要**:
-文件路徑: {file_path}
-
-📋 **內容段落**:
-"""
-                        # 添加段落摘要 - 使用你要的格式
-                        for section in content_sections:
-                            start_line = section.get('start_line', 0)
-                            end_line = section.get('end_line', 0)
-                            summary_text = section.get('summary', '無摘要')
-
-                            if start_line == end_line:
-                                file_summary_info += f"\n**第{start_line}行**: {summary_text}"
-                            else:
-                                file_summary_info += f"\n**第{start_line}-{end_line}行**: {summary_text}"
-
-                    # 檢查是否是智能摘要格式
-                    elif 'file_info' in summary and 'content_sections' in summary:
-                        # 智能摘要格式
-                        file_info = summary.get('file_info', {})
-                        content_sections = summary.get('content_sections', [])
-
-                        file_summary_info = f"""
-📄 **文件摘要**:
-文件路徑: {file_info.get('path', 'unknown')}
-
-📋 **內容段落**:
-"""
-                        # 添加段落摘要 - 使用你要的格式
-                        for section in content_sections:
-                            section_number = section.get('section_number', 0)
-                            line_range = section.get('line_range', '')
-                            title = section.get('title', '無標題')
-
-                            file_summary_info += f"\n**第{line_range}行**: {title}"
-
-                    else:
-                        # 舊的摘要格式
-                        text_summary = summary.get('text_summary', {})
-                        if text_summary and text_summary.get('success'):
-                            summary_data = text_summary.get('summary', {})
-                            file_info = summary_data.get('file_info', {})
-                            segments = summary_data.get('segments', [])
-                            overall_stats = summary_data.get('overall_stats', {})
-
-                            file_summary_info = f"""
-📄 **文件 Summary 已載入**:
-- 文件類型: 文本文件 ({summary.get('file_extension', 'unknown')})
-- 文件大小: {file_info.get('size', 0)} bytes
-- 行數: {file_info.get('lines', 0)}
-- 編碼: {file_info.get('encoding', 'unknown')}
-- 摘要段落數: {len(segments)}
-- 關鍵詞: {overall_stats.get('unique_keywords', [])}
-- 預估閱讀時間: {overall_stats.get('estimated_reading_time', {}).get('reading_time_minutes', 0):.1f} 分鐘
-
-📋 **文件內容摘要**:
-"""
-                            # 添加段落摘要
-                            for i, segment in enumerate(segments[:5], 1):  # 只顯示前5個段落
-                                file_summary_info += f"\n{i}. 第{segment.get('start_line', 0)}-{segment.get('end_line', 0)}行: {segment.get('summary', '無摘要')}"
-
-                            if len(segments) > 5:
-                                file_summary_info += f"\n... 還有 {len(segments) - 5} 個段落"
-                        else:
-                            file_summary_info = f"""
-📄 **文件 Summary 已載入**:
-- 文件類型: 文本文件 ({summary.get('file_extension', 'unknown')})
-- 處理狀態: 摘要生成失敗
-- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
-"""
-                else:
-                    file_summary_info = f"""
-📄 **文件 Summary 已載入**:
-- 文件類型: 原始文本 ({summary.get('file_extension', 'unknown')})
-- 字符數: {summary.get('char_count', 0)}
-- 行數: {summary.get('line_count', 0)}
-- 處理時間: {summary.get('processed_at', 'unknown')}
-- Session 目錄: temp/{summary.get('session_id', 'unknown')}/
-"""
-
-            base_instructions = f"""
-📁 **文件處理模式 - Session 記憶系統** (當前時間: {current_time}):
-你正在處理文件: {file_path}
-
-🧠 **Session 記憶系統**:
-- 這是一個持續的 session，文件的所有修改都會累積在記憶中
-- 以下 Summary 是當前 session 中文件的最新狀態
-- 每次文件修改後，你必須更新這個 Summary
-- 這個 Summary 是你對文件的完整記憶，包含所有歷史修改
-
-{file_summary_info}
-🔧 **可用工具** (共15個)：
-
-**文件操作工具**:
-1. **read_file_with_summary_tool**: 重新讀取文件並生成摘要
-2. **edit_file_by_lines_tool**: 按行編輯文件
-3. **highlight_file_sections_tool**: 高亮文件區域
-4. **save_file_tool**: 保存文件
-5. **create_file_tool**: 創建新文件
-6. **delete_file_tool**: 刪除文件
-
-**數據文件工具**:
-7. **read_data_file_tool**: 讀取數據文件
-8. **edit_data_file_tool**: 編輯數據文件 (添加/刪除/修改行)
-
-**數據分析工具**:
-9. **get_data_info_tool**: 獲取數據基本信息
-10. **group_by_analysis_tool**: 分組分析
-11. **threshold_analysis_tool**: 閾值分析
-12. **correlation_analysis_tool**: 相關性分析
-13. **linear_prediction_tool**: 線性預測
-
-💡 **執行策略 - Session 記憶管理**：
-- **優先使用 Session 記憶**: 始終基於當前 Summary (Session 記憶) 回答問題
-- **摘要請求**: 直接使用 Summary 中的最新信息，無需調用工具
-- **數據分析**: 基於 Summary 進行分析，必要時使用分析工具
-- **文件編輯**:
-  1. 執行編輯操作
-  2. **立即更新 Summary** (這是關鍵！)
-  3. 確保 Session 記憶保持最新狀態
-- **Session 持續性**: 同一 session 內的所有操作都基於累積的記憶
-
-⚠️ **Session 記憶系統重要規則**:
-1. **永遠基於 Summary 回答** - 這是你對文件的完整記憶
-2. **任何文件修改都必須更新 Summary** - 保持記憶同步
-3. **Summary 是持續累積的** - 包含所有歷史修改信息
-4. **每次操作後檢查 Summary 是否需要更新** - 確保記憶準確性
-
-📊 **會話數據管理**:
-- 當使用 filter_data_tool 時，設置 save_filtered_data=True 來保存過濾後的數據
-- 後續分析工具可以使用 "@current" 作為 file_path 來自動使用最新的過濾數據
-- 使用 get_session_data_status_tool() 查看當前會話的數據狀態
-
-🔢 **分析操作選擇指南**:
-- group_by_analysis_tool 支持多種操作類型，根據分析需求選擇：
-  * "mean" - 平均值（薪資分析、績效評估等）
-  * "sum" - 總和（銷售額、數量統計等）
-  * "count" - 計數（人員統計、頻次分析等）
-  * "max" - 最大值（最高薪資、峰值分析等）
-  * "min" - 最小值（最低薪資、基準分析等）
-- 例如：group_by_analysis_tool("@current", "department", "salary", "mean", session_id)
-
-"""
-        else:
-            # 瀏覽器模式的系統提示
-            base_instructions = """
-🌐 **瀏覽器操作指南**:
-你已連接到前端 Puppeteer 瀏覽器，可以執行以下操作：
-
-1. **讀取網頁內容**: 使用 `read_page_content_tool()` 獲取當前頁面的文字內容和所有連結
-2. **獲取可點擊元素**: 使用 `get_clickable_elements_tool()` 找到頁面上所有可點擊的元素
-3. **點擊連結**: 使用 `click_link_tool("連結文字")` 點擊特定連結
-4. **導航到URL**: 使用 `navigate_to_url_tool("https://...")` 直接導航到指定網址
-5. **其他瀏覽器操作**: 點擊、輸入、滾動等
-
-⚠️ **重要**: 在分析任何網頁內容之前，必須先使用 `read_page_content_tool()` 讀取當前頁面內容！
-
-"""
-
-        # 添加上下文資料
-        context_info = ""
-        if not is_file_mode and context and "page_data" in context:
-            page_data = context["page_data"]
-            if page_data:
-                context_info = f"""
-📄 **當前頁面資訊**:
-- URL: {page_data.get('url', 'N/A')}
-- 標題: {page_data.get('title', 'N/A')}
-- 內容預覽: {page_data.get('content', '')[:500]}...
-- 互動元素數量: {len(page_data.get('interactiveElements', []))}
-- 載入狀態: {page_data.get('metadata', {}).get('loadState', 'unknown')}
-
-"""
+        # 獲取當前台灣時間
+        from datetime import datetime
+        import pytz
+        taiwan_tz = pytz.timezone('Asia/Taipei')
+        current_time = datetime.now(taiwan_tz).strftime('%Y-%m-%d %H:%M:%S (台灣時間)')
 
         if rule_id:
-            # 嘗試載入規則的提示
-            rule_data = self._load_rule(rule_id)
+            # 載入規則提示
+            rule_data = self.find_rule_by_name(rule_id)
             if rule_data and rule_data.get("prompt"):
                 logger.info(f"📋 使用規則提示: {rule_data.get('name', rule_id)}")
 
-                # 動態替換 prompt 中的占位符
                 rule_prompt = rule_data["prompt"]
 
                 # 從 context 中獲取 file_path
@@ -844,161 +754,77 @@ class SupervisorAgent:
                     if isinstance(context_data, dict):
                         file_path = context_data.get('file_path', '未提供')
 
-                # 獲取當前台灣時間
-                from datetime import datetime
-                import pytz
-                taiwan_tz = pytz.timezone('Asia/Taipei')
-                current_time = datetime.now(taiwan_tz).strftime('%Y-%m-%d %H:%M:%S (台灣時間)')
-
                 # 替換占位符
                 rule_prompt = rule_prompt.replace('{file_path}', str(file_path))
                 rule_prompt = rule_prompt.replace('{current_time}', current_time)
 
-                logger.info(f"📋 已替換占位符: file_path={file_path}, current_time={current_time}")
+                return rule_prompt
 
-                return base_instructions + context_info + "\n" + rule_prompt
+        # 預設提示
+        return f"你是一個智能助手。當前時間: {current_time}\n請根據用戶需求智能地選擇和使用工具來完成任務。"
 
-        # 預設系統提示
-        return base_instructions + context_info + """你是一個智能的任務執行助手，具備以下能力：
+    def _build_context_query(self, query: str, context: Dict[str, Any], has_rule: bool = False) -> str:
+        """構建包含 context 信息的用戶查詢"""
 
-🎯 **核心職責**：
-- 分析用戶需求，制定執行計劃
-- 智能選擇和調用工具
-- 根據工具執行結果決定下一步動作
-- 提供準確、有用的最終回答
+        # 提取關鍵信息
+        context_data = context.get('context_data', {})
+        file_path = context_data.get('file_path', '未知文件')
+        data_info = context_data.get('data_info', {})
 
-🔧 **可用工具**：
-1. 📧 Gmail管理：gmail_summary_tool, mark_important_emails_tool, download_invoices_tool, compose_email_tool, financial_management_tool
-2. 🌐 瀏覽器自動化：browser_navigate_tool, browser_click_tool, browser_type_tool, browser_scroll_tool, browser_screenshot_tool, browser_execute_script_tool
-3. 📚 Taaze.ai測試：taaze_navigate_to_bestsellers_tool, taaze_click_first_book_tool, taaze_find_qa_section_tool, taaze_ask_question_tool, taaze_get_ai_response_tool, taaze_complete_workflow_tool
-4. 🧪 測試工具：test_tool
-5. 🧠 任務記憶管理：create_batch_task_tool, get_task_status_tool, save_temp_data_tool, load_temp_data_tool, list_session_tasks_tool, pause_task_tool, resume_task_tool, generate_task_report_tool
-6. 🚀 智能批次處理：smart_batch_processor_tool, get_batch_processing_status_tool
-7. 📊 繪圖可視化：create_line_chart_tool, create_bar_chart_tool, create_scatter_plot_tool, create_pie_chart_tool, list_session_plots_tool
-8. 📁 文件操作：read_file_with_summary_tool, edit_file_by_lines_tool, save_file_tool, create_file_tool, delete_file_tool
-9. 📈 數據分析：read_data_file_tool, get_data_info_tool, group_by_analysis_tool, threshold_analysis_tool, correlation_analysis_tool, linear_prediction_tool
+        # 構建簡潔的數據摘要
+        data_summary = ""
+        if data_info:
+            total_rows = data_info.get('total_rows', 0)
+            columns = data_info.get('columns', [])
+            numeric_columns = data_info.get('numeric_columns', [])
+            categorical_columns = data_info.get('categorical_columns', [])
 
-💡 **執行策略**：
-- 如果任務需要多個步驟，請逐步執行，每次調用必要的工具
-- 根據工具執行結果評估是否需要調用更多工具
-- 避免重複調用相同工具（除非參數不同）
-- 當收集到足夠信息時，提供完整的最終回答
+            data_summary = f"""
+📊 數據文件已載入並準備分析:
+- 文件路徑: {file_path}
+- 數據行數: {total_rows} 行
+- 總欄位數: {len(columns)} 個
+- 數值欄位: {', '.join(numeric_columns[:10])}{'...' if len(numeric_columns) > 10 else ''}
+- 分類欄位: {', '.join(categorical_columns[:10])}{'...' if len(categorical_columns) > 10 else ''}
+"""
 
-🔄 **大量數據處理策略**：
-- 當遇到需要處理大量數據（>100項）時，優先使用 smart_batch_processor_tool
-- 該工具會自動創建批次任務、循環處理、保存中間結果到 tmp 空間
-- 所有 tool results 會自動累積，無需手動管理
-- 使用 get_batch_processing_status_tool 查詢處理進度
+        if has_rule:
+            instruction = f"""{data_summary}
 
-📊 **可視化策略**：
-- 數據分析完成後，使用繪圖工具創建相應的圖表
-- 圖表會自動保存到會話目錄，用戶可以查看和下載
+✅ 數據已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
 
-🎯 **決策原則**：
-- 優先使用最相關的工具
-- 如果一個工具失敗，考慮替代方案
-- 保持任務執行的邏輯性和效率
-- 始終以完成用戶目標為導向
+用戶需求: "{query}"
 
-請根據用戶需求智能地選擇工具並執行任務。"""
+請立即開始分析，不需要再詢問用戶需求。"""
+        else:
+            instruction = f"""{data_summary}
 
-    def _parse_query(self, query: str, rule_id: Optional[str] = None) -> tuple[str, Optional[Dict[str, Any]]]:
-        """解析查詢，提取規則信息"""
-        # 如果直接提供了rule_id，載入規則
-        if rule_id:
-            rule_data = self._load_rule(rule_id)
-            return query, rule_data
+請參考上面的數據架構，使用專業工具進行分析。
 
-        # 檢查查詢是否以 /rule_name 格式開始
-        if query.startswith("/"):
-            parts = query.split(" ", 1)
-            if len(parts) >= 1:
-                rule_name = parts[0][1:]  # 移除 /
-                user_input = parts[1] if len(parts) > 1 else ""
+用戶需求: "{query}" """
 
-                # 根據 rule_name 查找規則
-                rule_data = self._find_rule_by_name(rule_name)
+        return instruction
 
-                if rule_data:
-                    logger.info(f"🎯 找到規則: {rule_name} -> {rule_data['id']}")
-                    return user_input, rule_data
-                else:
-                    logger.warning(f"⚠️ 未找到規則: {rule_name}")
-                    return query, None
-
-        # 沒有規則調用
-        return query, None
-
-    def _load_rule(self, rule_id: str) -> Optional[Dict[str, Any]]:
-        """載入規則"""
+    def find_rule_by_name(self, rule_name: str) -> Optional[Dict[str, Any]]:
+        """根據 rule name 查找規則 - 簡單直接的方法"""
         try:
             from pathlib import Path
             import json
 
             rules_dir = Path(self.rules_dir)
-            logger.info(f"🔍 嘗試載入規則: {rule_id}")
-            logger.info(f"🔍 規則目錄: {rules_dir}")
 
-            # 嘗試多種文件名格式
-            possible_files = [
-                rules_dir / f"{rule_id}.json",           # hr_analysis.json
-                rules_dir / f"{rule_id.replace('_', '-')}.json",  # hr-analysis.json
-                rules_dir / f"{rule_id}-rule.json",      # hr_analysis-rule.json
-            ]
-
-            logger.info(f"🔍 嘗試的文件名: {[f.name for f in possible_files]}")
-
-            # 嘗試直接文件名匹配
-            for rule_file in possible_files:
-                logger.info(f"🔍 檢查文件: {rule_file}")
-                logger.info(f"🔍 文件是否存在: {rule_file.exists()}")
-                if rule_file.exists():
-                    logger.info(f"✅ 找到規則文件: {rule_file.name}")
-                    with open(rule_file, 'r', encoding='utf-8') as f:
-                        rule_data = json.load(f)
-                        logger.info(f"✅ 規則載入成功: {rule_data.get('name', 'unknown')}")
-                        return rule_data
-
-            # 如果直接匹配失敗，遍歷所有文件查找 name 匹配
-            logger.info(f"🔍 直接匹配失敗，遍歷所有文件查找 name 匹配...")
-            all_files = list(rules_dir.glob("*.json"))
-            logger.info(f"🔍 找到的所有 JSON 文件: {[f.name for f in all_files]}")
-
-            for rule_file in all_files:
-                try:
-                    logger.info(f"🔍 檢查文件: {rule_file.name}")
-                    with open(rule_file, 'r', encoding='utf-8') as f:
-                        rule_data = json.load(f)
-                        file_name = rule_data.get("name", "unknown")
-                        logger.info(f"🔍 文件 {rule_file.name} 的 name: '{file_name}', 尋找: '{rule_id}'")
-                        if file_name == rule_id:
-                            logger.info(f"✅ 通過 name 找到規則文件: {rule_file.name}")
-                            return rule_data
-                except Exception as e:
-                    logger.warning(f"⚠️ 讀取文件失敗 {rule_file.name}: {e}")
-                    continue
-
-            logger.warning(f"⚠️ 未找到規則文件: {rule_id}")
-            return None
-        except Exception as e:
-            logger.error(f"❌ 載入規則失敗 {rule_id}: {e}")
-            return None
-
-    def _find_rule_by_name(self, rule_name: str) -> Optional[Dict[str, Any]]:
-        """根據名稱查找規則"""
-        try:
-            from pathlib import Path
-            import json
-
-            rules_dir = Path(self.rules_dir)
+            # 遍歷所有 JSON 文件
             for rule_file in rules_dir.glob("*.json"):
                 try:
                     with open(rule_file, 'r', encoding='utf-8') as f:
                         rule_data = json.load(f)
-                        if rule_data.get("name", "").replace(" ", "_").lower() == rule_name.lower():
+                        # 直接比對 name 字段
+                        if rule_data.get("name") == rule_name:
                             return rule_data
-                except:
+                except Exception as e:
+                    logger.warning(f"⚠️ 讀取規則文件失敗 {rule_file.name}: {e}")
                     continue
+
             return None
         except Exception as e:
             logger.error(f"❌ 查找規則失敗 {rule_name}: {e}")
@@ -1065,9 +891,9 @@ class SupervisorAgent:
         # 根據 rule_id 載入規則
         rule_data = None
         if rule_id:
-            rule_data = self._load_rule(rule_id)
-            logger.info(f"📋 載入規則: {rule_id}")
-            logger.info(f"📋 規則內容: {rule_data}")
+            rule_data = self.find_rule_by_name(rule_id)
+            if not rule_data:
+                logger.info(f"⚠️ 未找到規則: {rule_id}")
 
         # 根據規則設置工具
         if rule_data:
