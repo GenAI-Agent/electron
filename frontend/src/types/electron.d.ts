@@ -133,6 +133,79 @@ declare global {
           error?: string;
         }>;
         stopFlow: () => Promise<{ success: boolean; error?: string }>;
+        syncGoogleCookies: (tokens: {
+          access_token: string;
+          refresh_token?: string;
+          expires_in?: number;
+          token_type?: string;
+        }) => Promise<{ 
+          success: boolean; 
+          userInfo?: {
+            email: string;
+            name?: string;
+            id?: string;
+          };
+          message?: string;
+          warning?: string;
+          error?: string; 
+        }>;
+        injectGoogleAuth: (authData: {
+          access_token: string;
+          user_info: {
+            email: string;
+            name?: string;
+            id?: string;
+          };
+          expires_at: number;
+        }) => Promise<{
+          success: boolean;
+          message?: string;
+          result?: any;
+          error?: string;
+        }>;
+        injectWebviewToken: (tokenData: {
+          access_token: string;
+          user_info: {
+            email: string;
+            name?: string;
+            id?: string;
+          };
+          expires_at: number;
+        }) => Promise<{
+          success: boolean;
+          result?: any;
+          error?: string;
+        }>;
+        startWebviewGoogleLogin: () => Promise<{
+          success: boolean;
+          url?: string;
+          message?: string;
+          error?: string;
+        }>;
+        checkWebviewLoginStatus: () => Promise<{
+          success: boolean;
+          status?: {
+            url: string;
+            hostname: string;
+            isOnGmail: boolean;
+            hasUserElements: boolean;
+            hasAccountMenu: boolean;
+            urlIndicatesLogin: boolean;
+            likelyLoggedIn: boolean;
+          };
+          error?: string;
+        }>;
+        debugWebviewCookies: () => Promise<{
+          success: boolean;
+          cookies?: any;
+          authCookies?: Array<{
+            domain: string;
+            name: string;
+            hasValue: boolean;
+          }>;
+          hasGoogleAuth?: boolean;
+          error?: string;
+        }>;
       };
 
       browserControl: {

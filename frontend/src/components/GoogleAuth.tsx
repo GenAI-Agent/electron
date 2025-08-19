@@ -4,9 +4,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
+import { Check, Loader2 } from 'lucide-react';
 
 interface OAuthConfig {
   clientId: string;
@@ -32,6 +32,7 @@ const GoogleAuth: React.FC = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authResult, setAuthResult] = useState<AuthResult | null>(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [showCancelOption, setShowCancelOption] = useState(false);
 
   const steps = [
     '準備授權',
@@ -63,20 +64,20 @@ const GoogleAuth: React.FC = () => {
     try {
       // 步驟 1: 準備授權
       setActiveStep(1);
-      
+
       // 啟動 OAuth 流程
       const flowResult = await window.electronAPI.oauth.startFlow(oauthConfig);
-      
+
       if (!flowResult.success) {
         throw new Error(flowResult.error || '啟動 OAuth 流程失敗');
       }
 
       // 步驟 2: 瀏覽器授權完成，獲取 Token
       setActiveStep(2);
-      
+
       const tokenResult = await window.electronAPI.oauth.exchangeToken({
         ...oauthConfig,
-        code: flowResult.code
+        code: flowResult.code || ''
       });
 
       if (!tokenResult.success) {
@@ -85,7 +86,7 @@ const GoogleAuth: React.FC = () => {
 
       // 步驟 3: 完成
       setActiveStep(3);
-      
+
       setAuthResult({
         success: true,
         tokens: tokenResult.tokens
@@ -100,7 +101,7 @@ const GoogleAuth: React.FC = () => {
         success: false,
         error: error instanceof Error ? error.message : '未知錯誤'
       });
-      
+
       // 停止 OAuth 流程
       await window.electronAPI.oauth.stopFlow();
     } finally {
@@ -114,144 +115,156 @@ const GoogleAuth: React.FC = () => {
       setIsAuthenticating(false);
       setActiveStep(0);
       setAuthResult(null);
+      setShowCancelOption(false);
     } catch (error) {
       console.error('停止 OAuth 流程錯誤:', error);
     }
   }, []);
 
-  const handleTestRefresh = useCallback(async () => {
-    if (!authResult?.tokens?.refresh_token) {
-      setAuthResult({
-        success: false,
-        error: '沒有 refresh token 可供測試'
-      });
-      return;
-    }
-
-    try {
-      const refreshResult = await window.electronAPI.oauth.refreshToken({
-        ...oauthConfig,
-        refreshToken: authResult.tokens.refresh_token
-      });
-
-      if (refreshResult.success) {
-        setAuthResult({
-          success: true,
-          tokens: refreshResult.tokens
-        });
-        console.log('Token 刷新成功:', refreshResult.tokens);
-      } else {
-        throw new Error(refreshResult.error || 'Token 刷新失敗');
-      }
-    } catch (error) {
-      console.error('Token 刷新錯誤:', error);
-      setAuthResult({
-        success: false,
-        error: error instanceof Error ? error.message : 'Token 刷新失敗'
-      });
-    }
-  }, [authResult, oauthConfig]);
-
-  const handleNavigateToGoogle = useCallback(async () => {
-    try {
-      // 導航到 browser 頁面並加載 Google
-      router.push('/browser?url=https://www.google.com');
-      console.log('已導航到 Browser 頁面，Google 登入狀態應該已保持');
-    } catch (error) {
-      console.error('導航錯誤:', error);
-    }
-  }, [router]);
+  const handleWebsiteClick = (websiteUrl: string) => {
+    router.push(`/browser?url=${encodeURIComponent(websiteUrl)}`);
+  };
 
   return (
-    <div className="max-w-[600px] mx-auto mt-8 bg-white rounded-lg shadow-sm border border-slate-200">
-      <div className="p-6">
-        <h2 className="text-2xl font-semibold mb-2">
-          Google OAuth 登入
-        </h2>
-
-        <p className="text-sm text-gray-600 mb-6">
-          使用 OAuth 2.0 + PKCE 進行安全的 Google 帳戶登入
-        </p>
+    <div className="max-w-[500px] mx-auto mt-8 bg-card rounded-xl shadow-lg border border-border">
+      <div className="p-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Google OAuth 登入
+          </h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            使用 OAuth 2.0 + PKCE 進行安全的 Google 帳戶登入
+          </p>
+        </div>
 
         {isAuthenticating && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              {steps.map((label, index) => (
-                <div key={label} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center">
+          <div className="mb-8">
+            <div className="relative">
+              {/* 連接線背景 */}
+              <div className="absolute top-4 left-8 right-8 h-0.5 bg-gray-200"></div>
+              <div
+                className={cn(
+                  "absolute top-4 left-8 h-0.5 bg-primary transition-all duration-500",
+                  activeStep === 0 ? "w-0" :
+                    activeStep === 1 ? "w-1/3" :
+                      activeStep === 2 ? "w-2/3" :
+                        "w-full"
+                )}
+              ></div>
+
+              {/* 步驟圓圈 */}
+              <div className="flex justify-between relative z-10">
+                {steps.map((label, index) => (
+                  <div key={label} className="flex flex-col items-center">
                     <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                      index < activeStep ? "bg-green-500 text-white" :
-                      index === activeStep ? "bg-primary-500 text-white" :
-                      "bg-gray-200 text-gray-500"
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 bg-white transition-colors duration-300",
+                      index < activeStep ? "bg-primary text-white border-primary" :
+                        index === activeStep ? "bg-primary text-white border-primary" :
+                          "bg-white text-gray-500 border-gray-200"
                     )}>
                       {index < activeStep ? <Check className="w-4 h-4" /> : index + 1}
                     </div>
-                    <span className="text-xs mt-1 text-center">{label}</span>
+                    <span className={cn(
+                      "text-xs mt-2 text-center max-w-[60px] leading-tight",
+                      index <= activeStep ? "text-primary font-medium" : "text-gray-500"
+                    )}>
+                      {label}
+                    </span>
                   </div>
-                  {index < steps.length - 1 && (
-                    <div className={cn(
-                      "flex-1 h-0.5 mx-2",
-                      index < activeStep ? "bg-green-500" : "bg-gray-200"
-                    )} />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {authResult && (
-          <div className={cn(
-            "p-4 mb-4 rounded-lg border",
-            authResult.success 
-              ? "bg-green-50 border-green-200 text-green-900" 
-              : "bg-red-50 border-red-200 text-red-900"
-          )}>
-            {authResult.success ? (
-              <div>
-                <h3 className="font-semibold mb-1">認證成功！瀏覽器登入狀態已設置</h3>
-                <p className="text-sm mt-1">
-                  ✅ Google 登入狀態已複製到瀏覽器
-                </p>
-                <p className="text-sm mt-1 font-bold">
-                  現在可以點擊「前往 Google 」來進入登入狀態！
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm">
-                錯誤: {authResult.error}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="flex gap-2 flex-wrap">
-          <button
-            className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            onClick={handleStartAuth}
-            disabled={isAuthenticating}
-          >
-            {isAuthenticating && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isAuthenticating ? '登入中...' : '開始 Google 登入'}
-          </button>
-
-          <button
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            onClick={() => router.push('/')}
-            disabled={isAuthenticating}
-          >
-            返回首頁
-          </button>
-
-          {authResult?.success && (
+        <div className="space-y-4">
+          {/* 主要操作按鈕 */}
+          {!isAuthenticating && !authResult?.success && (
             <button
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              onClick={handleNavigateToGoogle}
+              className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 font-medium text-base shadow-sm"
+              onClick={handleStartAuth}
             >
-              前往 Google (已登入)
+              開始 Google 登入
             </button>
           )}
+
+          {/* 登入進行中的狀態 */}
+          {isAuthenticating && (
+            <div className="space-y-4">
+              <button
+                className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg opacity-75 cursor-not-allowed flex items-center justify-center gap-2 font-medium text-base"
+                disabled
+              >
+                <Loader2 className="w-5 h-5 animate-spin" />
+                登入中...
+              </button>
+
+              {/* 取消按鈕（在適當的時機顯示） */}
+              {showCancelOption && (
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    如果瀏覽器沒有自動開啟，或您想取消登入：
+                  </p>
+                  <button
+                    className="px-4 py-2 text-destructive hover:text-destructive/80 hover:bg-destructive/10 rounded-md transition-colors text-sm font-medium"
+                    onClick={handleStopAuth}
+                  >
+                    取消登入
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 登入成功狀態 */}
+          {authResult?.success && (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <svg className="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                  </svg>
+                  <span className="font-semibold text-green-900">登入成功！</span>
+                </div>
+                <p className="text-sm text-green-700">您現在可以前往 Google 服務</p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  className="w-full px-6 py-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-base shadow-sm flex items-center justify-center gap-3"
+                  onClick={() => handleWebsiteClick('https://mail.google.com')}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#EA4335" />
+                  </svg>
+                  <span>前往 Gmail</span>
+                </button>
+
+                <button
+                  className="w-full px-6 py-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-base shadow-sm flex items-center justify-center gap-3"
+                  onClick={() => handleWebsiteClick('https://drive.google.com')}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8l6-6V8l-6-6H6zm7 7V3.5L18.5 9H13z" fill="#4285F4" />
+                    <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8l6-6V8l-6-6H6z" fill="#34A853" fillOpacity="0.6" />
+                    <path d="M13 3.5V9h5.5" fill="#FBBC04" />
+                  </svg>
+                  <span>前往雲端硬碟</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 返回首頁按鈕 */}
+          <div className="pt-4 border-t border-border">
+            <button
+              className="w-full px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors text-sm"
+              onClick={() => router.push('/')}
+              disabled={isAuthenticating}
+            >
+              ← 返回首頁
+            </button>
+          </div>
         </div>
       </div>
     </div>

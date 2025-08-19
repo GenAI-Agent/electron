@@ -40,6 +40,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startFlow: (config) => ipcRenderer.invoke('oauth-start-flow', config),
     exchangeToken: (config) => ipcRenderer.invoke('oauth-exchange-token', config),
     refreshToken: (config) => ipcRenderer.invoke('oauth-refresh-token', config),
-    stopFlow: () => ipcRenderer.invoke('oauth-stop-flow')
+    stopFlow: () => ipcRenderer.invoke('oauth-stop-flow'),
+    syncGoogleCookies: (tokens) => ipcRenderer.invoke('sync-google-cookies', tokens),
+    injectGoogleAuth: (authData) => ipcRenderer.invoke('inject-google-auth', authData),
+    injectWebviewToken: (tokenData) => ipcRenderer.invoke('inject-webview-token', tokenData),
+    startWebviewGoogleLogin: () => ipcRenderer.invoke('start-webview-google-login'),
+    checkWebviewLoginStatus: () => ipcRenderer.invoke('check-webview-login-status'),
+    debugWebviewCookies: () => ipcRenderer.invoke('debug-webview-cookies')
+  },
+
+  // Debug APIs (deprecated - moved to oauth)
+  debug: {
+    checkWebviewCookies: () => ipcRenderer.invoke('debug-webview-cookies')
   }
 });

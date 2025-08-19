@@ -25,7 +25,7 @@ class OAuthUtils {
   generatePKCE() {
     // Generate code verifier (43-128 characters, URL-safe)
     this.codeVerifier = crypto.randomBytes(32).toString('base64url');
-    
+
     // Generate code challenge (SHA256 hash of verifier, base64url encoded)
     this.codeChallenge = crypto
       .createHash('sha256')
@@ -56,7 +56,7 @@ class OAuthUtils {
    */
   buildAuthorizationUrl(config) {
     const { clientId, scope = 'openid email profile' } = config;
-    
+
     // Generate PKCE parameters
     this.generatePKCE();
     const state = this.generateState();
@@ -95,7 +95,7 @@ class OAuthUtils {
   tryStartServer(port, resolve, reject) {
     this.server = http.createServer((req, res) => {
       const url = new URL(req.url, `http://127.0.0.1:${port}`);
-      
+
       if (url.pathname === '/callback') {
         const code = url.searchParams.get('code');
         const state = url.searchParams.get('state');
@@ -190,11 +190,10 @@ class OAuthUtils {
    */
   async exchangeCodeForToken(config) {
     const { clientId, clientSecret, code } = config;
-
     const tokenUrl = 'https://oauth2.googleapis.com/token';
     const tokenData = new URLSearchParams({
       client_id: clientId,
-      client_secret: clientSecret,
+      client_secret: "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",
       code: code,
       grant_type: 'authorization_code',
       redirect_uri: this.redirectUri,
@@ -265,72 +264,11 @@ class OAuthUtils {
   }
 
   /**
-   * Open URL in system default browser as a popup window
+   * Open URL in system default browser
    * @param {string} url URL to open
    */
   openInBrowser(url) {
-    const { spawn } = require('child_process');
-    const os = require('os');
-    const path = require('path');
-
-    // 根據作業系統選擇不同的打開方式
-    const platform = os.platform();
-
-    try {
-      if (platform === 'win32') {
-        // Windows: 嘗試使用 Chrome 的彈出視窗模式
-        const chromeArgs = [
-          '--new-window',
-          '--window-size=500,600',
-          '--window-position=400,200',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          url
-        ];
-
-        // 嘗試找到 Chrome 的路徑
-        const possibleChromePaths = [
-          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-          path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe'),
-          path.join(process.env.PROGRAMFILES, 'Google\\Chrome\\Application\\chrome.exe'),
-          path.join(process.env['PROGRAMFILES(X86)'], 'Google\\Chrome\\Application\\chrome.exe')
-        ];
-
-        let chromePath = null;
-        const fs = require('fs');
-
-        for (const chromePath_candidate of possibleChromePaths) {
-          if (chromePath_candidate && fs.existsSync(chromePath_candidate)) {
-            chromePath = chromePath_candidate;
-            break;
-          }
-        }
-
-        if (chromePath) {
-          console.log('Opening OAuth popup with Chrome:', chromePath);
-          spawn(chromePath, chromeArgs, { detached: true, stdio: 'ignore' });
-        } else {
-          console.log('Chrome not found, using default browser');
-          shell.openExternal(url);
-        }
-
-      } else if (platform === 'darwin') {
-        // macOS: 使用 open 命令打開新視窗
-        spawn('open', ['-n', '-a', 'Google Chrome', '--args', '--new-window', url], { detached: true });
-      } else {
-        // Linux: 使用 google-chrome 或回退到默認瀏覽器
-        try {
-          spawn('google-chrome', ['--new-window', '--window-size=500,600', url], { detached: true });
-        } catch {
-          shell.openExternal(url);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to open popup window, falling back to default browser:', error);
-      // 如果彈出視窗失敗，回退到默認方式
-      shell.openExternal(url);
-    }
+    shell.openExternal(url);
   }
 }
 
