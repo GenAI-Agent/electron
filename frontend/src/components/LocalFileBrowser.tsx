@@ -126,6 +126,8 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
     const previewableExtensions = [
       // 文本文件
       'txt', 'md', 'json', 'js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'java', 'cpp', 'c', 'h', 'xml', 'yaml', 'yml', 'ini', 'cfg', 'log',
+      // 數據文件
+      'csv',
       // 圖片文件
       'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
       // 影片文件

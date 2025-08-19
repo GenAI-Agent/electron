@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Alert, IconButton, Button } from '@mui/material';
 import { ArrowBack, OpenInNew } from '@mui/icons-material';
 import { useRouter } from 'next/router';
+import DataFileViewer from './DataFileViewer';
 
 interface FileViewerProps {
   filePath: string;
@@ -45,7 +46,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
   };
 
   const isOfficeFile = (ext: string) => {
-    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+    return ['doc', 'docx', 'ppt', 'pptx'].includes(ext);
   };
 
   const isVideoFile = (ext: string) => {
@@ -133,6 +134,17 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
         <Alert severity="warning" sx={{ m: 2 }}>
           無法載入文件內容
         </Alert>
+      );
+    }
+
+    // 數據文件 (CSV, JSON, Excel)
+    if (['csv', 'json', 'excel'].includes(fileContent.type)) {
+      return (
+        <DataFileViewer
+          fileContent={fileContent as any}
+          fileName={fileName}
+          onOpenWithSystem={handleOpenWithSystem}
+        />
       );
     }
 
@@ -299,13 +311,11 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       );
     }
 
-    // Word/Excel文件
-    if (['doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
+    // Word文件
+    if (['doc', 'docx'].includes(ext)) {
       const fileTypeNames = {
         'doc': 'Word 文檔',
-        'docx': 'Word 文檔',
-        'xls': 'Excel 試算表',
-        'xlsx': 'Excel 試算表'
+        'docx': 'Word 文檔'
       };
 
       return (
@@ -332,7 +342,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
                 📄 {fileTypeNames[ext as keyof typeof fileTypeNames]}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                此文件需要用 Microsoft Office 或相容程式開啟
+                此文件需要用 Microsoft Word 或相容程式開啟
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 點擊上方按鈕用系統預設程式開啟

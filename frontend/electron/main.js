@@ -188,9 +188,46 @@ ipcMain.handle('read-file', async (event, filePath) => {
     const ext = path.extname(filePath).toLowerCase();
 
     // 對於文本文件，使用UTF-8編碼讀取
-    if (['.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.py', '.java', '.cpp', '.c', '.h', '.xml', '.yaml', '.yml', '.ini', '.cfg', '.log'].includes(ext)) {
+    if (['.txt', '.md', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.py', '.java', '.cpp', '.c', '.h', '.xml', '.yaml', '.yml', '.ini', '.cfg', '.log'].includes(ext)) {
       const content = await fs.promises.readFile(filePath, 'utf-8');
       return { type: 'text', content };
+    }
+
+    // 對於JSON文件，特別處理以支持格式化顯示
+    if (ext === '.json') {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      return { type: 'json', content };
+    }
+
+    // 對於CSV文件，讀取內容並進行基本解析
+    if (ext === '.csv') {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+
+      // 簡單的CSV解析
+      const lines = content.split('\n').filter(line => line.trim());
+      const headers = lines[0] ? lines[0].split(',').map(h => h.trim().replace(/"/g, '')) : [];
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        return row;
+      });
+
+      return {
+        type: 'csv',
+        content,
+        data: { headers, rows: rows.slice(0, 100) }, // 限制前100行以提高性能
+        totalRows: rows.length,
+        filePath,
+        size: stats.size
+      };
+    }
+
+    // 對於Excel文件，返回文件信息供前端處理
+    if (['.xlsx', '.xls'].includes(ext)) {
+      return { type: 'excel', filePath, size: stats.size, extension: ext };
     }
 
     // 對於PDF文件，返回文件路徑供前端處理

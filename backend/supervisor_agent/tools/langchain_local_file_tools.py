@@ -22,14 +22,37 @@ from tools.data_analysis_tools import data_analysis_tools
 logger = logging.getLogger(__name__)
 
 # 導入新的工具模組
+# 初始化擴展工具函數
+get_langchain_task_memory_tools = lambda: []
+get_langchain_plotting_tools = lambda: []
+get_batch_processor_tools = lambda: []
+
+EXTENDED_TOOLS_AVAILABLE = False
+
 try:
-    from .langchain_task_memory_tools import get_langchain_task_memory_tools
-    from .langchain_plotting_tools import get_langchain_plotting_tools
-    from .langchain_batch_processor_tool import get_batch_processor_tools
-    EXTENDED_TOOLS_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"擴展工具不可用: {e}")
-    EXTENDED_TOOLS_AVAILABLE = False
+    # 使用絕對導入避免相對導入問題
+    import importlib.util
+
+    # 跳過task_memory_tools的導入，因為它依賴複雜的外部存儲系統
+    # 在簡化版本中，我們專注於核心的文件操作和數據處理功能
+    logger.info("⚠️ 跳過Task Memory工具導入（避免複雜依賴）")
+    logger.info("⚠️ 跳過Plotting工具導入（專注核心功能）")
+
+    # 動態導入batch_processor_tool
+    batch_path = current_dir / "langchain_batch_processor_tool.py"
+    if batch_path.exists():
+        try:
+            spec = importlib.util.spec_from_file_location("batch_processor_tool", batch_path)
+            batch_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(batch_module)
+            get_batch_processor_tools = batch_module.get_batch_processor_tools
+            logger.info("✅ Batch Processor工具導入成功")
+            EXTENDED_TOOLS_AVAILABLE = True  # 至少batch processor成功了
+        except Exception as e:
+            logger.warning(f"⚠️ Batch Processor工具導入失敗: {e}")
+
+except Exception as e:
+    logger.warning(f"擴展工具導入過程失敗: {e}")
 
 @tool
 async def read_file_with_summary_tool(file_path: str, session_id: str = "default") -> str:
@@ -196,8 +219,8 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> str
         return error_result
 
 @tool
-async def group_by_analysis_tool(file_path: str, group_column: str, value_column: str, 
-                                operation: str = "mean", session_id: str = "default") -> str:
+async def group_by_analysis_tool(file_path: str, group_column: str, value_column: str,
+                                operation: str = "sum", session_id: str = "default") -> str:
     """
     通用分組分析工具
     
@@ -245,11 +268,11 @@ async def threshold_analysis_tool(file_path: str, value_column: str, threshold: 
 async def read_data_file_tool(file_path: str, session_id: str = "default") -> str:
     """
     讀取數據文件
-    
+
     Args:
         file_path: 數據文件路徑
         session_id: 會話ID
-        
+
     Returns:
         數據內容的JSON字符串
     """
@@ -258,6 +281,324 @@ async def read_data_file_tool(file_path: str, session_id: str = "default") -> st
         return str(result)
     except Exception as e:
         logger.error(f"❌ 讀取數據文件失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def filter_data_tool(file_path: str, filter_conditions: str, session_id: str = "default") -> str:
+    """
+    根據條件過濾數據文件
+
+    Args:
+        file_path: 數據文件路徑
+        filter_conditions: 過濾條件的JSON字符串，例如: {"column": "age", "operator": ">", "value": 25}
+        session_id: 會話ID
+
+    Returns:
+        過濾後的數據JSON字符串
+    """
+    try:
+        import json
+        import pandas as pd
+        import os
+
+        # 解析過濾條件
+        conditions = json.loads(filter_conditions)
+
+        # 讀取數據文件
+        if not os.path.exists(file_path):
+            return f'{{"success": false, "error": "文件不存在: {file_path}"}}'
+
+        # 根據文件類型讀取
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_ext == '.json':
+            df = pd.read_json(file_path)
+        elif file_ext in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            return f'{{"success": false, "error": "不支持的文件格式: {file_ext}"}}'
+
+        # 應用過濾條件
+        if isinstance(conditions, dict):
+            conditions = [conditions]  # 轉換為列表
+
+        filtered_df = df.copy()
+
+        for condition in conditions:
+            column = condition.get('column')
+            operator = condition.get('operator')
+            value = condition.get('value')
+
+            if column not in filtered_df.columns:
+                continue
+
+            if operator == '>':
+                filtered_df = filtered_df[filtered_df[column] > value]
+            elif operator == '<':
+                filtered_df = filtered_df[filtered_df[column] < value]
+            elif operator == '>=':
+                filtered_df = filtered_df[filtered_df[column] >= value]
+            elif operator == '<=':
+                filtered_df = filtered_df[filtered_df[column] <= value]
+            elif operator == '==':
+                filtered_df = filtered_df[filtered_df[column] == value]
+            elif operator == '!=':
+                filtered_df = filtered_df[filtered_df[column] != value]
+            elif operator == 'contains':
+                filtered_df = filtered_df[filtered_df[column].str.contains(str(value), na=False)]
+            elif operator == 'in':
+                filtered_df = filtered_df[filtered_df[column].isin(value)]
+
+        # 返回結果
+        result = {
+            "success": True,
+            "original_rows": len(df),
+            "filtered_rows": len(filtered_df),
+            "data": filtered_df.to_dict('records'),
+            "columns": list(filtered_df.columns),
+            "filter_conditions": conditions
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 數據過濾失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def create_data_file_tool(file_path: str, data: str, file_type: str = "csv", session_id: str = "default") -> str:
+    """
+    創建新的數據文件
+
+    Args:
+        file_path: 文件路徑
+        data: 數據內容的JSON字符串
+        file_type: 文件類型 (csv, json, xlsx)
+        session_id: 會話ID
+
+    Returns:
+        創建結果的JSON字符串
+    """
+    try:
+        import json
+        import pandas as pd
+        import os
+
+        # 解析數據
+        data_dict = json.loads(data)
+
+        # 確保目錄存在
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # 創建DataFrame
+        if isinstance(data_dict, list):
+            df = pd.DataFrame(data_dict)
+        elif isinstance(data_dict, dict):
+            df = pd.DataFrame([data_dict])
+        else:
+            return f'{{"success": false, "error": "數據格式不正確"}}'
+
+        # 根據文件類型保存
+        if file_type.lower() == 'csv':
+            df.to_csv(file_path, index=False, encoding='utf-8')
+        elif file_type.lower() == 'json':
+            df.to_json(file_path, orient='records', ensure_ascii=False, indent=2)
+        elif file_type.lower() == 'xlsx':
+            df.to_excel(file_path, index=False)
+        else:
+            return f'{{"success": false, "error": "不支持的文件類型: {file_type}"}}'
+
+        result = {
+            "success": True,
+            "file_path": file_path,
+            "file_type": file_type,
+            "rows_created": len(df),
+            "columns": list(df.columns)
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 創建數據文件失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def update_data_rows_tool(file_path: str, update_conditions: str, new_values: str, session_id: str = "default") -> str:
+    """
+    更新數據文件中的行
+
+    Args:
+        file_path: 數據文件路徑
+        update_conditions: 更新條件的JSON字符串
+        new_values: 新值的JSON字符串
+        session_id: 會話ID
+
+    Returns:
+        更新結果的JSON字符串
+    """
+    try:
+        import json
+        import pandas as pd
+        import os
+
+        if not os.path.exists(file_path):
+            return f'{{"success": false, "error": "文件不存在: {file_path}"}}'
+
+        # 解析條件和新值
+        conditions = json.loads(update_conditions)
+        values = json.loads(new_values)
+
+        # 讀取數據
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_ext == '.json':
+            df = pd.read_json(file_path)
+        elif file_ext in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            return f'{{"success": false, "error": "不支持的文件格式: {file_ext}"}}'
+
+        # 應用更新條件
+        mask = pd.Series([True] * len(df))
+
+        for condition in conditions:
+            column = condition.get('column')
+            operator = condition.get('operator')
+            value = condition.get('value')
+
+            if column not in df.columns:
+                continue
+
+            if operator == '==':
+                mask &= (df[column] == value)
+            elif operator == '!=':
+                mask &= (df[column] != value)
+            elif operator == '>':
+                mask &= (df[column] > value)
+            elif operator == '<':
+                mask &= (df[column] < value)
+            elif operator == 'contains':
+                mask &= df[column].str.contains(str(value), na=False)
+
+        # 更新數據
+        updated_rows = mask.sum()
+
+        for column, new_value in values.items():
+            if column in df.columns:
+                df.loc[mask, column] = new_value
+
+        # 保存文件
+        if file_ext == '.csv':
+            df.to_csv(file_path, index=False, encoding='utf-8')
+        elif file_ext == '.json':
+            df.to_json(file_path, orient='records', ensure_ascii=False, indent=2)
+        elif file_ext == '.xlsx':
+            df.to_excel(file_path, index=False)
+
+        result = {
+            "success": True,
+            "file_path": file_path,
+            "updated_rows": int(updated_rows),
+            "total_rows": len(df),
+            "update_conditions": conditions,
+            "new_values": values
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 更新數據失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def delete_data_rows_tool(file_path: str, delete_conditions: str, session_id: str = "default") -> str:
+    """
+    刪除數據文件中的行
+
+    Args:
+        file_path: 數據文件路徑
+        delete_conditions: 刪除條件的JSON字符串
+        session_id: 會話ID
+
+    Returns:
+        刪除結果的JSON字符串
+    """
+    try:
+        import json
+        import pandas as pd
+        import os
+
+        if not os.path.exists(file_path):
+            return f'{{"success": false, "error": "文件不存在: {file_path}"}}'
+
+        # 解析刪除條件
+        conditions = json.loads(delete_conditions)
+
+        # 讀取數據
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_ext == '.json':
+            df = pd.read_json(file_path)
+        elif file_ext in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            return f'{{"success": false, "error": "不支持的文件格式: {file_ext}"}}'
+
+        original_rows = len(df)
+
+        # 應用刪除條件
+        mask = pd.Series([False] * len(df))
+
+        for condition in conditions:
+            column = condition.get('column')
+            operator = condition.get('operator')
+            value = condition.get('value')
+
+            if column not in df.columns:
+                continue
+
+            if operator == '==':
+                mask |= (df[column] == value)
+            elif operator == '!=':
+                mask |= (df[column] != value)
+            elif operator == '>':
+                mask |= (df[column] > value)
+            elif operator == '<':
+                mask |= (df[column] < value)
+            elif operator == 'contains':
+                mask |= df[column].str.contains(str(value), na=False)
+
+        # 刪除數據
+        df_filtered = df[~mask]
+        deleted_rows = original_rows - len(df_filtered)
+
+        # 保存文件
+        if file_ext == '.csv':
+            df_filtered.to_csv(file_path, index=False, encoding='utf-8')
+        elif file_ext == '.json':
+            df_filtered.to_json(file_path, orient='records', ensure_ascii=False, indent=2)
+        elif file_ext == '.xlsx':
+            df_filtered.to_excel(file_path, index=False)
+
+        result = {
+            "success": True,
+            "file_path": file_path,
+            "deleted_rows": int(deleted_rows),
+            "remaining_rows": len(df_filtered),
+            "original_rows": original_rows,
+            "delete_conditions": conditions
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 刪除數據失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
 
 # 添加更多工具
@@ -470,6 +811,12 @@ def get_langchain_local_file_tools() -> List:
         threshold_analysis_tool,
         correlation_analysis_tool,
         linear_prediction_tool,
+
+        # 新增的數據CRUD工具
+        filter_data_tool,
+        create_data_file_tool,
+        update_data_rows_tool,
+        delete_data_rows_tool,
     ]
 
     # 添加擴展工具（如果可用）
@@ -479,9 +826,8 @@ def get_langchain_local_file_tools() -> List:
             tools.extend(get_langchain_task_memory_tools())
             logger.info("✅ Task Memory 工具已添加")
 
-            # 添加繪圖工具
-            tools.extend(get_langchain_plotting_tools())
-            logger.info("✅ 繪圖工具已添加")
+            # 繪圖工具已移除，專注於核心文件操作功能
+            logger.info("⚠️ 繪圖工具已移除")
 
             # 添加智能批次處理工具
             tools.extend(get_batch_processor_tools())

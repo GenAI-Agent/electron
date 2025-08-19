@@ -88,6 +88,7 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
     const previewableExtensions = [
       'txt', 'md', 'json', 'js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'java', 'cpp', 'c', 'h', 'xml', 'yaml', 'yml', 'ini', 'cfg', 'log',
+      'csv',
       'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
       'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv',
       'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a',

@@ -23,6 +23,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from langchain_openai import AzureChatOpenAI
+import tiktoken
 
 # 工具將在查詢時動態導入
 
@@ -44,14 +45,17 @@ class SupervisorAgentState(TypedDict):
 class ParallelToolNode(BaseToolNode):
     """平行執行工具的自定義 ToolNode"""
 
-    def __init__(self, tools: List):
+    def __init__(self, tools: List, stream_callback=None):
         super().__init__(tools)
         self.tools_by_name = {tool.name: tool for tool in tools}
+        self.stream_callback = stream_callback  # 添加stream回調函數
 
     async def _execute_single_tool_with_message(self, tool, tool_args, tool_call_id, tool_name):
         """執行單個工具並返回 ToolMessage"""
         try:
+            # 記錄工具調用參數
             logger.info(f"🔧 執行工具: {tool_name}")
+            logger.info(f"📋 工具參數: {tool_args}")
             start_time = time.time()
 
             # 執行工具
@@ -63,17 +67,36 @@ class ParallelToolNode(BaseToolNode):
             execution_time = time.time() - start_time
             logger.info(f"✅ 工具 {tool_name} 執行完成，耗時 {execution_time:.2f}秒")
 
+            # 記錄工具執行結果（前300字符）
+            result_str = str(result)
+            logger.info(f"📤 工具 {tool_name} 執行結果前300字符: {result_str[:300]}")
+
+            # 包裝工具結果，添加 tool 標籤
+            wrapped_result = f"<tool name='{tool_name}' execution_time='{execution_time:.2f}s'>\n{result_str}\n</tool>"
+
+            # 如果有stream回調，實時發送工具執行結果
+            if self.stream_callback:
+                await self.stream_callback({
+                    'type': 'tool_result',
+                    'tool_name': tool_name,
+                    'parameters': tool_args,
+                    'result': result_str,
+                    'execution_time': execution_time,
+                    'wrapped_result': wrapped_result
+                })
+
             # 創建 ToolMessage
             return ToolMessage(
-                content=str(result),
+                content=wrapped_result,
                 tool_call_id=tool_call_id,
                 name=tool_name
             )
 
         except Exception as e:
             logger.error(f"❌ 工具 {tool_name} 執行失敗: {e}")
+            error_result = f"<tool name='{tool_name}' status='error'>\n工具執行失敗: {str(e)}\n</tool>"
             return ToolMessage(
-                content=f"工具執行失敗: {str(e)}",
+                content=error_result,
                 tool_call_id=tool_call_id,
                 name=tool_name
             )
@@ -140,12 +163,14 @@ class ParallelToolNode(BaseToolNode):
 class SupervisorAgent:
     """Gmail 自動化處理監督者 Agent"""
 
-    def __init__(self, rules_dir: str = "data/rules"):
+    def __init__(self, rules_dir: str = "data/rules", stream_callback=None):
         logger.info("🔄 開始初始化 Supervisor Agent...")
         init_start = time.time()
 
         # 設置規則目錄
         self.rules_dir = rules_dir
+        # 設置stream回調函數
+        self.stream_callback = stream_callback
 
         # 初始化 LLM
         self.llm = AzureChatOpenAI(
@@ -157,6 +182,12 @@ class SupervisorAgent:
 
         logger.info("✅ LLM 初始化完成")
 
+        # 初始化Token計算器
+        try:
+            self.tokenizer = tiktoken.encoding_for_model("gpt-4")
+        except:
+            self.tokenizer = tiktoken.get_encoding("cl100k_base")
+
         # 當前會話的工具（動態設置）
         self.current_tools = []
         self.current_llm_with_tools = None
@@ -164,6 +195,71 @@ class SupervisorAgent:
 
         init_time = time.time() - init_start
         logger.info(f"✅ Supervisor Agent 初始化完成，耗時 {init_time:.2f}秒")
+
+    def calculate_tokens(self, text: str) -> int:
+        """計算文本的token數量"""
+        try:
+            return len(self.tokenizer.encode(text))
+        except Exception as e:
+            logger.warning(f"Token計算失敗: {e}")
+            # 簡單估算：1 token ≈ 4 字符
+            return len(text) // 4
+
+    def calculate_messages_tokens(self, messages: List) -> int:
+        """計算消息列表的總token數"""
+        total_tokens = 0
+        for msg in messages:
+            if hasattr(msg, 'content'):
+                total_tokens += self.calculate_tokens(str(msg.content))
+            else:
+                total_tokens += self.calculate_tokens(str(msg))
+        return total_tokens
+
+    def manage_context_for_batch_processing(self, messages: List, context: Dict[str, Any]) -> List:
+        """為batch processing管理上下文，只保留進度信息"""
+        is_batch_mode = context.get("is_batch_processing", False)
+
+        if not is_batch_mode:
+            return messages  # 非batch模式，保持原有邏輯
+
+        # Batch模式：只保留最近的重要消息和進度信息
+        important_messages = []
+        tool_call_count = 0
+
+        for msg in messages:
+            if isinstance(msg, (HumanMessage, SystemMessage)):
+                # 保留用戶消息和系統消息
+                important_messages.append(msg)
+            elif isinstance(msg, AIMessage):
+                # 保留AI消息，但簡化內容
+                if hasattr(msg, "tool_calls") and msg.tool_calls:
+                    tool_call_count += len(msg.tool_calls)
+                important_messages.append(msg)
+            elif isinstance(msg, ToolMessage):
+                # 工具消息只保留進度信息，不保留詳細結果
+                tool_call_count += 1
+
+                # 檢查是否是進度相關的工具結果
+                content = str(msg.content)
+                if any(keyword in content.lower() for keyword in ['進度', 'progress', '完成', '任務', 'task']):
+                    # 保留進度信息
+                    important_messages.append(msg)
+                else:
+                    # 簡化工具結果
+                    simplified_content = f"工具 {msg.name} 執行完成 (第{tool_call_count}次調用)"
+                    simplified_msg = ToolMessage(
+                        content=simplified_content,
+                        tool_call_id=msg.tool_call_id,
+                        name=msg.name
+                    )
+                    important_messages.append(simplified_msg)
+
+        # 記錄token節省情況
+        original_tokens = self.calculate_messages_tokens(messages)
+        managed_tokens = self.calculate_messages_tokens(important_messages)
+        logger.info(f"🧠 Batch模式Token管理: {original_tokens} → {managed_tokens} (節省 {original_tokens - managed_tokens})")
+
+        return important_messages
 
     def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
         """為當前查詢動態設置工具"""
@@ -215,10 +311,10 @@ class SupervisorAgent:
 
         # 創建自定義的平行 ToolNode 來處理工具調用
         if self.current_tools:
-            tool_node = ParallelToolNode(self.current_tools)
+            tool_node = ParallelToolNode(self.current_tools, self.stream_callback)
         else:
             # 沒有工具時創建一個空的工具節點
-            tool_node = ParallelToolNode([])
+            tool_node = ParallelToolNode([], self.stream_callback)
 
         # 添加節點
         workflow.add_node("supervisor", self.supervisor_node)  # 中央決策節點
@@ -253,6 +349,7 @@ class SupervisorAgent:
     def should_continue(self, state: SupervisorAgentState) -> str:
         """決定下一步動作的條件函數"""
         messages = state.get("messages", [])
+        context = state.get("context", {})
 
         if not messages:
             return "respond"
@@ -264,10 +361,15 @@ class SupervisorAgent:
             logger.info(f"🔧 supervisor決定調用工具: {len(last_message.tool_calls)} 個")
             return "tools"
 
+        # 檢查是否是batch processing模式
+        is_batch_mode = context.get("is_batch_processing", False)
+
         # 檢查是否達到最大工具調用次數（防止無限循環）
         tool_messages = [msg for msg in messages if isinstance(msg, ToolMessage)]
-        if len(tool_messages) >= 10:  # 最多10次工具調用
-            logger.info("🛑 達到最大工具調用次數，強制生成回答")
+        max_tools = 50 if is_batch_mode else 10  # batch模式允許更多工具調用
+
+        if len(tool_messages) >= max_tools:
+            logger.info(f"🛑 達到最大工具調用次數({max_tools})，強制生成回答")
             return "respond"
 
         # 如果最後一個消息是AI消息但沒有工具調用，生成最終回答
@@ -286,6 +388,18 @@ class SupervisorAgent:
         messages = state.get("messages", [])
         rule_id = state.get("rule_id")
         context = state.get("context", {})
+
+        # 計算當前token使用量
+        current_tokens = self.calculate_messages_tokens(messages)
+        logger.info(f"📊 當前上下文Token數: {current_tokens}")
+
+        # 如果是batch processing模式，管理上下文
+        if context.get("is_batch_processing", False):
+            messages = self.manage_context_for_batch_processing(messages, context)
+            managed_tokens = self.calculate_messages_tokens(messages)
+            logger.info(f"🧠 Batch模式Token管理後: {managed_tokens}")
+            # 更新state中的messages
+            state["messages"] = messages
 
         # 檢查是否是初始查詢
         is_initial_query = not any(isinstance(msg, (AIMessage, ToolMessage)) for msg in messages)
@@ -392,6 +506,12 @@ class SupervisorAgent:
         # 檢查是否是文件處理模式
         context_data = context.get('context_data', {}) if context else {}
         is_file_mode = context_data.get('type') == 'file'
+
+        # 檢查是否有自定義的system_prompt
+        custom_system_prompt = context_data.get('system_prompt')
+        if custom_system_prompt:
+            logger.info("📋 使用自定義system_prompt")
+            return custom_system_prompt
 
         if is_file_mode:
             # 文件處理模式的系統提示
@@ -599,7 +719,30 @@ class SupervisorAgent:
             rule_data = self._load_rule(rule_id)
             if rule_data and rule_data.get("prompt"):
                 logger.info(f"📋 使用規則提示: {rule_data.get('name', rule_id)}")
-                return base_instructions + context_info + "\n" + rule_data["prompt"]
+
+                # 動態替換 prompt 中的占位符
+                rule_prompt = rule_data["prompt"]
+
+                # 從 context 中獲取 file_path
+                file_path = "未提供"
+                if context and isinstance(context, dict):
+                    context_data = context.get('context_data', {})
+                    if isinstance(context_data, dict):
+                        file_path = context_data.get('file_path', '未提供')
+
+                # 獲取當前台灣時間
+                from datetime import datetime
+                import pytz
+                taiwan_tz = pytz.timezone('Asia/Taipei')
+                current_time = datetime.now(taiwan_tz).strftime('%Y-%m-%d %H:%M:%S (台灣時間)')
+
+                # 替換占位符
+                rule_prompt = rule_prompt.replace('{file_path}', str(file_path))
+                rule_prompt = rule_prompt.replace('{current_time}', current_time)
+
+                logger.info(f"📋 已替換占位符: file_path={file_path}, current_time={current_time}")
+
+                return base_instructions + context_info + "\n" + rule_prompt
 
         # 預設系統提示
         return base_instructions + context_info + """你是一個智能的任務執行助手，具備以下能力：
@@ -679,12 +822,49 @@ class SupervisorAgent:
             import json
 
             rules_dir = Path(self.rules_dir)
-            rule_file = rules_dir / f"{rule_id}.json"
+            logger.info(f"🔍 嘗試載入規則: {rule_id}")
+            logger.info(f"🔍 規則目錄: {rules_dir}")
 
-            if rule_file.exists():
-                with open(rule_file, 'r', encoding='utf-8') as f:
-                    rule_data = json.load(f)
-                    return rule_data
+            # 嘗試多種文件名格式
+            possible_files = [
+                rules_dir / f"{rule_id}.json",           # hr_analysis.json
+                rules_dir / f"{rule_id.replace('_', '-')}.json",  # hr-analysis.json
+                rules_dir / f"{rule_id}-rule.json",      # hr_analysis-rule.json
+            ]
+
+            logger.info(f"🔍 嘗試的文件名: {[f.name for f in possible_files]}")
+
+            # 嘗試直接文件名匹配
+            for rule_file in possible_files:
+                logger.info(f"🔍 檢查文件: {rule_file}")
+                logger.info(f"🔍 文件是否存在: {rule_file.exists()}")
+                if rule_file.exists():
+                    logger.info(f"✅ 找到規則文件: {rule_file.name}")
+                    with open(rule_file, 'r', encoding='utf-8') as f:
+                        rule_data = json.load(f)
+                        logger.info(f"✅ 規則載入成功: {rule_data.get('name', 'unknown')}")
+                        return rule_data
+
+            # 如果直接匹配失敗，遍歷所有文件查找 name 匹配
+            logger.info(f"🔍 直接匹配失敗，遍歷所有文件查找 name 匹配...")
+            all_files = list(rules_dir.glob("*.json"))
+            logger.info(f"🔍 找到的所有 JSON 文件: {[f.name for f in all_files]}")
+
+            for rule_file in all_files:
+                try:
+                    logger.info(f"🔍 檢查文件: {rule_file.name}")
+                    with open(rule_file, 'r', encoding='utf-8') as f:
+                        rule_data = json.load(f)
+                        file_name = rule_data.get("name", "unknown")
+                        logger.info(f"🔍 文件 {rule_file.name} 的 name: '{file_name}', 尋找: '{rule_id}'")
+                        if file_name == rule_id:
+                            logger.info(f"✅ 通過 name 找到規則文件: {rule_file.name}")
+                            return rule_data
+                except Exception as e:
+                    logger.warning(f"⚠️ 讀取文件失敗 {rule_file.name}: {e}")
+                    continue
+
+            logger.warning(f"⚠️ 未找到規則文件: {rule_id}")
             return None
         except Exception as e:
             logger.error(f"❌ 載入規則失敗 {rule_id}: {e}")

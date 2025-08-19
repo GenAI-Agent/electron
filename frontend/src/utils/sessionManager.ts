@@ -39,8 +39,10 @@ export class SessionManager {
   private mode: 'local' | 'browser' = 'browser';
 
   constructor() {
+    // 每次創建SessionManager都生成新的session_id
     this.sessionId = this.generateSessionId();
     this.loadFromStorage();
+    console.log(`🆕 新的Session已創建: ${this.sessionId}`);
   }
 
   /**
@@ -60,11 +62,19 @@ export class SessionManager {
       const stored = localStorage.getItem('current_session');
       if (stored) {
         const data = JSON.parse(stored);
-        this.sessionId = data.sessionId || this.sessionId;
+
+        // 每次應用啟動都使用新的session_id，但保留文件上下文
+        console.log('📁 從儲存中恢復文件上下文');
+
+        // 保留文件上下文和模式
         this.currentFile = data.currentFile || null;
         this.fileSummary = data.fileSummary || null;
         this.mode = data.mode || 'browser';
       }
+
+      // 保存新的session數據
+      this.saveToStorage();
+
     } catch (error) {
       console.warn('Failed to load session from storage:', error);
     }
@@ -104,6 +114,17 @@ export class SessionManager {
     this.fileSummary = null;
     this.mode = 'browser';
     this.saveToStorage();
+    return this.sessionId;
+  }
+
+  /**
+   * 強制刷新session_id（用於手動刷新）
+   */
+  forceRefreshSession(): string {
+    const oldSessionId = this.sessionId;
+    this.sessionId = this.generateSessionId();
+    this.saveToStorage();
+    console.log(`🔄 強制刷新session: ${oldSessionId} → ${this.sessionId}`);
     return this.sessionId;
   }
 

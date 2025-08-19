@@ -1,5 +1,5 @@
 {
-  "id": "financial-management-rule",
+  "id": "financial-management",
   "name": "financial_management",
   "description": "專門處理財務分析和發票管理的規則",
   "model": "gpt-4.1",
