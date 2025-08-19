@@ -276,7 +276,8 @@ async def group_by_analysis_tool(file_path: str, group_column: str, value_column
 
         result = await data_analysis_tools.group_by_analysis(resolved_file_path, group_column, value_column, operation, session_id)
         logger.info(f"✅ group_by_analysis_tool 執行完成")
-        return str(result)
+        import json
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 分組分析失敗: {e}")
         import traceback
@@ -305,7 +306,8 @@ async def threshold_analysis_tool(file_path: str, value_column: str, threshold: 
         logger.info(f"🔄 threshold_analysis_tool: {file_path} -> {resolved_file_path}")
 
         result = await data_analysis_tools.threshold_analysis(resolved_file_path, value_column, threshold, comparison, session_id)
-        return str(result)
+        import json
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 閾值分析失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
@@ -446,7 +448,7 @@ async def filter_data_tool(file_path: str, filter_conditions: str, session_id: s
             temp_file_path = temp_dir / temp_filename
 
             # 保存過濾後的數據為JSON格式
-            filtered_df.to_json(temp_file_path, orient='records', ensure_ascii=False, indent=2)
+            filtered_df.to_json(temp_file_path, orient='records', indent=2)
 
             # 更新會話數據狀態
             session_data_manager.update_data_state(
@@ -666,6 +668,8 @@ async def filter_and_analyze_tool(file_path: str, filter_conditions: str,
         分析結果的JSON字符串
     """
     try:
+        import json
+
         logger.info(f"🔄 filter_and_analyze_tool 開始執行:")
         logger.info(f"  - file_path: {file_path}")
         logger.info(f"  - filter_conditions: {filter_conditions}")
@@ -675,13 +679,13 @@ async def filter_and_analyze_tool(file_path: str, filter_conditions: str,
         logger.info(f"  - selected_columns: {selected_columns}")
 
         # 步驟1: 過濾數據並選擇列
-        filter_result = await filter_data_tool(
-            file_path,
-            filter_conditions,
-            session_id,
-            save_filtered_data=True,
-            selected_columns=selected_columns
-        )
+        filter_result = await filter_data_tool.ainvoke({
+            "file_path": file_path,
+            "filter_conditions": filter_conditions,
+            "session_id": session_id,
+            "save_filtered_data": True,
+            "selected_columns": selected_columns
+        })
 
         filter_data = json.loads(filter_result)
         if not filter_data.get('success', False):
@@ -690,14 +694,14 @@ async def filter_and_analyze_tool(file_path: str, filter_conditions: str,
         logger.info(f"✅ 過濾完成: {filter_data.get('filtered_rows', 0)} 行")
 
         # 步驟2: 對過濾後的數據進行分組分析
-        analysis_result = await group_by_analysis_tool(
-            "@current",  # 使用過濾後的數據
-            group_column,
-            value_column,
-            operation,
-            session_id,
-            data_source="current"
-        )
+        analysis_result = await group_by_analysis_tool.ainvoke({
+            "file_path": "@current",  # 使用過濾後的數據
+            "group_column": group_column,
+            "value_column": value_column,
+            "operation": operation,
+            "session_id": session_id,
+            "data_source": "current"
+        })
 
         analysis_data = json.loads(analysis_result)
         if not analysis_data.get('success', False):
@@ -770,7 +774,7 @@ async def create_data_file_tool(file_path: str, data: str, file_type: str = "csv
         if file_type.lower() == 'csv':
             df.to_csv(file_path, index=False, encoding='utf-8')
         elif file_type.lower() == 'json':
-            df.to_json(file_path, orient='records', ensure_ascii=False, indent=2)
+            df.to_json(file_path, orient='records', indent=2)
         elif file_type.lower() == 'xlsx':
             df.to_excel(file_path, index=False)
         else:
@@ -948,7 +952,7 @@ async def delete_data_rows_tool(file_path: str, delete_conditions: str, session_
         if file_ext == '.csv':
             df_filtered.to_csv(file_path, index=False, encoding='utf-8')
         elif file_ext == '.json':
-            df_filtered.to_json(file_path, orient='records', ensure_ascii=False, indent=2)
+            df_filtered.to_json(file_path, orient='records', indent=2)
         elif file_ext == '.xlsx':
             df_filtered.to_excel(file_path, index=False)
 

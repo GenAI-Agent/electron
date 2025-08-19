@@ -263,7 +263,11 @@ class SupervisorAgent:
 
     def compress_tool_messages(self, messages: List, max_tool_results: int = 3) -> List:
         """
-        壓縮工具消息，只保留最近的幾個工具結果
+        改進的工具消息壓縮方法
+        - 保留完整的 SystemMessage 和 HumanMessage
+        - 保留最新一個 tool result 的完整內容
+        - 壓縮中間的 tool results 成結構化摘要
+        - 重要信息（如文件路徑）完整保留
 
         Args:
             messages: 消息列表
@@ -272,71 +276,196 @@ class SupervisorAgent:
         Returns:
             壓縮後的消息列表
         """
+        # 追蹤壓縮次數
+        if not hasattr(self, '_compression_count'):
+            self._compression_count = 0
+        self._compression_count += 1
+
+        # 分類消息
+        system_messages = []
+        human_messages = []
+        ai_messages = []
+        tool_messages = []
+
+        for msg in messages:
+            if isinstance(msg, SystemMessage):
+                system_messages.append(msg)
+            elif isinstance(msg, HumanMessage):
+                human_messages.append(msg)
+            elif isinstance(msg, AIMessage):
+                ai_messages.append(msg)
+            elif isinstance(msg, ToolMessage):
+                tool_messages.append(msg)
+
+        # 如果沒有工具消息，直接返回原消息
+        if not tool_messages:
+            return messages
+
+        # 構建壓縮後的消息列表
         compressed_messages = []
-        tool_message_count = 0
 
-        # 從後往前遍歷，保留最近的工具結果
-        for msg in reversed(messages):
-            if isinstance(msg, ToolMessage):
-                if tool_message_count < max_tool_results:
-                    # 壓縮工具結果內容
-                    content = str(msg.content)
-                    if len(content) > 500:  # 如果內容太長，截斷
-                        try:
-                            import json
-                            parsed = json.loads(content)
-                            if isinstance(parsed, dict):
-                                # 保留關鍵信息，移除大數據字段
-                                compressed_parsed = {
-                                    "success": parsed.get("success", True),
-                                    "message": parsed.get("message", ""),
-                                    "summary": f"工具執行結果已壓縮 (原長度: {len(content)} 字符)"
-                                }
-                                # 保留關鍵統計信息
-                                for key in ["total_rows", "filtered_rows", "analysis_type", "results_count"]:
-                                    if key in parsed:
-                                        compressed_parsed[key] = parsed[key]
+        # 1. 保留完整的系統消息和用戶消息
+        compressed_messages.extend(system_messages)
+        compressed_messages.extend(human_messages)
 
-                                # 保留重要的工作進度信息
-                                important_keys = [
-                                    "temp_file_path", "temp_file_created", "current_data_updated",
-                                    "operation", "file_path", "columns", "results"
-                                ]
-                                for key in important_keys:
-                                    if key in parsed:
-                                        if key == "results" and isinstance(parsed[key], dict):
-                                            # 保留結果摘要，不保留詳細數據
-                                            compressed_parsed[key + "_summary"] = {
-                                                k: v for k, v in parsed[key].items()
-                                                if not isinstance(v, (list, dict)) or k in ["count", "mean", "sum"]
-                                            }
-                                        else:
-                                            compressed_parsed[key] = parsed[key]
+        # 2. 保留最近的 AI 消息
+        if ai_messages:
+            # 保留最後一個 AI 消息
+            compressed_messages.append(ai_messages[-1])
 
-                                content = json.dumps(compressed_parsed, ensure_ascii=False)
-                        except:
-                            # 如果不是JSON，直接截斷
-                            content = content[:500] + "... (內容已截斷)"
+        # 3. 處理工具消息
+        if len(tool_messages) <= max_tool_results:
+            # 如果工具消息數量不多，直接保留
+            compressed_messages.extend(tool_messages)
+        else:
+            # 需要壓縮：保留最新一個完整，壓縮其他
+            latest_tool = tool_messages[-1]  # 最新的工具結果
+            middle_tools = tool_messages[:-1]  # 中間的工具結果
 
-                    compressed_msg = ToolMessage(
-                        content=content,
-                        tool_call_id=msg.tool_call_id,
-                        name=msg.name
-                    )
-                    compressed_messages.insert(0, compressed_msg)
-                    tool_message_count += 1
-                else:
-                    # 超過限制的工具消息用摘要替代
-                    summary_msg = ToolMessage(
-                        content=f"工具 {msg.name} 執行完成 (結果已省略)",
-                        tool_call_id=msg.tool_call_id,
-                        name=msg.name
-                    )
-                    compressed_messages.insert(0, summary_msg)
-            else:
-                compressed_messages.insert(0, msg)
+            # 創建壓縮摘要
+            compression_summary = self._create_compression_summary(middle_tools)
+
+            # 將壓縮摘要作為 SystemMessage 插入（避免 tool_call_id 驗證問題）
+            compression_system_msg = SystemMessage(
+                content=f"📋 記憶壓縮摘要:\n{compression_summary}"
+            )
+
+            # 添加壓縮摘要和最新工具結果
+            compressed_messages.append(compression_system_msg)
+            compressed_messages.append(latest_tool)
 
         return compressed_messages
+
+    def _create_compression_summary(self, tool_messages: List) -> str:
+        """
+        創建工具消息的壓縮摘要
+
+        Args:
+            tool_messages: 要壓縮的工具消息列表
+
+        Returns:
+            結構化的壓縮摘要字符串
+        """
+        import json
+        from datetime import datetime
+
+        summary_parts = [
+            f"🧠 第 {self._compression_count} 次記憶壓縮",
+            f"📊 壓縮時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"📋 原始工具消息數: {len(tool_messages)}",
+            "",
+            "📝 工具執行摘要:"
+        ]
+
+        for i, tool_msg in enumerate(tool_messages, 1):
+            tool_name = tool_msg.name
+            content = str(tool_msg.content)
+
+            # 提取重要內容
+            important_info = self._extract_important_content(content, tool_name)
+
+            summary_parts.extend([
+                f"",
+                f"第{i}個 tool: {tool_name}",
+                f"tool裡面的重要內容:",
+                important_info,
+                "---"
+            ])
+
+        summary_parts.extend([
+            "",
+            "💡 注意: 以上為壓縮摘要，最新的工具結果保持完整。",
+            "🔄 如需詳細信息，請參考最新的工具執行結果。"
+        ])
+
+        return "\n".join(summary_parts)
+
+    def _extract_important_content(self, content: str, tool_name: str) -> str:
+        """
+        從工具結果中提取重要內容
+
+        Args:
+            content: 工具結果內容
+            tool_name: 工具名稱
+
+        Returns:
+            提取的重要內容
+        """
+        try:
+            import json
+
+            # 嘗試解析 JSON 內容
+            if content.startswith('<tool') and content.endswith('</tool>'):
+                # 提取 XML 標籤內的內容
+                start = content.find('>') + 1
+                end = content.rfind('<')
+                json_content = content[start:end].strip()
+            else:
+                json_content = content
+
+            parsed = json.loads(json_content)
+
+            if isinstance(parsed, dict):
+                important_info = []
+
+                # 基本狀態信息
+                if "success" in parsed:
+                    status = "✅ 成功" if parsed["success"] else "❌ 失敗"
+                    important_info.append(f"執行狀態: {status}")
+
+                # 錯誤信息
+                if "error" in parsed and parsed["error"]:
+                    important_info.append(f"錯誤信息: {parsed['error']}")
+
+                # 文件路徑信息（完整保留）
+                file_path_keys = ["file_path", "temp_file_path", "current_file", "output_file"]
+                for key in file_path_keys:
+                    if key in parsed and parsed[key]:
+                        important_info.append(f"{key}: {parsed[key]}")
+
+                # 數據統計信息
+                stats_keys = ["total_rows", "filtered_rows", "original_rows", "processed_items", "success_count", "error_count"]
+                for key in stats_keys:
+                    if key in parsed and parsed[key] is not None:
+                        important_info.append(f"{key}: {parsed[key]}")
+
+                # 操作信息
+                operation_keys = ["operation", "analysis_type", "tool_type", "message"]
+                for key in operation_keys:
+                    if key in parsed and parsed[key]:
+                        value = str(parsed[key])
+                        if len(value) > 100:
+                            value = value[:100] + "..."
+                        important_info.append(f"{key}: {value}")
+
+                # 結果摘要
+                if "results" in parsed and isinstance(parsed["results"], dict):
+                    results_summary = []
+                    for k, v in parsed["results"].items():
+                        if isinstance(v, (int, float, str)) and len(str(v)) < 50:
+                            results_summary.append(f"{k}: {v}")
+                        elif isinstance(v, dict) and "value" in v:
+                            results_summary.append(f"{k}: {v['value']}")
+
+                    if results_summary:
+                        important_info.append(f"結果摘要: {', '.join(results_summary[:5])}")
+
+                # 如果沒有提取到重要信息，使用消息內容
+                if not important_info and "message" in parsed:
+                    msg = str(parsed["message"])
+                    important_info.append(f"消息: {msg[:200]}{'...' if len(msg) > 200 else ''}")
+
+                return "\n".join(f"  • {info}" for info in important_info) if important_info else "  • 無重要信息提取"
+
+        except (json.JSONDecodeError, Exception):
+            # 如果不是 JSON 或解析失敗，提取前200字符
+            clean_content = content.replace('\n', ' ').strip()
+            if len(clean_content) > 200:
+                return f"  • 內容摘要: {clean_content[:200]}..."
+            else:
+                return f"  • 內容: {clean_content}"
+
+        return "  • 無法提取內容"
 
     def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
         """為當前查詢動態設置工具"""
@@ -471,7 +600,7 @@ class SupervisorAgent:
         logger.info(f"📊 當前上下文Token數: {current_tokens}")
 
         # 智能記憶管理
-        if current_tokens > 8000:  # 如果token數量過多，進行壓縮
+        if current_tokens > 12000:  # 如果token數量過多，進行壓縮
             logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
             messages = self.compress_tool_messages(messages, max_tool_results=3)
             compressed_tokens = self.calculate_messages_tokens(messages)
@@ -527,7 +656,7 @@ class SupervisorAgent:
 
             # 檢查是否已經執行了太多工具（防止無限循環）
             tool_count = len([msg for msg in messages if isinstance(msg, ToolMessage)])
-            if tool_count >= 8:
+            if tool_count >= 12:
                 logger.info(f"🛑 已執行 {tool_count} 個工具，停止並生成回答")
                 # 直接生成回答，不再調用工具
                 final_prompt = f"""基於已執行的工具結果，請直接回答用戶的問題：

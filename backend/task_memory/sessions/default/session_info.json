@@ -1,0 +1,11 @@
+{
+  "session_id": "default",
+  "created_at": "2025-08-19T16:50:08.256932",
+  "last_accessed": "2025-08-19T16:50:08.256932",
+  "status": "active",
+  "directories": {
+    "temp_data": "task_memory\\sessions\\default\\temp_data",
+    "file_summaries": "task_memory\\sessions\\default\\file_summaries",
+    "task_states": "task_memory\\sessions\\default\\task_states"
+  }
+}
