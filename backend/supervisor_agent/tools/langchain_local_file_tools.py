@@ -19,6 +19,13 @@ from tools.local_file_tools import local_file_tools
 from tools.data_file_tools import data_file_tools
 from tools.data_analysis_tools import data_analysis_tools
 
+# 導入會話數據管理器
+import sys
+from pathlib import Path
+core_dir = Path(__file__).parent.parent / "core"
+sys.path.insert(0, str(core_dir))
+from session_data_manager import session_data_manager
+
 logger = logging.getLogger(__name__)
 
 # 導入新的工具模組
@@ -220,45 +227,84 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> str
 
 @tool
 async def group_by_analysis_tool(file_path: str, group_column: str, value_column: str,
-                                operation: str = "sum", session_id: str = "default") -> str:
+                                operation: str = "sum", session_id: str = "default",
+                                data_source: str = "file") -> str:
     """
     通用分組分析工具
-    
+
     Args:
-        file_path: 數據文件路徑
+        file_path: 數據文件路徑，支持特殊值 "@current" 使用當前會話的最新數據
         group_column: 分組列名
         value_column: 數值列名
-        operation: 操作類型 (mean, sum, count, min, max)
+        operation: 操作類型，根據分析需求選擇：
+                  - "mean": 平均值（薪資分析、績效評估）
+                  - "sum": 總和（銷售額、數量統計）
+                  - "count": 計數（人員統計、頻次分析）
+                  - "max": 最大值（最高薪資、峰值分析）
+                  - "min": 最小值（最低薪資、基準分析）
         session_id: 會話ID
-        
+        data_source: 數據源類型 ("file": 從文件加載, "current": 使用當前會話數據)
+
     Returns:
         分組分析結果的JSON字符串
     """
     try:
-        result = await data_analysis_tools.group_by_analysis(file_path, group_column, value_column, operation, session_id)
+        logger.info(f"🔄 group_by_analysis_tool 開始執行:")
+        logger.info(f"  - 原始 file_path: {file_path}")
+        logger.info(f"  - group_column: {group_column}")
+        logger.info(f"  - value_column: {value_column}")
+        logger.info(f"  - operation: {operation}")
+        logger.info(f"  - session_id: {session_id}")
+        logger.info(f"  - data_source: {data_source}")
+
+        # 根據 data_source 參數決定數據來源
+        if data_source == "current" or file_path in ["@current", "current", "latest"]:
+            # 使用會話數據管理器解析路徑
+            resolved_file_path = session_data_manager.resolve_file_path(session_id, file_path)
+            logger.info(f"🔄 使用會話數據: {file_path} -> {resolved_file_path}")
+        else:
+            # 直接使用提供的文件路徑
+            resolved_file_path = file_path
+            logger.info(f"🔄 使用指定文件: {resolved_file_path}")
+
+        # 檢查文件是否存在
+        from pathlib import Path
+        if not Path(resolved_file_path).exists():
+            error_msg = f"文件不存在: {resolved_file_path}"
+            logger.error(f"❌ {error_msg}")
+            return f'{{"success": false, "error": "{error_msg}"}}'
+
+        result = await data_analysis_tools.group_by_analysis(resolved_file_path, group_column, value_column, operation, session_id)
+        logger.info(f"✅ group_by_analysis_tool 執行完成")
         return str(result)
     except Exception as e:
         logger.error(f"❌ 分組分析失敗: {e}")
+        import traceback
+        logger.error(f"❌ 詳細錯誤: {traceback.format_exc()}")
         return f'{{"success": false, "error": "{str(e)}"}}'
 
 @tool
-async def threshold_analysis_tool(file_path: str, value_column: str, threshold: float, 
+async def threshold_analysis_tool(file_path: str, value_column: str, threshold: float,
                                  comparison: str = "greater", session_id: str = "default") -> str:
     """
     通用閾值分析工具
-    
+
     Args:
-        file_path: 數據文件路徑
+        file_path: 數據文件路徑，支持特殊值 "@current" 使用當前會話的最新數據
         value_column: 數值列名
         threshold: 閾值
         comparison: 比較方式 (greater, less, equal)
         session_id: 會話ID
-        
+
     Returns:
         閾值分析結果的JSON字符串
     """
     try:
-        result = await data_analysis_tools.threshold_analysis(file_path, value_column, threshold, comparison, session_id)
+        # 解析文件路徑
+        resolved_file_path = session_data_manager.resolve_file_path(session_id, file_path)
+        logger.info(f"🔄 threshold_analysis_tool: {file_path} -> {resolved_file_path}")
+
+        result = await data_analysis_tools.threshold_analysis(resolved_file_path, value_column, threshold, comparison, session_id)
         return str(result)
     except Exception as e:
         logger.error(f"❌ 閾值分析失敗: {e}")
@@ -284,17 +330,20 @@ async def read_data_file_tool(file_path: str, session_id: str = "default") -> st
         return f'{{"success": false, "error": "{str(e)}"}}'
 
 @tool
-async def filter_data_tool(file_path: str, filter_conditions: str, session_id: str = "default") -> str:
+async def filter_data_tool(file_path: str, filter_conditions: str, session_id: str = "default",
+                          save_filtered_data: bool = False, selected_columns: str = None) -> str:
     """
-    根據條件過濾數據文件
+    根據條件過濾數據文件，支持列選擇
 
     Args:
         file_path: 數據文件路徑
         filter_conditions: 過濾條件的JSON字符串，例如: {"column": "age", "operator": ">", "value": 25}
         session_id: 會話ID
+        save_filtered_data: 是否將過濾後的數據保存為臨時文件，供其他工具使用
+        selected_columns: 要保留的列名JSON數組，例如: ["姓名", "部門", "基本薪資"]，如果為None則保留所有列
 
     Returns:
-        過濾後的數據JSON字符串
+        過濾後的數據JSON字符串，如果save_filtered_data=True，還會包含臨時文件路徑
     """
     try:
         import json
@@ -351,20 +400,337 @@ async def filter_data_tool(file_path: str, filter_conditions: str, session_id: s
             elif operator == 'in':
                 filtered_df = filtered_df[filtered_df[column].isin(value)]
 
-        # 返回結果
+        # 處理列選擇
+        if selected_columns:
+            try:
+                columns_list = json.loads(selected_columns) if isinstance(selected_columns, str) else selected_columns
+                if isinstance(columns_list, list):
+                    # 檢查列是否存在
+                    available_columns = [col for col in columns_list if col in filtered_df.columns]
+                    missing_columns = [col for col in columns_list if col not in filtered_df.columns]
+
+                    if missing_columns:
+                        logger.warning(f"⚠️ 以下列不存在: {missing_columns}")
+
+                    if available_columns:
+                        filtered_df = filtered_df[available_columns]
+                        logger.info(f"✅ 已選擇列: {available_columns}")
+                    else:
+                        logger.warning(f"⚠️ 沒有有效的列可選擇，保留所有列")
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.warning(f"⚠️ 列選擇參數格式錯誤: {e}，保留所有列")
+
+        # 準備基本結果
         result = {
             "success": True,
             "original_rows": len(df),
             "filtered_rows": len(filtered_df),
-            "data": filtered_df.to_dict('records'),
             "columns": list(filtered_df.columns),
             "filter_conditions": conditions
         }
+
+        # 如果需要保存臨時文件
+        if save_filtered_data and len(filtered_df) > 0:
+            import tempfile
+            import os
+            from pathlib import Path
+
+            # 創建會話級臨時目錄
+            temp_dir = Path(tempfile.gettempdir()) / "agent_sessions" / session_id
+            temp_dir.mkdir(parents=True, exist_ok=True)
+
+            # 生成臨時文件名
+            original_name = Path(file_path).stem
+            timestamp = __import__('datetime').datetime.now().strftime("%Y%m%d_%H%M%S")
+            temp_filename = f"{original_name}_filtered_{timestamp}.json"
+            temp_file_path = temp_dir / temp_filename
+
+            # 保存過濾後的數據為JSON格式
+            filtered_df.to_json(temp_file_path, orient='records', ensure_ascii=False, indent=2)
+
+            # 更新會話數據狀態
+            session_data_manager.update_data_state(
+                session_id=session_id,
+                original_file=file_path,
+                current_file=str(temp_file_path),
+                operation="filter",
+                metadata={
+                    "original_rows": len(df),
+                    "filtered_rows": len(filtered_df),
+                    "filter_conditions": conditions
+                },
+                description=f"過濾條件: {conditions}"
+            )
+
+            result.update({
+                "temp_file_path": str(temp_file_path),
+                "temp_file_created": True,
+                "current_data_updated": True,
+                "message": f"過濾後的數據已保存到臨時文件並設為當前數據源: {temp_file_path}"
+            })
+
+            # 只返回前10行數據預覽，避免響應過大
+            result["data_preview"] = filtered_df.head(10).to_dict('records')
+            logger.info(f"✅ 過濾後數據已保存到臨時文件: {temp_file_path}")
+        else:
+            # 不保存文件時，返回完整數據（但限制在100行以內）
+            max_rows = 100
+            if len(filtered_df) > max_rows:
+                result["data"] = filtered_df.head(max_rows).to_dict('records')
+                result["data_truncated"] = True
+                result["message"] = f"數據已截斷，只顯示前{max_rows}行。如需完整數據，請設置save_filtered_data=True"
+            else:
+                result["data"] = filtered_df.to_dict('records')
 
         return json.dumps(result, ensure_ascii=False)
 
     except Exception as e:
         logger.error(f"❌ 數據過濾失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def cleanup_temp_files_tool(session_id: str = "default") -> str:
+    """
+    清理會話的臨時文件
+
+    Args:
+        session_id: 會話ID
+
+    Returns:
+        清理結果的JSON字符串
+    """
+    try:
+        import tempfile
+        import shutil
+        from pathlib import Path
+
+        temp_dir = Path(tempfile.gettempdir()) / "agent_sessions" / session_id
+
+        if temp_dir.exists():
+            # 計算文件數量和大小
+            files = list(temp_dir.glob("*"))
+            file_count = len(files)
+            total_size = sum(f.stat().st_size for f in files if f.is_file())
+
+            # 刪除整個會話目錄
+            shutil.rmtree(temp_dir)
+
+            result = {
+                "success": True,
+                "cleaned_files": file_count,
+                "freed_space_bytes": total_size,
+                "message": f"已清理 {file_count} 個臨時文件，釋放 {total_size} 字節空間"
+            }
+        else:
+            result = {
+                "success": True,
+                "cleaned_files": 0,
+                "message": "沒有找到需要清理的臨時文件"
+            }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 清理臨時文件失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def get_session_data_status_tool(session_id: str = "default") -> str:
+    """
+    獲取會話的數據狀態信息
+
+    Args:
+        session_id: 會話ID
+
+    Returns:
+        會話數據狀態的JSON字符串
+    """
+    try:
+        summary = session_data_manager.get_session_summary(session_id)
+        history = session_data_manager.get_data_history(session_id)
+
+        result = {
+            "success": True,
+            "session_summary": summary,
+            "data_history": history,
+            "message": f"會話 {session_id} 數據狀態信息"
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 獲取會話數據狀態失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def clear_session_data_tool(session_id: str = "default") -> str:
+    """
+    清理會話的數據狀態（不刪除實際文件）
+
+    Args:
+        session_id: 會話ID
+
+    Returns:
+        清理結果的JSON字符串
+    """
+    try:
+        result = session_data_manager.clear_session_data(session_id)
+        result["success"] = True
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 清理會話數據狀態失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def suggest_analysis_operation_tool(analysis_purpose: str) -> str:
+    """
+    根據分析目的建議合適的操作類型
+
+    Args:
+        analysis_purpose: 分析目的描述，例如 "計算部門平均薪資"、"統計各部門人數"
+
+    Returns:
+        建議的操作類型和說明
+    """
+    try:
+        purpose_lower = analysis_purpose.lower()
+
+        suggestions = {
+            "mean": {
+                "keywords": ["平均", "均值", "average", "mean", "薪資分析", "績效", "評分"],
+                "description": "計算平均值，適用於薪資分析、績效評估、評分統計等"
+            },
+            "sum": {
+                "keywords": ["總和", "總計", "合計", "sum", "total", "銷售額", "營收", "數量"],
+                "description": "計算總和，適用於銷售額統計、數量合計、營收分析等"
+            },
+            "count": {
+                "keywords": ["數量", "人數", "個數", "count", "統計", "頻次", "次數"],
+                "description": "計算數量，適用於人員統計、頻次分析、計數統計等"
+            },
+            "max": {
+                "keywords": ["最大", "最高", "max", "maximum", "峰值", "頂點"],
+                "description": "找出最大值，適用於最高薪資、峰值分析、極值統計等"
+            },
+            "min": {
+                "keywords": ["最小", "最低", "min", "minimum", "基準", "底線"],
+                "description": "找出最小值，適用於最低薪資、基準分析、極值統計等"
+            }
+        }
+
+        # 根據關鍵詞匹配建議操作
+        best_match = "sum"  # 默認
+        best_score = 0
+
+        for operation, info in suggestions.items():
+            score = sum(1 for keyword in info["keywords"] if keyword in purpose_lower)
+            if score > best_score:
+                best_score = score
+                best_match = operation
+
+        result = {
+            "success": True,
+            "analysis_purpose": analysis_purpose,
+            "suggested_operation": best_match,
+            "description": suggestions[best_match]["description"],
+            "all_options": {op: info["description"] for op, info in suggestions.items()},
+            "usage_example": f'group_by_analysis_tool("@current", "group_column", "value_column", "{best_match}", session_id)'
+        }
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 建議分析操作失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+@tool
+async def filter_and_analyze_tool(file_path: str, filter_conditions: str,
+                                 group_column: str, value_column: str,
+                                 operation: str = "mean", selected_columns: str = None,
+                                 session_id: str = "default") -> str:
+    """
+    一步完成過濾和分組分析的組合工具
+
+    Args:
+        file_path: 數據文件路徑
+        filter_conditions: 過濾條件的JSON字符串
+        group_column: 分組列名
+        value_column: 數值列名
+        operation: 操作類型 (mean, sum, count, max, min)
+        selected_columns: 要保留的列名JSON數組，例如: ["姓名", "部門", "基本薪資"]
+        session_id: 會話ID
+
+    Returns:
+        分析結果的JSON字符串
+    """
+    try:
+        logger.info(f"🔄 filter_and_analyze_tool 開始執行:")
+        logger.info(f"  - file_path: {file_path}")
+        logger.info(f"  - filter_conditions: {filter_conditions}")
+        logger.info(f"  - group_column: {group_column}")
+        logger.info(f"  - value_column: {value_column}")
+        logger.info(f"  - operation: {operation}")
+        logger.info(f"  - selected_columns: {selected_columns}")
+
+        # 步驟1: 過濾數據並選擇列
+        filter_result = await filter_data_tool(
+            file_path,
+            filter_conditions,
+            session_id,
+            save_filtered_data=True,
+            selected_columns=selected_columns
+        )
+
+        filter_data = json.loads(filter_result)
+        if not filter_data.get('success', False):
+            return filter_result  # 返回過濾錯誤
+
+        logger.info(f"✅ 過濾完成: {filter_data.get('filtered_rows', 0)} 行")
+
+        # 步驟2: 對過濾後的數據進行分組分析
+        analysis_result = await group_by_analysis_tool(
+            "@current",  # 使用過濾後的數據
+            group_column,
+            value_column,
+            operation,
+            session_id,
+            data_source="current"
+        )
+
+        analysis_data = json.loads(analysis_result)
+        if not analysis_data.get('success', False):
+            return analysis_result  # 返回分析錯誤
+
+        # 步驟3: 組合結果
+        combined_result = {
+            "success": True,
+            "tool_type": "filter_and_analyze",
+            "filter_info": {
+                "original_rows": filter_data.get('original_rows', 0),
+                "filtered_rows": filter_data.get('filtered_rows', 0),
+                "selected_columns": json.loads(selected_columns) if selected_columns else "all",
+                "filter_conditions": json.loads(filter_conditions)
+            },
+            "analysis_info": {
+                "group_column": group_column,
+                "value_column": value_column,
+                "operation": operation
+            },
+            "results": analysis_data.get('results', {}),
+            "summary": analysis_data.get('summary', {}),
+            "temp_file_path": filter_data.get('temp_file_path'),
+            "message": f"成功過濾 {filter_data.get('filtered_rows', 0)} 行數據並完成 {operation} 分析"
+        }
+
+        logger.info(f"✅ filter_and_analyze_tool 執行完成")
+        return json.dumps(combined_result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 過濾分析組合工具失敗: {e}")
+        import traceback
+        logger.error(f"❌ 詳細錯誤: {traceback.format_exc()}")
         return f'{{"success": false, "error": "{str(e)}"}}'
 
 @tool
@@ -814,6 +1180,11 @@ def get_langchain_local_file_tools() -> List:
 
         # 新增的數據CRUD工具
         filter_data_tool,
+        filter_and_analyze_tool,
+        cleanup_temp_files_tool,
+        get_session_data_status_tool,
+        clear_session_data_tool,
+        suggest_analysis_operation_tool,
         create_data_file_tool,
         update_data_rows_tool,
         delete_data_rows_tool,

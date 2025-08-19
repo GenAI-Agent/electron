@@ -261,6 +261,83 @@ class SupervisorAgent:
 
         return important_messages
 
+    def compress_tool_messages(self, messages: List, max_tool_results: int = 3) -> List:
+        """
+        壓縮工具消息，只保留最近的幾個工具結果
+
+        Args:
+            messages: 消息列表
+            max_tool_results: 最大保留的工具結果數量
+
+        Returns:
+            壓縮後的消息列表
+        """
+        compressed_messages = []
+        tool_message_count = 0
+
+        # 從後往前遍歷，保留最近的工具結果
+        for msg in reversed(messages):
+            if isinstance(msg, ToolMessage):
+                if tool_message_count < max_tool_results:
+                    # 壓縮工具結果內容
+                    content = str(msg.content)
+                    if len(content) > 500:  # 如果內容太長，截斷
+                        try:
+                            import json
+                            parsed = json.loads(content)
+                            if isinstance(parsed, dict):
+                                # 保留關鍵信息，移除大數據字段
+                                compressed_parsed = {
+                                    "success": parsed.get("success", True),
+                                    "message": parsed.get("message", ""),
+                                    "summary": f"工具執行結果已壓縮 (原長度: {len(content)} 字符)"
+                                }
+                                # 保留關鍵統計信息
+                                for key in ["total_rows", "filtered_rows", "analysis_type", "results_count"]:
+                                    if key in parsed:
+                                        compressed_parsed[key] = parsed[key]
+
+                                # 保留重要的工作進度信息
+                                important_keys = [
+                                    "temp_file_path", "temp_file_created", "current_data_updated",
+                                    "operation", "file_path", "columns", "results"
+                                ]
+                                for key in important_keys:
+                                    if key in parsed:
+                                        if key == "results" and isinstance(parsed[key], dict):
+                                            # 保留結果摘要，不保留詳細數據
+                                            compressed_parsed[key + "_summary"] = {
+                                                k: v for k, v in parsed[key].items()
+                                                if not isinstance(v, (list, dict)) or k in ["count", "mean", "sum"]
+                                            }
+                                        else:
+                                            compressed_parsed[key] = parsed[key]
+
+                                content = json.dumps(compressed_parsed, ensure_ascii=False)
+                        except:
+                            # 如果不是JSON，直接截斷
+                            content = content[:500] + "... (內容已截斷)"
+
+                    compressed_msg = ToolMessage(
+                        content=content,
+                        tool_call_id=msg.tool_call_id,
+                        name=msg.name
+                    )
+                    compressed_messages.insert(0, compressed_msg)
+                    tool_message_count += 1
+                else:
+                    # 超過限制的工具消息用摘要替代
+                    summary_msg = ToolMessage(
+                        content=f"工具 {msg.name} 執行完成 (結果已省略)",
+                        tool_call_id=msg.tool_call_id,
+                        name=msg.name
+                    )
+                    compressed_messages.insert(0, summary_msg)
+            else:
+                compressed_messages.insert(0, msg)
+
+        return compressed_messages
+
     def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
         """為當前查詢動態設置工具"""
         logger.info(f"🔧 開始動態設置工具，規則工具: {tool_names}")
@@ -393,7 +470,30 @@ class SupervisorAgent:
         current_tokens = self.calculate_messages_tokens(messages)
         logger.info(f"📊 當前上下文Token數: {current_tokens}")
 
-        # 如果是batch processing模式，管理上下文
+        # 智能記憶管理
+        if current_tokens > 8000:  # 如果token數量過多，進行壓縮
+            logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
+            messages = self.compress_tool_messages(messages, max_tool_results=3)
+            compressed_tokens = self.calculate_messages_tokens(messages)
+            logger.info(f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})")
+            state["messages"] = messages
+
+            # 壓縮後，將會話狀態信息注入到上下文中，確保不丟失重要信息
+            try:
+                from ..core.session_data_manager import session_data_manager
+                session_summary = session_data_manager.get_session_summary(context.get("session_id", "default"))
+                if session_summary.get("has_current_data"):
+                    context["session_data_info"] = {
+                        "current_data_file": session_summary.get("current_data_file"),
+                        "operations_count": session_summary.get("operations_count"),
+                        "last_operation": session_summary.get("last_operation"),
+                        "note": "記憶壓縮後保留的會話數據狀態信息"
+                    }
+                    logger.info(f"🔄 會話狀態信息已注入上下文: {session_summary.get('current_data_file')}")
+            except Exception as e:
+                logger.warning(f"⚠️ 無法注入會話狀態信息: {e}")
+
+        # 如果是batch processing模式，額外管理上下文
         if context.get("is_batch_processing", False):
             messages = self.manage_context_for_batch_processing(messages, context)
             managed_tokens = self.calculate_messages_tokens(messages)
@@ -426,7 +526,7 @@ class SupervisorAgent:
 
             # 檢查是否已經執行了太多工具（防止無限循環）
             tool_count = len([msg for msg in messages if isinstance(msg, ToolMessage)])
-            if tool_count >= 5:
+            if tool_count >= 8:
                 logger.info(f"🛑 已執行 {tool_count} 個工具，停止並生成回答")
                 # 直接生成回答，不再調用工具
                 final_prompt = f"""基於已執行的工具結果，請直接回答用戶的問題：
@@ -681,6 +781,20 @@ class SupervisorAgent:
 2. **任何文件修改都必須更新 Summary** - 保持記憶同步
 3. **Summary 是持續累積的** - 包含所有歷史修改信息
 4. **每次操作後檢查 Summary 是否需要更新** - 確保記憶準確性
+
+📊 **會話數據管理**:
+- 當使用 filter_data_tool 時，設置 save_filtered_data=True 來保存過濾後的數據
+- 後續分析工具可以使用 "@current" 作為 file_path 來自動使用最新的過濾數據
+- 使用 get_session_data_status_tool() 查看當前會話的數據狀態
+
+🔢 **分析操作選擇指南**:
+- group_by_analysis_tool 支持多種操作類型，根據分析需求選擇：
+  * "mean" - 平均值（薪資分析、績效評估等）
+  * "sum" - 總和（銷售額、數量統計等）
+  * "count" - 計數（人員統計、頻次分析等）
+  * "max" - 最大值（最高薪資、峰值分析等）
+  * "min" - 最小值（最低薪資、基準分析等）
+- 例如：group_by_analysis_tool("@current", "department", "salary", "mean", session_id)
 
 """
         else:

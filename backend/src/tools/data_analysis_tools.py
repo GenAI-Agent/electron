@@ -157,10 +157,23 @@ class DataAnalysisTools:
                 group_val = str(item.get(group_column, "未知"))
                 value_val = item.get(value_column, 0)
 
-                # 嘗試轉換為數字
+                # 嘗試轉換為數字，處理各種格式
                 try:
-                    value_val = float(value_val)
+                    if value_val is None or value_val == "":
+                        value_val = 0
+                    else:
+                        # 處理字符串格式的數字
+                        if isinstance(value_val, str):
+                            # 移除逗號和空格
+                            value_val = value_val.replace(",", "").replace(" ", "").strip()
+                            if value_val == "":
+                                value_val = 0
+                            else:
+                                value_val = float(value_val)
+                        else:
+                            value_val = float(value_val)
                 except (ValueError, TypeError):
+                    logger.warning(f"⚠️ 無法轉換數值: {repr(item.get(value_column))} -> 設為 0")
                     value_val = 0
 
                 if group_val not in groups:
@@ -210,7 +223,19 @@ class DataAnalysisTools:
 
             for group_val in result["results"]:
                 if total_value > 0:
-                    percentage = (result["results"][group_val]["sum"] / total_value) * 100
+                    # 安全地獲取 sum 值
+                    group_result = result["results"][group_val]
+                    if isinstance(group_result, dict):
+                        if "all_stats" in group_result:
+                            sum_value = group_result["all_stats"]["sum"]
+                        elif "sum" in group_result:
+                            sum_value = group_result["sum"]
+                        else:
+                            sum_value = 0
+                    else:
+                        sum_value = 0
+
+                    percentage = (sum_value / total_value) * 100
                     result["summary"]["group_percentages"][group_val] = round(percentage, 2)
 
             return result

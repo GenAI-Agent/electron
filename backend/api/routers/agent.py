@@ -48,6 +48,42 @@ def convert_numpy_types(obj):
         return obj
 
 
+def compress_tool_result(tool_result: dict, max_data_items: int = 5) -> dict:
+    """
+    壓縮工具結果，避免對話歷史過長
+
+    Args:
+        tool_result: 工具執行結果
+        max_data_items: 最大保留的數據項目數量
+
+    Returns:
+        壓縮後的結果
+    """
+    if not isinstance(tool_result, dict):
+        return tool_result
+
+    compressed = tool_result.copy()
+
+    # 壓縮大數據量字段
+    for key in ['data', 'filtered_data', 'sample_data', 'results']:
+        if key in compressed and isinstance(compressed[key], list):
+            original_length = len(compressed[key])
+            if original_length > max_data_items:
+                compressed[key] = compressed[key][:max_data_items]
+                compressed[f'{key}_truncated'] = True
+                compressed[f'{key}_original_count'] = original_length
+                compressed[f'{key}_truncated_message'] = f"數據已截斷，原有 {original_length} 項，只顯示前 {max_data_items} 項"
+
+    # 移除或壓縮其他大字段
+    large_fields_to_remove = ['raw_data', 'full_results', 'detailed_analysis']
+    for field in large_fields_to_remove:
+        if field in compressed:
+            compressed[f'{field}_removed'] = f"大字段 {field} 已移除以節省空間"
+            del compressed[field]
+
+    return compressed
+
+
 # 工具轉換函數已移除，直接使用 LangChain 工具
 
 # 移除不需要的函數，簡化邏輯
@@ -296,15 +332,18 @@ async def generate_stream_response(message: str, agent: SupervisorAgent, session
         # 轉換numpy類型以避免序列化問題
         result = convert_numpy_types(result)
 
-        # 發送所有工具執行事件
+        # 發送所有工具執行事件（壓縮後）
         for event_data in stream_events:
             if event_data['type'] == 'tool_result':
+                # 壓縮工具結果
+                compressed_result = compress_tool_result(event_data['wrapped_result'])
+
                 tool_event = {
                     'type': 'tool_execution',
                     'tool_name': event_data['tool_name'],
                     'parameters': event_data['parameters'],
                     'execution_time': event_data['execution_time'],
-                    'result': event_data['wrapped_result']
+                    'result': compressed_result
                 }
                 tool_event = convert_numpy_types(tool_event)
                 yield f"data: {json.dumps(tool_event, ensure_ascii=False)}\n\n"
