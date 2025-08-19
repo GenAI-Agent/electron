@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, TextField, IconButton } from '@mui/material';
-import { AttachFile, Image, Headset } from '@mui/icons-material';
+import { Paperclip, ImageIcon, Headphones } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface InputAreaProps {
   onSubmit?: (text: string) => void;
@@ -18,73 +18,66 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, maxContentWidth = '50vw
   };
 
   return (
-    <Box sx={{
-      display: 'flex', flexDirection: 'column', minHeight: 0,
-      bgcolor: (t) => t.palette.background.default,
-      px: 1.5, pt: 1, pb: 1,
-    }}>
-      <Box
-        component="form"
+    <div className="flex flex-col min-h-0 bg-[#eef5fb] px-6 pt-4 pb-4">
+      <form
         onSubmit={handleSubmit}
-        sx={{
-          flex: 1,
-          display: 'flex', flexDirection: 'column', minHeight: 0,
+        className="flex-1 flex flex-col min-h-0 mx-auto w-full"
+        style={{
           maxWidth: typeof maxContentWidth === 'number' ? `${maxContentWidth}px` : maxContentWidth,
-          mx: 'auto', width: '100%',
         }}
       >
-        <TextField
-          fullWidth
-          multiline
+        <textarea
+          className={cn(
+            "flex-1 w-full resize-none rounded-[10px] border border-slate-200",
+            "bg-[#eef5fb] px-2 py-2 text-sm leading-[1.4] text-gray-800",
+            "placeholder:text-slate-400 placeholder:opacity-100",
+            "hover:border-slate-300 focus:border-slate-400 focus:outline-none",
+            "transition-colors"
+          )}
           placeholder="輸入文字"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          sx={{
-            flex: 1,
-            '& .MuiOutlinedInput-root': {
-              bgcolor: (t) => t.palette.background.default,
-              borderRadius: '10px',
-              height: '100%',
-              alignItems: 'flex-start',
-              '& fieldset': { borderColor: '#e2e8f0' },
-              '&:hover fieldset': { borderColor: '#cbd5e1' },
-              '&.Mui-focused fieldset': { borderColor: '#94a3b8' },
-            },
-            '& .MuiOutlinedInput-inputMultiline': {
-              paddingTop: '8px',
-              paddingLeft: '6px',
-              paddingRight: '8px',
-              paddingBottom: '6px',
-              margin: 0,
-              fontSize: '14px',
-              lineHeight: 1.4,
-              textAlign: 'left',
-              color: '#1a202c',
-              '&::placeholder': { color: '#94a3b8', opacity: 1 },
-            },
-          }}
         />
-      </Box>
+      </form>
 
-      <Box sx={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: '6px', flexShrink: 0,
-        maxWidth: typeof maxContentWidth === 'number' ? `${maxContentWidth}px` : maxContentWidth,
-        mx: 'auto', width: '100%',
-      }}>
-        <Box sx={{ display: 'flex', gap: '6px' }}>
-          <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 22, height: 22 }}>
-            <AttachFile sx={{ fontSize: 16 }} />
-          </IconButton>
-          <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 22, height: 22 }}>
-            <Image sx={{ fontSize: 16 }} />
-          </IconButton>
-          <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 22, height: 22 }}>
-            <Headset sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Box>
-        <Box />
-      </Box>
-    </Box>
+      <div
+        className="flex justify-between items-center pt-[6px] flex-shrink-0 mx-auto w-full"
+        style={{
+          maxWidth: typeof maxContentWidth === 'number' ? `${maxContentWidth}px` : maxContentWidth,
+        }}
+      >
+        <div className="flex gap-[6px]">
+          <button
+            type="button"
+            className={cn(
+              "w-[22px] h-[22px] flex items-center justify-center",
+              "text-slate-600 hover:bg-slate-100 rounded transition-colors"
+            )}
+          >
+            <Paperclip className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "w-[22px] h-[22px] flex items-center justify-center",
+              "text-slate-600 hover:bg-slate-100 rounded transition-colors"
+            )}
+          >
+            <ImageIcon className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "w-[22px] h-[22px] flex items-center justify-center",
+              "text-slate-600 hover:bg-slate-100 rounded transition-colors"
+            )}
+          >
+            <Headphones className="w-4 h-4" />
+          </button>
+        </div>
+        <div />
+      </div>
+    </div>
   );
 };
 

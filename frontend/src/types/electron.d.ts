@@ -1,7 +1,9 @@
 declare global {
   interface Window {
     electronAPI: {
-      navigateToUrl: (url: string) => Promise<{ success: boolean; url: string }>;
+      navigateToUrl: (
+        url: string
+      ) => Promise<{ success: boolean; url: string }>;
       getBrowserState: () => Promise<{
         currentUrl: string;
         canGoBack: boolean;
@@ -25,7 +27,9 @@ declare global {
         }>;
         error?: string;
       }>;
-      openFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+      openFile: (
+        filePath: string
+      ) => Promise<{ success: boolean; error?: string }>;
       getFileStats: (filePath: string) => Promise<{
         success: boolean;
         stats?: {
@@ -38,7 +42,7 @@ declare global {
         error?: string;
       }>;
       readFile: (filePath: string) => Promise<{
-        type: 'text' | 'pdf' | 'binary' | 'presentation';
+        type: "text" | "pdf" | "binary" | "presentation";
         content?: string;
         filePath?: string;
         size?: number;
@@ -53,12 +57,20 @@ declare global {
       }>;
 
       // Extended file operations
-      writeFile: (filePath: string, content: string, encoding?: string) => Promise<{
+      writeFile: (
+        filePath: string,
+        content: string,
+        encoding?: string
+      ) => Promise<{
         success: boolean;
         message?: string;
         error?: string;
       }>;
-      createFile: (filePath: string, content?: string, encoding?: string) => Promise<{
+      createFile: (
+        filePath: string,
+        content?: string,
+        encoding?: string
+      ) => Promise<{
         success: boolean;
         message?: string;
         path?: string;
@@ -69,7 +81,12 @@ declare global {
         message?: string;
         error?: string;
       }>;
-      editFileLines: (filePath: string, startLine: number, endLine: number, newContent: string) => Promise<{
+      editFileLines: (
+        filePath: string,
+        startLine: number,
+        endLine: number,
+        newContent: string
+      ) => Promise<{
         success: boolean;
         message?: string;
         linesChanged?: number;
@@ -119,12 +136,30 @@ declare global {
       };
 
       browserControl: {
-        click: (selector: string, options?: {
-          button?: 'left' | 'right' | 'middle';
-          doubleClick?: boolean;
-          delay?: number;
-          force?: boolean;
-        }) => Promise<{
+        click: (
+          selector: string,
+          options?: {
+            button?: "left" | "right" | "middle";
+            doubleClick?: boolean;
+            delay?: number;
+            force?: boolean;
+          }
+        ) => Promise<{
+          success: boolean;
+          error?: string;
+          elementText?: string;
+          elementTag?: string;
+          executionTime?: number;
+        }>;
+        testClick: (
+          selector: string,
+          options?: {
+            button?: "left" | "right" | "middle";
+            doubleClick?: boolean;
+            delay?: number;
+            force?: boolean;
+          }
+        ) => Promise<{
           success: boolean;
           error?: string;
           elementText?: string;
@@ -132,34 +167,47 @@ declare global {
           executionTime?: number;
         }>;
 
-        type: (selector: string, text: string, options?: {
-          delay?: number;
-          clear?: boolean;
-          pressEnter?: boolean;
-        }) => Promise<{
+        type: (
+          selector: string,
+          text: string,
+          options?: {
+            delay?: number;
+            clear?: boolean;
+            pressEnter?: boolean;
+          }
+        ) => Promise<{
           success: boolean;
           error?: string;
           value?: string;
           executionTime?: number;
         }>;
 
-        scroll: (direction: 'up' | 'down' | 'left' | 'right' | 'top' | 'bottom', amount?: number) => Promise<{
+        scroll: (
+          direction: "up" | "down" | "left" | "right" | "top" | "bottom",
+          amount?: number
+        ) => Promise<{
           success: boolean;
           error?: string;
           position?: { x: number; y: number };
         }>;
 
-        navigate: (url: string, options?: {
-          waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
-          timeout?: number;
-        }) => Promise<{
+        navigate: (
+          url: string,
+          options?: {
+            waitUntil?: "load" | "domcontentloaded" | "networkidle";
+            timeout?: number;
+          }
+        ) => Promise<{
           success: boolean;
           error?: string;
           url?: string;
           title?: string;
         }>;
 
-        waitForElement: (selector: string, timeout?: number) => Promise<{
+        waitForElement: (
+          selector: string,
+          timeout?: number
+        ) => Promise<{
           success: boolean;
           error?: string;
           found?: boolean;
@@ -174,7 +222,7 @@ declare global {
         }>;
 
         takeScreenshot: (options?: {
-          format?: 'png' | 'jpeg';
+          format?: "png" | "jpeg";
           quality?: number;
           fullPage?: boolean;
           clip?: { x: number; y: number; width: number; height: number };

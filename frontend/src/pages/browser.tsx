@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box } from '@mui/material';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 import BrowserView from '@/components/BrowserView';
 import ViewToggle from '@/components/ViewToggle';
 import AgentPanel from '@/components/AgentPanel';
@@ -57,17 +57,7 @@ const BrowserPage: React.FC = () => {
   if (!url && !path && !file) return null;
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: '#f0f4f8', // More blue-tinted light background
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="h-screen w-screen flex flex-col bg-[#f0f4f8] relative overflow-hidden">
       {/* Title Bar */}
       <TitleBar
         title={getTitle()}
@@ -77,29 +67,24 @@ const BrowserPage: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'grid',
-          position: 'relative',
-          overflow: 'hidden', // 防止溢出
-          minHeight: 0, // 允許 flex 子項縮小
+      <div
+        className="flex-1 grid relative overflow-hidden min-h-0"
+        style={{
           gridTemplateColumns:
             viewMode === 'both'
               ? `${leftWidth}% 6px ${100 - leftWidth}%`
               : '1fr',
-          gridTemplateRows: '1fr', // 確保行高度正確
+          gridTemplateRows: '1fr',
         }}
       >
         {/* Left Panel - Browser View */}
         {(viewMode === 'left-only' || viewMode === 'both') && (
-          <Box sx={{
-            gridColumn: viewMode === 'both' ? 1 : '1 / -1',
-            height: '100%',
-            position: 'relative',
-            overflow: 'hidden', // 防止溢出
-            minHeight: 0 // 允許縮小
-          }}>
+          <div
+            className="h-full relative overflow-hidden min-h-0"
+            style={{
+              gridColumn: viewMode === 'both' ? 1 : '1 / -1',
+            }}
+          >
             <BrowserView
               url={currentUrl || url as string}
               path={path as string}
@@ -107,39 +92,24 @@ const BrowserPage: React.FC = () => {
               mode={isLocalMode ? 'local' : 'web'}
               disablePointerEvents={isDragging}
             />
-          </Box>
+          </div>
         )}
 
         {/* Vertical Resizer - middle grid column */}
         {viewMode === 'both' && (
-          <Box
-            className="drag-handle drag-handle-horizontal"
-            sx={{
+          <div
+            className={cn(
+              "drag-handle drag-handle-horizontal",
+              "h-full cursor-col-resize bg-transparent hover:bg-slate-200",
+              "z-[2000] relative select-none",
+              "after:content-[''] after:absolute after:top-1/2 after:left-1/2",
+              "after:-translate-x-1/2 after:-translate-y-1/2",
+              "after:w-0.5 after:h-5 after:bg-slate-400 after:rounded-[1px]",
+              "after:opacity-50 hover:after:opacity-100"
+            )}
+            style={{
               gridColumn: 2,
-              height: '100%',
-              cursor: 'col-resize',
-              bgcolor: 'transparent',
-              '&:hover': { bgcolor: '#e2e8f0' },
-              zIndex: 2000,
-              position: 'relative',
               WebkitAppRegion: 'no-drag',
-              userSelect: 'none',
-              // Add visual indicator
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '2px',
-                height: '20px',
-                bgcolor: '#94a3b8',
-                borderRadius: '1px',
-                opacity: 0.5,
-              },
-              '&:hover::after': {
-                opacity: 1,
-              }
             }}
             onMouseDown={(e) => {
               e.preventDefault();
@@ -188,27 +158,27 @@ const BrowserPage: React.FC = () => {
               document.addEventListener('mousemove', onMove, { passive: false, capture: true });
               document.addEventListener('mouseup', onUp, { passive: false, capture: true });
             }}
-          />
+          ></div>
         )}
 
         {/* Right Panel - Agent Panel */}
         {(viewMode === 'right-only' || viewMode === 'both') && (
-          <Box sx={{
-            gridColumn: viewMode === 'both' ? 3 : '1 / -1',
-            height: '100%',
-            overflow: 'hidden', // 防止溢出
-            minHeight: 0 // 允許縮小
-          }}>
+          <div
+            className="h-full overflow-hidden min-h-0"
+            style={{
+              gridColumn: viewMode === 'both' ? 3 : '1 / -1',
+            }}
+          >
             <AgentPanel
               onDragStateChange={(dragging) => setIsDragging(dragging)}
             />
-          </Box>
+          </div>
         )}
 
         {/* View Toggle */}
         <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

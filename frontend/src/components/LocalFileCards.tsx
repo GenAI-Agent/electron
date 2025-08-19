@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, Typography, IconButton, Tooltip } from '@mui/material';
-import {
-  DesktopWindows,
+import { 
+  Monitor,
   Folder,
-  Storage,
+  HardDrive,
   FolderOpen,
-  Refresh
-} from '@mui/icons-material';
+  RefreshCw
+} from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 
 interface FileCardProps {
   title: string;
@@ -24,65 +24,22 @@ const FileCard: React.FC<FileCardProps> = ({ title, icon, path, description }) =
   };
 
   return (
-    <Card
-      sx={{
-        width: 200,
-        height: 150,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-        },
-        '&:active': {
-          transform: 'translateY(-2px)',
-        },
-      }}
+    <div
+      className="w-[200px] h-[150px] bg-white rounded-lg shadow-md border border-slate-200 cursor-pointer transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] active:translate-y-0"
       onClick={handleClick}
     >
-      <CardContent
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          textAlign: 'center',
-          gap: 1,
-        }}
-      >
-        <Box
-          sx={{
-            fontSize: 48,
-            color: '#64748b',
-            mb: 1,
-          }}
-        >
+      <div className="flex flex-col items-center justify-center h-full text-center gap-1 p-4">
+        <div className="text-slate-500 mb-1">
           {icon}
-        </Box>
-        <Typography
-          variant="h6"
-          sx={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#374151',
-            mb: 0.5,
-          }}
-        >
+        </div>
+        <h6 className="text-sm font-semibold text-gray-700 mb-0.5">
           {title}
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            fontSize: '11px',
-            color: '#6b7280',
-            lineHeight: 1.3,
-          }}
-        >
+        </h6>
+        <p className="text-[11px] text-gray-500 leading-tight">
           {description}
-        </Typography>
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+    </div>
   );
 };
 
@@ -121,71 +78,56 @@ const LocalFileCards: React.FC = () => {
   const cards = [
     {
       title: '桌面',
-      icon: <DesktopWindows sx={{ fontSize: 48 }} />,
+      icon: <Monitor className="w-12 h-12" />,
       path: paths.desktop,
       description: '瀏覽桌面文件',
     },
     {
       title: '文件',
-      icon: <FolderOpen sx={{ fontSize: 48 }} />,
+      icon: <FolderOpen className="w-12 h-12" />,
       path: paths.documents,
       description: '瀏覽文件夾',
     },
     {
       title: '磁碟',
-      icon: <Storage sx={{ fontSize: 48 }} />,
+      icon: <HardDrive className="w-12 h-12" />,
       path: paths.drives,
       description: '瀏覽系統磁碟',
     },
   ];
 
   return (
-    <Box>
+    <div>
       {/* 標題和刷新按鈕 */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-          px: 2
-        }}
-      >
-        <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600 }}>
+      <div className="flex justify-between items-center mb-2 px-2">
+        <h6 className="text-gray-700 font-semibold text-lg">
           本地文件
-        </Typography>
-        <Tooltip title="刷新文件列表">
-          <IconButton
+        </h6>
+        <div className="relative group">
+          <button
             onClick={loadPaths}
             disabled={isRefreshing}
-            sx={{
-              color: '#6b7280',
-              '&:hover': { color: '#374151' }
-            }}
+            className={cn(
+              "p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors",
+              isRefreshing && "cursor-not-allowed"
+            )}
           >
-            <Refresh sx={{
-              fontSize: 20,
-              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-              '@keyframes spin': {
-                '0%': { transform: 'rotate(0deg)' },
-                '100%': { transform: 'rotate(360deg)' }
-              }
-            }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+            <RefreshCw 
+              className={cn(
+                "w-5 h-5",
+                isRefreshing && "animate-spin"
+              )}
+            />
+          </button>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            刷新文件列表
+          </div>
+        </div>
+      </div>
 
       {/* 文件卡片 */}
-      <Box
-        sx={{
-          display: 'flex',
-          gap: 3,
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          mt: 2,
-        }}
-      >
+      <div className="flex gap-3 justify-center items-center flex-wrap mt-2">
         {cards.map((card, index) => (
           <FileCard
             key={index}
@@ -195,8 +137,8 @@ const LocalFileCards: React.FC = () => {
             description={card.description}
           />
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

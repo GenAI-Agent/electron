@@ -1,21 +1,10 @@
 import React from 'react';
-import { Box } from '@mui/material';
 import GoogleAuth from '../components/GoogleAuth';
 import TitleBar from '../components/TitleBar';
 
 const GmailAuthPage: React.FC = () => {
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: '#f0f4f8',
-        margin: 0,
-        padding: 0,
-      }}
-    >
+    <div className="h-screen w-screen flex flex-col bg-[#f0f4f8] m-0 p-0">
       {/* Title Bar */}
       <TitleBar
         title="Google OAuth 登入"
@@ -23,18 +12,10 @@ const GmailAuthPage: React.FC = () => {
       />
 
       {/* Main Content */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2,
-        }}
-      >
+      <div className="flex-1 flex items-center justify-center p-2">
         <GoogleAuth />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

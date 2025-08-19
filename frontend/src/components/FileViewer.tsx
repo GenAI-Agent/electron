@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Alert, IconButton, Button } from '@mui/material';
-import { ArrowBack, OpenInNew } from '@mui/icons-material';
+import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 
 interface FileViewerProps {
   filePath: string;
@@ -114,61 +114,38 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
 
     if (loading) {
       return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50%' }}>
-          <CircularProgress />
-        </Box>
+        <div className="flex justify-center items-center h-1/2">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        </div>
       );
     }
 
     if (error) {
       return (
-        <Alert severity="error" sx={{ m: 2 }}>
-          {error}
-        </Alert>
+        <div className="m-2 p-3 bg-red-50 border border-red-200 rounded-md">
+          <span className="text-sm text-red-700">{error}</span>
+        </div>
       );
     }
 
     if (!fileContent) {
       return (
-        <Alert severity="warning" sx={{ m: 2 }}>
-          無法載入文件內容
-        </Alert>
+        <div className="m-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <span className="text-sm text-yellow-700">無法載入文件內容</span>
+        </div>
       );
     }
 
     // 文本文件
     if (fileContent.type === 'text') {
       return (
-        <Box sx={{
-          p: 2,
-          height: '100%',
-          overflow: 'auto',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: '#f1f1f1',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: '#c1c1c1',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: '#a8a8a8',
-          },
-        }}>
-          <pre style={{
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-            fontSize: '14px',
-            lineHeight: '1.5',
-            margin: 0
+        <div className="p-2 h-full overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+          <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed m-0" style={{
+            fontFamily: 'Monaco, Consolas, "Courier New", monospace'
           }}>
             {fileContent.content}
           </pre>
-        </Box>
+        </div>
       );
     }
 
@@ -206,96 +183,88 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       };
 
       return (
-        <Box sx={{ height: '100%', position: 'relative', bgcolor: '#f5f5f5' }}>
+        <div className="h-full relative bg-gray-100">
           {renderPdfViewer()}
-        </Box>
+        </div>
       );
     }
 
     // PPT/PPTX文件
     if (fileContent.type === 'presentation') {
       return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" gutterBottom>
+        <div className="h-full flex flex-col">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold mb-2">
               PowerPoint 簡報
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
+            </h3>
+            <p className="text-sm text-gray-600 mb-1">
               文件大小: {(fileContent.size! / 1024 / 1024).toFixed(2)} MB
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
               格式: {fileContent.extension?.toUpperCase()}
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<OpenInNew />}
+            </p>
+            <button
+              className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors flex items-center gap-2"
               onClick={handleOpenWithSystem}
-              sx={{ mt: 2 }}
             >
+              <ExternalLink className="w-4 h-4" />
               用 PowerPoint 打開
-            </Button>
-          </Box>
-          <Box sx={{ flex: 1, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+            </button>
+          </div>
+          <div className="flex-1 p-4 flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg text-gray-600 mb-2">
                 📊 PowerPoint 簡報
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </h3>
+              <p className="text-sm text-gray-600">
                 此文件需要用 Microsoft PowerPoint 或相容程式開啟
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
                 點擊上方按鈕用系統預設程式開啟
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+              </p>
+            </div>
+          </div>
+        </div>
       );
     }
 
     // 圖片文件
     if (isImageFile(ext)) {
       return (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <div className="p-2 flex justify-center items-center h-full">
           <img
             src={`file://${filePath}`}
             alt={fileName}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain'
-            }}
+            className="max-w-full max-h-full object-contain"
           />
-        </Box>
+        </div>
       );
     }
 
     // 影片文件
     if (isVideoFile(ext)) {
       return (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <div className="p-2 flex justify-center items-center h-full">
           <video
             controls
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%'
-            }}
+            className="max-w-full max-h-full"
           >
             <source src={`file://${filePath}`} />
             您的瀏覽器不支援影片播放
           </video>
-        </Box>
+        </div>
       );
     }
 
     // 音頻文件
     if (isAudioFile(ext)) {
       return (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-          <audio controls style={{ width: '100%' }}>
+        <div className="p-2 flex justify-center items-center h-full">
+          <audio controls className="w-full">
             <source src={`file://${filePath}`} />
             您的瀏覽器不支援音頻播放
           </audio>
-        </Box>
+        </div>
       );
     }
 
@@ -309,100 +278,91 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       };
 
       return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" gutterBottom>
+        <div className="h-full flex flex-col">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold mb-2">
               {fileTypeNames[ext as keyof typeof fileTypeNames]}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
               文件大小: {fileContent.size ? (fileContent.size / 1024 / 1024).toFixed(2) + ' MB' : '未知'}
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<OpenInNew />}
+            </p>
+            <button
+              className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors flex items-center gap-2"
               onClick={handleOpenWithSystem}
-              sx={{ mt: 2 }}
             >
+              <ExternalLink className="w-4 h-4" />
               用系統程式打開
-            </Button>
-          </Box>
-          <Box sx={{ flex: 1, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+            </button>
+          </div>
+          <div className="flex-1 p-4 flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg text-gray-600 mb-2">
                 📄 {fileTypeNames[ext as keyof typeof fileTypeNames]}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </h3>
+              <p className="text-sm text-gray-600">
                 此文件需要用 Microsoft Office 或相容程式開啟
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
                 點擊上方按鈕用系統預設程式開啟
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+              </p>
+            </div>
+          </div>
+        </div>
       );
     }
 
     // 不支援的文件類型
     return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6" gutterBottom>
+      <div className="p-4 text-center">
+        <h3 className="text-lg font-semibold mb-2">
           無法預覽此文件類型
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h3>
+        <p className="text-sm text-gray-600">
           文件：{fileName}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        </p>
+        <p className="text-sm text-gray-600 mt-1">
           請使用外部程式打開此文件
-        </Typography>
-      </Box>
+        </p>
+      </div>
     );
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-full flex flex-col">
       {/* 文件標題欄 */}
-      <Box sx={{
-        px: 1,
-        py: 0.5,
-        borderBottom: '1px solid #e2e8f0',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        bgcolor: '#f8fafc',
-        minHeight: '40px'
-      }}>
-        <IconButton size="small" onClick={handleBack}>
-          <ArrowBack />
-        </IconButton>
-        <Typography variant="subtitle2" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div className="px-2 py-1 border-b border-slate-200 flex items-center gap-2 bg-slate-50 min-h-[40px]">
+        <button
+          onClick={handleBack}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <h2 className="flex-1 text-sm font-medium truncate">
           {filePath.split(/[/\\]/).pop()}
-        </Typography>
+        </h2>
 
         {/* PDF文件信息和操作按鈕 */}
         {fileContent?.type === 'pdf' && (
           <>
-            <Typography variant="caption" color="text.secondary" sx={{ mx: 1 }}>
+            <span className="text-xs text-gray-600 mx-1">
               📄 ({(fileContent.size! / 1024 / 1024).toFixed(2)} MB)
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<OpenInNew />}
+            </span>
+            <button
+              className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
               onClick={handleOpenWithSystem}
-              sx={{ minWidth: 'auto', px: 1 }}
             >
+              <ExternalLink className="w-3 h-3" />
               外部打開
-            </Button>
+            </button>
           </>
         )}
-      </Box>
+      </div>
 
       {/* 文件內容 */}
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+      <div className="flex-1 overflow-hidden">
         {renderFileContent()}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

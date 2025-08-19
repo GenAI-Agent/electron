@@ -26,8 +26,8 @@ function createWindow() {
   });
 
   const isDev = process.env.NODE_ENV === 'development';
-  const startUrl = isDev 
-    ? 'http://localhost:3000' 
+  const startUrl = isDev
+    ? 'http://localhost:4081'
     : `file://${path.join(__dirname, '../out/index.html')}`;
 
   mainWindow.loadURL(startUrl);

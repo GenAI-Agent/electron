@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Box, IconButton, Switch, FormControlLabel, TextField, InputAdornment } from '@mui/material';
-import { Home, Language, Folder, Search } from '@mui/icons-material';
+import { Globe, Folder, Search } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
+
+// 擴展 CSSProperties 類型以支持 WebkitAppRegion
+declare module 'react' {
+  interface CSSProperties {
+    WebkitAppRegion?: 'drag' | 'no-drag';
+  }
+}
 
 interface TitleBarProps {
   title?: string;
@@ -52,48 +59,18 @@ const TitleBar: React.FC<TitleBarProps> = ({
   };
 
   return (
-    <Box
-      className="title-bar"
-      sx={{
-        height: '32px', // 減少高度從 40px 到 32px
-        bgcolor: '#374151',
-        display: 'flex',
-        alignItems: 'center',
-        paddingLeft: '12px',
-        paddingRight: '12px',
-        WebkitAppRegion: 'drag',
-        position: 'relative',
-        zIndex: 1000,
-        borderBottom: '1px solid #4b5563', // 添加底部邊框
-      }}
+    <div
+      className="title-bar h-8 bg-gray-700 flex items-center px-3 relative z-[1000] border-b border-gray-600"
+      style={{ WebkitAppRegion: 'drag' }}
     >
       {/* Traffic Lights */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          WebkitAppRegion: 'no-drag',
-        }}
+      <div
+        className="flex items-center gap-1.5"
+        style={{ WebkitAppRegion: 'no-drag' }}
       >
         {/* Close button - Red */}
-        <Box
-          sx={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            bgcolor: '#ef4444',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '8px',
-            color: 'transparent',
-            '&:hover': {
-              bgcolor: '#dc2626',
-              color: 'white',
-            },
-          }}
+        <div
+          className="w-3 h-3 rounded-full bg-red-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-red-600 hover:text-white transition-colors"
           onClick={() => {
             if (window.electronAPI?.closeWindow) {
               window.electronAPI.closeWindow();
@@ -101,26 +78,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
           }}
         >
           ×
-        </Box>
+        </div>
 
         {/* Minimize button - Yellow */}
-        <Box
-          sx={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            bgcolor: '#f59e0b',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '8px',
-            color: 'transparent',
-            '&:hover': {
-              bgcolor: '#d97706',
-              color: 'white',
-            },
-          }}
+        <div
+          className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-amber-600 hover:text-white transition-colors"
           onClick={() => {
             if (window.electronAPI?.minimizeWindow) {
               window.electronAPI.minimizeWindow();
@@ -128,26 +90,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
           }}
         >
           −
-        </Box>
+        </div>
 
         {/* Maximize button - Green */}
-        <Box
-          sx={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            bgcolor: '#10b981',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '8px',
-            color: 'transparent',
-            '&:hover': {
-              bgcolor: '#059669',
-              color: 'white',
-            },
-          }}
+        <div
+          className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-emerald-600 hover:text-white transition-colors"
           onClick={() => {
             if (window.electronAPI?.maximizeWindow) {
               window.electronAPI.maximizeWindow();
@@ -155,185 +102,97 @@ const TitleBar: React.FC<TitleBarProps> = ({
           }}
         >
           □
-        </Box>
+        </div>
 
         {/* Home button - Blue (new) */}
         {showHomeButton && (
-          <Box
-            sx={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              bgcolor: '#3b82f6',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '8px',
-              color: 'transparent',
-              '&:hover': {
-                bgcolor: '#2563eb',
-                color: 'white',
-              },
-            }}
+          <div
+            className="w-3 h-3 rounded-full bg-blue-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-blue-600 hover:text-white transition-colors"
             onClick={handleHomeClick}
           >
             ⌂
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Mode Switch */}
       {showModeSwitch && (
-        <Box
-          sx={{
-            ml: 2,
-            WebkitAppRegion: 'no-drag',
-          }}
+        <div
+          className="ml-2"
+          style={{ WebkitAppRegion: 'no-drag' }}
         >
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isWebMode}
-                onChange={(e) => onModeChange?.(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#3b82f6',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#3b82f6',
-                  },
-                }}
-              />
-            }
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                {isWebMode ? <Language sx={{ fontSize: 12 }} /> : <Folder sx={{ fontSize: 12 }} />}
-                <Box sx={{ fontSize: '10px', color: '#d1d5db' }}>
-                  {isWebMode ? 'Web' : 'Local'}
-                </Box>
-              </Box>
-            }
-            sx={{
-              margin: 0,
-              '& .MuiFormControlLabel-label': {
-                fontSize: '10px',
-                color: '#d1d5db',
-              },
-            }}
-          />
-        </Box>
+          <label className="flex items-center gap-1 text-gray-300 text-[10px]">
+            <input
+              type="checkbox"
+              checked={isWebMode}
+              onChange={(e) => onModeChange?.(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={cn(
+              "relative inline-block w-6 h-3 rounded-full transition-colors",
+              isWebMode ? "bg-blue-500" : "bg-gray-600"
+            )}>
+              <div className={cn(
+                "absolute top-0.5 w-2 h-2 bg-white rounded-full transition-transform",
+                isWebMode ? "translate-x-3.5" : "translate-x-0.5"
+              )} />
+            </div>
+            <div className="flex items-center gap-1">
+              {isWebMode ? <Globe className="w-3 h-3" /> : <Folder className="w-3 h-3" />}
+              <span className="text-[10px] text-gray-300">
+                {isWebMode ? 'Web' : 'Local'}
+              </span>
+            </div>
+          </label>
+        </div>
       )}
 
       {/* Title Display / URL Input - 絕對置中，佔頁面寬度的一半 */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: '25%',
-          width: '50%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          WebkitAppRegion: 'no-drag', // 改為 no-drag 以允許點擊事件
-          pointerEvents: 'auto', // 改為 auto 以允許點擊事件
-        }}
+      <div
+        className="absolute left-1/4 w-1/2 flex justify-center items-center pointer-events-auto"
+        style={{ WebkitAppRegion: 'no-drag' }}
       >
         {showUrlInput && isEditing ? (
-          <Box
-            component="form"
+          <form
             onSubmit={handleUrlSubmit}
-            sx={{
-              width: '100%', // 改為 100% 寬度
-              pointerEvents: 'auto',
-              WebkitAppRegion: 'no-drag',
-            }}
+            className="w-full pointer-events-auto"
+            style={{ WebkitAppRegion: 'no-drag' }}
           >
-            <TextField
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onBlur={() => setIsEditing(false)}
-              autoFocus
-              size="small"
-              placeholder="輸入網址..."
-              sx={{
-                width: '100%',
-                '& .MuiOutlinedInput-root': {
-                  height: '20px',
-                  bgcolor: '#4b5563',
-                  borderRadius: '10px',
-                  fontSize: '10px',
-                  color: '#d1d5db',
-                  '& fieldset': { borderColor: '#6b7280' },
-                  '&:hover fieldset': { borderColor: '#9ca3af' },
-                  '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                },
-                '& .MuiOutlinedInput-input': {
-                  padding: '2px 8px',
-                  fontSize: '10px',
-                  color: '#d1d5db',
-                  '&::placeholder': { color: '#9ca3af', opacity: 1 },
-                },
-              }}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        type="submit"
-                        size="small"
-                        sx={{
-                          color: '#9ca3af',
-                          padding: '2px',
-                          '&:hover': { color: '#d1d5db' },
-                        }}
-                      >
-                        <Search sx={{ fontSize: 12 }} />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
+            <div className="relative w-full">
+              <input
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onBlur={() => setIsEditing(false)}
+                autoFocus
+                placeholder="輸入網址..."
+                className="w-full h-5 bg-gray-600 rounded-[10px] text-[10px] text-gray-300 px-2 pr-6 border border-gray-500 hover:border-gray-400 focus:border-blue-500 focus:outline-none placeholder:text-gray-500"
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 p-0.5"
+              >
+                <Search className="w-3 h-3" />
+              </button>
+            </div>
+          </form>
         ) : (
-          <Box
+          <div
             onClick={handleUrlInputClick}
             onMouseDown={(e) => {
               console.log('Mouse down on URL area');
               e.stopPropagation();
             }}
-            sx={{
-              height: '16px', // 減少高度從 18px 到 16px
-              bgcolor: '#4b5563',
-              borderRadius: '8px', // 減少圓角從 9px 到 8px
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d1d5db',
-              fontSize: '10px', // 減少字體從 11px 到 10px
-              fontWeight: 400,
-              px: 1.2, // 減少內邊距從 1.5 到 1.2
-              minWidth: '200px', // 增加最小寬度
-              width: '100%', // 設置為 100% 寬度，佔滿一半頁面寬
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'auto',
-              WebkitAppRegion: 'no-drag', // 確保不被拖拽干擾
-              cursor: showUrlInput ? 'pointer' : 'default',
-              border: showUrlInput ? '1px solid transparent' : 'none',
-              '&:hover': showUrlInput ? {
-                bgcolor: '#6b7280',
-                border: '1px solid #9ca3af',
-              } : {},
-            }}
+            className={cn(
+              "h-4 bg-gray-600 rounded-lg flex items-center justify-center text-gray-300 text-[10px] font-normal px-3 min-w-[200px] w-full overflow-hidden text-ellipsis whitespace-nowrap pointer-events-auto",
+              showUrlInput ? "cursor-pointer border border-transparent hover:bg-gray-500 hover:border-gray-400" : "cursor-default"
+            )}
+            style={{ WebkitAppRegion: 'no-drag' }}
           >
             {title}
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

@@ -5,23 +5,24 @@
   "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently \"yarn dev:next\" \"yarn dev:electron\"",
-    "dev:next": "next dev",
-    "dev:electron": "wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently \"bun dev:next\" \"bun dev:electron\"",
+    "dev:next": "next dev --port 4081",
+    "dev:electron": "wait-on http://localhost:4081 && cross-env NODE_ENV=development electron .",
     "build": "next build",
-    "build:electron": "yarn build && electron-builder",
-    "start": "yarn build && electron .",
+    "build:electron": "bun run build && electron-builder",
+    "start": "bun run build && electron .",
     "lint": "next lint"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.0",
-    "@emotion/styled": "^11.13.0",
-    "@mui/icons-material": "^6.1.0",
-    "@mui/material": "^6.1.0",
+    "@tailwindcss/postcss": "^4.1.12",
+    "clsx": "^2.0.0",
     "electron": "^33.0.0",
+    "lucide-react": "^0.263.1",
     "next": "^15.0.0",
+    "postcss": "^8.5.6",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -33,7 +34,9 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.0.0",
     "typescript": "^5.6.0",
-    "wait-on": "^8.0.0"
+    "wait-on": "^8.0.0",
+    "tailwindcss": "^4.1.12",
+    "autoprefixer": "^10.4.16"
   },
   "build": {
     "appId": "com.supervisor-agent.app",

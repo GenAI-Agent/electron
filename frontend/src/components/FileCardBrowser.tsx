@@ -1,29 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  IconButton, 
-  Breadcrumbs, 
-  Link,
-  Alert,
-  CircularProgress,
-  Grid
-} from '@mui/material';
 import {
   Folder,
-  InsertDriveFile,
-  ArrowBack,
+  File,
+  ArrowLeft,
   Home,
   Image,
-  VideoFile,
-  AudioFile,
-  PictureAsPdf,
+  Video,
+  Music,
+  FileText,
   Code,
-  Description
-} from '@mui/icons-material';
+  FileIcon,
+  Loader2
+} from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 
 interface FileItem {
   name: string;
@@ -45,43 +35,43 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
 
   const getFileIcon = (fileName: string, isDirectory: boolean) => {
     if (isDirectory) {
-      return <Folder sx={{ fontSize: 48, color: '#3b82f6' }} />;
+      return <Folder className="w-12 h-12 text-blue-500" />;
     }
 
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
     
     // 圖片文件
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
-      return <Image sx={{ fontSize: 48, color: '#10b981' }} />;
+      return <Image className="w-12 h-12 text-green-500" />;
     }
     
     // 影片文件
     if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(ext)) {
-      return <VideoFile sx={{ fontSize: 48, color: '#f59e0b' }} />;
+      return <Video className="w-12 h-12 text-amber-500" />;
     }
     
     // 音頻文件
     if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext)) {
-      return <AudioFile sx={{ fontSize: 48, color: '#8b5cf6' }} />;
+      return <Music className="w-12 h-12 text-purple-500" />;
     }
     
     // PDF 文件
     if (ext === 'pdf') {
-      return <PictureAsPdf sx={{ fontSize: 48, color: '#ef4444' }} />;
+      return <FileText className="w-12 h-12 text-red-500" />;
     }
     
     // 程式碼文件
     if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'java', 'cpp', 'c', 'h'].includes(ext)) {
-      return <Code sx={{ fontSize: 48, color: '#6366f1' }} />;
+      return <Code className="w-12 h-12 text-indigo-500" />;
     }
     
     // 文本文件
     if (['txt', 'md', 'json', 'xml', 'yaml', 'yml'].includes(ext)) {
-      return <Description sx={{ fontSize: 48, color: '#64748b' }} />;
+      return <FileText className="w-12 h-12 text-slate-500" />;
     }
     
     // 默認文件圖標
-    return <InsertDriveFile sx={{ fontSize: 48, color: '#64748b' }} />;
+    return <File className="w-12 h-12 text-slate-500" />;
   };
 
   const canPreviewInApp = (fileName: string) => {
@@ -164,144 +154,82 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50%' }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center h-1/2">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
     );
   }
 
   return (
-    <Box sx={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      p: 2,
-      overflow: 'hidden' // 確保父容器不會溢出
-    }}>
+    <div className="h-full flex flex-col p-2 overflow-hidden">
       {/* 導航欄 */}
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        mb: 2,
-        gap: 1,
-        flexShrink: 0 // 防止導航欄被壓縮
-      }}>
-        <IconButton onClick={handleHome} size="small">
-          <Home />
-        </IconButton>
-        <IconButton onClick={handleBack} size="small" disabled={pathSegments.length <= 1}>
-          <ArrowBack />
-        </IconButton>
+      <div className="flex items-center mb-2 gap-1 flex-shrink-0">
+        <button
+          onClick={handleHome}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+        >
+          <Home className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleBack}
+          disabled={pathSegments.length <= 1}
+          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
 
-        <Breadcrumbs sx={{ flex: 1 }}>
+        <nav className="flex-1 flex items-center text-sm">
           {pathSegments.map((segment, index) => {
             const isLast = index === pathSegments.length - 1;
             const separator = currentPath.includes('\\') ? '\\' : '/';
             const segmentPath = pathSegments.slice(0, index + 1).join(separator);
 
-            return isLast ? (
-              <Typography key={index} color="text.primary" sx={{ fontSize: '14px' }}>
-                {segment}
-              </Typography>
-            ) : (
-              <Link
-                key={index}
-                component="button"
-                variant="body2"
-                onClick={() => loadDirectory(segmentPath)}
-                sx={{ fontSize: '14px' }}
-              >
-                {segment}
-              </Link>
+            return (
+              <React.Fragment key={index}>
+                {index > 0 && <span className="mx-1 text-gray-400">/</span>}
+                {isLast ? (
+                  <span className="text-gray-900">{segment}</span>
+                ) : (
+                  <button
+                    onClick={() => loadDirectory(segmentPath)}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {segment}
+                  </button>
+                )}
+              </React.Fragment>
             );
           })}
-        </Breadcrumbs>
-      </Box>
+        </nav>
+      </div>
 
       {/* 錯誤提示 */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2, flexShrink: 0 }}>
-          {error}
-        </Alert>
+        <div className="mb-2 p-3 bg-red-50 border border-red-200 rounded-md flex-shrink-0">
+          <span className="text-sm text-red-700">{error}</span>
+        </div>
       )}
 
       {/* 文件卡片網格 - 可滾動區域 */}
-      <Box sx={{
-        flex: 1,
-        overflow: 'auto',
-        minHeight: 0, // 重要：允許 flex 子項縮小
-        '&::-webkit-scrollbar': {
-          width: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: '#f1f1f1',
-          borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: '#c1c1c1',
-          borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          background: '#a8a8a8',
-        },
-      }}>
-        <Grid container spacing={2} sx={{ pb: 2 }}>
+      <div className="flex-1 overflow-auto min-h-0 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 pb-2">
           {items.map((item) => (
-            <Grid item key={item.path}>
-              <Card
-                sx={{
-                  width: 120,
-                  height: 140,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  },
-                  '&:active': {
-                    transform: 'translateY(0px)',
-                  },
-                }}
-                onClick={() => handleItemClick(item)}
-              >
-                <CardContent
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    textAlign: 'center',
-                    p: 1,
-                    '&:last-child': { pb: 1 }
-                  }}
-                >
-                  {getFileIcon(item.name, item.isDirectory)}
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mt: 1,
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      color: '#374151',
-                      lineHeight: 1.2,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      wordBreak: 'break-word'
-                    }}
-                  >
-                    {item.name}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <div
+              key={item.path}
+              className="w-[120px] h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+              onClick={() => handleItemClick(item)}
+            >
+              <div className="flex flex-col items-center justify-center h-full text-center p-2">
+                {getFileIcon(item.name, item.isDirectory)}
+                <span className="mt-2 text-[11px] font-medium text-gray-700 leading-tight overflow-hidden line-clamp-2 break-words">
+                  {item.name}
+                </span>
+              </div>
+            </div>
           ))}
-        </Grid>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

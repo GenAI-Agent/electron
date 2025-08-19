@@ -3,6 +3,7 @@
 ## 📋 問題分析
 
 ### 1. 核心問題
+
 您的專案中，瀏覽器控制 API 無法正常工作的主要原因是：
 
 - **架構層級問題**：瀏覽器控制代碼寫在 `main.js` 中，但實際的網頁內容在 `webview` 元素內
@@ -10,6 +11,7 @@
 - **選擇器範圍限制**：無法直接操作 webview 內部的 DOM 元素
 
 ### 2. 當前架構分析
+
 ```
 Electron Main Process (main.js)
 ├── BrowserWindow (mainWindow)
@@ -25,6 +27,7 @@ Electron Main Process (main.js)
 ### 方案 1：直接操作 webview 內容（推薦）
 
 #### 1.1 修改 BrowserView 組件
+
 在 `BrowserView.tsx` 中添加瀏覽器控制方法：
 
 ```typescript:frontend/src/components/BrowserView.tsx
@@ -263,10 +266,10 @@ const BrowserView = forwardRef<BrowserViewRef, BrowserViewProps>(({
             try {
               const title = document.title || 'Untitled';
               const url = window.location.href;
-              
+
               // 提取頁面內容
               const content = document.body.innerText || '';
-              
+
               // 提取連結
               const links = Array.from(document.querySelectorAll('a[href]')).map(link => ({
                 text: link.textContent?.trim() || '',
@@ -276,7 +279,7 @@ const BrowserView = forwardRef<BrowserViewRef, BrowserViewProps>(({
 
               // 提取互動元素
               const interactiveElements = [];
-              
+
               // 按鈕
               document.querySelectorAll('button, input[type="button"], input[type="submit"]').forEach((el, index) => {
                 interactiveElements.push({
@@ -343,6 +346,7 @@ export default BrowserView;
 ```
 
 #### 1.2 修改 browser.tsx 頁面
+
 更新 `browser.tsx` 以使用新的瀏覽器控制方法：
 
 ```typescript:frontend/src/pages/browser.tsx
@@ -370,17 +374,17 @@ const BrowserPage: React.FC = () => {
   useEffect(() => {
     if (browserViewRef.current && typeof window !== 'undefined') {
       (window as any).browserControl = {
-        click: (selector: string, options?: any) => 
+        click: (selector: string, options?: any) =>
           browserViewRef.current?.click(selector, options),
-        type: (selector: string, text: string, options?: any) => 
+        type: (selector: string, text: string, options?: any) =>
           browserViewRef.current?.type(selector, text, options),
-        scroll: (direction: string, amount?: number) => 
+        scroll: (direction: string, amount?: number) =>
           browserViewRef.current?.scroll(direction, amount),
-        navigate: (url: string) => 
+        navigate: (url: string) =>
           browserViewRef.current?.navigate(url),
-        getPageData: () => 
+        getPageData: () =>
           browserViewRef.current?.getPageData(),
-        executeScript: (script: string) => 
+        executeScript: (script: string) =>
           browserViewRef.current?.executeScript(script)
       };
     }
@@ -426,6 +430,7 @@ export default BrowserPage;
 ### 方案 2：使用 Electron 的 BrowserView API（進階）
 
 #### 2.1 創建獨立的 BrowserView
+
 在 `main.js` 中創建獨立的 BrowserView 來控制網頁：
 
 ```javascript:frontend/electron/main.js
@@ -455,20 +460,20 @@ function createWindow() {
   });
 
   mainWindow.setBrowserView(browserView);
-  
+
   // 設置 BrowserView 的位置和大小
   const bounds = mainWindow.getBounds();
-  browserView.setBounds({ 
-    x: 0, 
+  browserView.setBounds({
+    x: 0,
     y: 60, // 留出標題欄空間
-    width: bounds.width, 
-    height: bounds.height - 60 
+    width: bounds.width,
+    height: bounds.height - 60
   });
 
   // 載入初始頁面
   browserView.webContents.loadURL('https://www.google.com');
 
-  mainWindow.loadURL('http://localhost:3000');
+  mainWindow.loadURL('http://localhost:4081');
 }
 
 // 更新瀏覽器控制 IPC 處理器
@@ -510,24 +515,28 @@ ipcMain.handle('browser-click', async (event, selector, options = {}) => {
 ## 🔧 實作步驟
 
 ### 步驟 1：更新 BrowserView 組件
+
 1. 修改 `BrowserView.tsx`，添加 `useImperativeHandle` 和瀏覽器控制方法
 2. 確保所有方法都通過 webview 的 `executeJavaScript` 執行
 
 ### 步驟 2：更新 browser.tsx 頁面
+
 1. 使用 `useRef` 引用 BrowserView 組件
 2. 將瀏覽器控制方法暴露到全域 `window.browserControl`
 
 ### 步驟 3：測試瀏覽器控制
+
 1. 在瀏覽器控制台中測試：
+
 ```javascript
 // 點擊元素
 await window.browserControl.click('button[type="submit"]');
 
 // 輸入文字
-await window.browserControl.type('input[name="q"]', 'Hello World');
+await window.browserControl.type('input[name="q"]', "Hello World");
 
 // 滾動頁面
-await window.browserControl.scroll('down', 500);
+await window.browserControl.scroll("down", 500);
 
 // 獲取頁面數據
 const pageData = await window.browserControl.getPageData();
@@ -537,6 +546,7 @@ console.log(pageData);
 ## 🚀 進階功能
 
 ### 1. 等待元素出現
+
 ```typescript
 async waitForElement(selector: string, timeout: number = 5000) {
   if (!webviewRef.current) {
@@ -544,28 +554,29 @@ async waitForElement(selector: string, timeout: number = 5000) {
   }
 
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     try {
       const result = await webviewRef.current.executeJavaScript(`
         !!document.querySelector('${selector}')
       `);
-      
+
       if (result) {
         return { success: true, found: true };
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       // 繼續等待
     }
   }
-  
+
   return { success: false, found: false, error: 'Timeout' };
 }
 ```
 
 ### 2. 智能等待頁面載入
+
 ```typescript
 async waitForNavigation(timeout: number = 10000) {
   if (!webviewRef.current) {
@@ -589,6 +600,7 @@ async waitForNavigation(timeout: number = 10000) {
 ```
 
 ### 3. 截圖功能
+
 ```typescript
 async takeScreenshot(options: any = {}) {
   if (!webviewRef.current) {
@@ -601,13 +613,13 @@ async takeScreenshot(options: any = {}) {
         // 創建 canvas 來截圖
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        
+
         // 這裡需要更複雜的截圖邏輯
         // 可以使用 html2canvas 或其他庫
-        
+
         return canvas.toDataURL('image/png');
       })();
     `);
@@ -622,10 +634,11 @@ async takeScreenshot(options: any = {}) {
 ## 📊 效能優化
 
 ### 1. 批量操作
+
 ```typescript
 async batchExecute(operations: Array<{type: string, ...any}>) {
   const results = [];
-  
+
   for (const operation of operations) {
     try {
       let result;
@@ -639,7 +652,7 @@ async batchExecute(operations: Array<{type: string, ...any}>) {
         // ... 其他操作
       }
       results.push(result);
-      
+
       // 添加延遲避免操作過快
       if (operation.delay) {
         await new Promise(resolve => setTimeout(resolve, operation.delay));
@@ -648,12 +661,13 @@ async batchExecute(operations: Array<{type: string, ...any}>) {
       results.push({ success: false, error: error.message });
     }
   }
-  
+
   return results;
 }
 ```
 
 ### 2. 事件節流
+
 ```typescript
 private throttle<T extends (...args: any[]) => any>(
   func: T,
@@ -673,6 +687,7 @@ private throttle<T extends (...args: any[]) => any>(
 ## 🧪 測試和調試
 
 ### 1. 開發者工具
+
 ```typescript
 // 在 BrowserView 中添加調試方法
 async openDevTools() {
@@ -683,7 +698,7 @@ async openDevTools() {
 
 async getConsoleLogs() {
   if (!webviewRef.current) return [];
-  
+
   try {
     const logs = await webviewRef.current.executeJavaScript(`
       window.console.logs || []
@@ -696,17 +711,18 @@ async getConsoleLogs() {
 ```
 
 ### 2. 錯誤處理和日誌
+
 ```typescript
 private log(level: 'info' | 'warn' | 'error', message: string, data?: any) {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
-  
+
   if (data) {
     console.log(logMessage, data);
   } else {
     console.log(logMessage);
   }
-  
+
   // 可以發送到日誌服務或保存到文件
 }
 ```

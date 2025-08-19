@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip, 
-  IconButton,
-  Grid,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { ArrowBack, Settings } from '@mui/icons-material';
+import { ArrowLeft, Settings, Loader2, X } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface Rule {
   id: string;
@@ -92,212 +82,137 @@ const RulesPanel: React.FC<RulesPanelProps> = () => {
   // 如果正在載入
   if (loading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100%' 
-      }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
     );
   }
 
   // 如果有錯誤
   if (error) {
     return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      </Box>
+      <div className="p-2">
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 text-red-500 hover:text-red-700"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     );
   }
 
   // 如果選中了規則，顯示詳情
   if (selectedRule) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 2 }}>
+      <div className="h-full flex flex-col p-2">
         {/* 返回按鈕 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <IconButton onClick={handleBack} sx={{ mr: 1 }}>
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h6" sx={{ fontSize: '16px' }}>
+        <div className="flex items-center mb-2">
+          <button
+            onClick={handleBack}
+            className="p-1.5 mr-2 rounded hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h6 className="text-base font-semibold">
             {selectedRule.name}
-          </Typography>
-        </Box>
+          </h6>
+        </div>
 
         {/* 規則詳情 */}
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ fontSize: '12px', color: '#666', mb: 1 }}>
+        <div className="flex-1 overflow-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-2">
+            <div className="p-4">
+              <h3 className="text-xs text-gray-600 mb-1">
                 描述
-              </Typography>
-              <Typography variant="body2" sx={{ fontSize: '12px', mb: 2 }}>
+              </h3>
+              <p className="text-xs mb-4">
                 {selectedRule.description}
-              </Typography>
+              </p>
 
-              <Typography variant="subtitle2" sx={{ fontSize: '12px', color: '#666', mb: 1 }}>
+              <h3 className="text-xs text-gray-600 mb-1">
                 模型
-              </Typography>
-              <Chip 
-                label={selectedRule.model} 
-                size="small" 
-                sx={{ fontSize: '10px', mb: 2 }}
-              />
+              </h3>
+              <span className="inline-block px-2 py-1 text-[10px] bg-gray-100 rounded-full mb-4">
+                {selectedRule.model}
+              </span>
 
               {selectedRule.tools.length > 0 && (
                 <>
-                  <Typography variant="subtitle2" sx={{ fontSize: '12px', color: '#666', mb: 1 }}>
+                  <h3 className="text-xs text-gray-600 mb-1">
                     工具
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  </h3>
+                  <div className="flex gap-1 flex-wrap mb-4">
                     {selectedRule.tools.map((tool, index) => (
-                      <Chip 
+                      <span
                         key={index}
-                        label={tool} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ fontSize: '10px' }}
-                      />
+                        className="inline-block px-2 py-1 text-[10px] border border-gray-300 rounded-full"
+                      >
+                        {tool}
+                      </span>
                     ))}
-                  </Box>
+                  </div>
                 </>
               )}
 
-              <Typography variant="subtitle2" sx={{ fontSize: '12px', color: '#666', mb: 1 }}>
+              <h3 className="text-xs text-gray-600 mb-1">
                 系統提示詞
-              </Typography>
-              <Box sx={{ 
-                bgcolor: '#f8fafc', 
-                borderRadius: 1, 
-                p: 2,
-                border: '1px solid #e2e8f0',
-                maxHeight: '300px',
-                overflow: 'auto'
-              }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontSize: '11px',
-                    fontFamily: 'monospace',
-                    lineHeight: 1.5,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word'
-                  }}
-                >
+              </h3>
+              <div className="bg-slate-50 rounded p-4 border border-slate-200 max-h-[300px] overflow-auto">
+                <pre className="text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-words">
                   {selectedRule.prompt || '無系統提示詞'}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   // 顯示規則列表
   return (
-    <Box sx={{
-      height: '100%',
-      p: 1,  // 減少 padding
-      overflow: 'auto',  // 直接在這層滑動
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',  // 固定兩列
-      gap: 1,  // 減少間距
-      alignContent: 'start'  // 內容從頂部開始
-    }}>
+    <div className="h-full p-1 overflow-auto grid grid-cols-2 gap-1 content-start">
         {rules.map((rule) => (
-          <Card
+          <div
             key={rule.id}
-            sx={{
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': {
-                transform: 'translateY(-1px)',
-                boxShadow: 1
-              },
-              height: '140px',  // 增加高度
-              display: 'flex',
-              flexDirection: 'column'
-            }}
+            className="h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col"
             onClick={() => handleRuleClick(rule)}
           >
-            <CardContent sx={{
-              p: 1.5,
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              '&:last-child': { pb: 1.5 }  // 確保最後一個元素的 padding
-            }}>
+            <div className="p-3 flex flex-col h-full">
               {/* 標題 */}
-              <Box sx={{ mb: 0.5 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    lineHeight: 1.1
-                  }}
-                >
+              <div className="mb-1">
+                <h3 className="text-xs font-semibold leading-tight">
                   {rule.name}
-                </Typography>
-              </Box>
+                </h3>
+              </div>
 
               {/* 描述 - 顯示 prompt 內容 */}
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: '9px',  // 更小字體
-                  color: '#666',
-                  mb: 1,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  lineHeight: 1.3,
-                  flex: 1  // 佔據剩餘空間
-                }}
-              >
+              <p className="text-[9px] text-gray-600 mb-2 line-clamp-3 leading-relaxed flex-1">
                 {rule.prompt || rule.description}
-              </Typography>
+              </p>
 
               {/* 底部信息 - model chip 在左下角 */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end' }}>
-                <Chip
-                  label={rule.model}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    fontSize: '7px',  // 更小字體
-                    height: '14px',   // 更小高度
-                    '& .MuiChip-label': {
-                      px: 0.5
-                    }
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
+              <div className="flex justify-start items-end">
+                <span className="inline-block px-1.5 py-0.5 text-[7px] border border-gray-300 rounded-full">
+                  {rule.model}
+                </span>
+              </div>
+            </div>
+          </div>
         ))}
 
         {rules.length === 0 && (
-          <Box sx={{
-            gridColumn: '1 / -1',  // 跨越所有列
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '200px',
-            color: '#6b7280'
-          }}>
-            <Typography sx={{ fontSize: '11px' }}>
+          <div className="col-span-full flex justify-center items-center h-[200px] text-gray-500">
+            <p className="text-[11px]">
               沒有找到規則
-            </Typography>
-          </Box>
+            </p>
+          </div>
         )}
-    </Box>
+    </div>
   );
 };
 

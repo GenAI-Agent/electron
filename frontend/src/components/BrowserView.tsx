@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
 import FileCardBrowser from './FileCardBrowser';
 import FileViewer from './FileViewer';
+import { cn } from '@/utils/cn';
 
 interface BrowserViewProps {
   url?: string;
@@ -25,38 +25,18 @@ const BrowserView: React.FC<BrowserViewProps> = ({
   // If in local mode with a specific file, render file viewer
   if (mode === 'local' && file) {
     return (
-      <Box
-        sx={{
-          width: '100%',
-          height: '100%',
-          bgcolor: 'white',
-          position: 'relative',
-          overflow: 'hidden', // 確保不會溢出
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
+      <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
         <FileViewer filePath={file as string} />
-      </Box>
+      </div>
     );
   }
 
   // If in local mode with path, render file browser
   if (mode === 'local' && path) {
     return (
-      <Box
-        sx={{
-          width: '100%',
-          height: '100%',
-          bgcolor: 'white',
-          position: 'relative',
-          overflow: 'hidden', // 確保不會溢出
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
+      <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
         <FileCardBrowser initialPath={path} />
-      </Box>
+      </div>
     );
   }
 
@@ -103,17 +83,7 @@ const BrowserView: React.FC<BrowserViewProps> = ({
   }, [url]);
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        bgcolor: 'white',
-        position: 'relative',
-        minWidth: '200px', // 設置最小寬度，防止被完全遮蓋
-        // Add padding to prevent webview from covering resize areas
-        paddingRight: '4px', // Smaller padding for better space usage
-      }}
-    >
+    <div className="w-full h-full bg-white relative min-w-[200px] pr-1">
       <webview
         ref={webviewRef}
         style={{
@@ -130,7 +100,7 @@ const BrowserView: React.FC<BrowserViewProps> = ({
         useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         partition="persist:browser"
       />
-    </Box>
+    </div>
   );
 };
 

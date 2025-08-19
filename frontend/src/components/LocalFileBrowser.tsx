@@ -1,30 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
-  Typography,
-  Breadcrumbs,
-  Link,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { 
   Folder, 
-  InsertDriveFile, 
-  PictureAsPdf,
-  Description,
-  TableChart,
-  Slideshow,
+  File, 
+  FileText,
+  FileSpreadsheet,
+  Presentation,
   Image,
-  VideoFile,
-  AudioFile,
+  Video,
+  Music,
   Code,
-  Archive
-} from '@mui/icons-material';
+  Archive,
+  Loader2,
+  AlertCircle,
+  ChevronRight
+} from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 
 interface FileItem {
   name: string;
@@ -46,38 +37,38 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
 
   const getFileIcon = (fileName: string, isDirectory: boolean) => {
     if (isDirectory) {
-      return <Folder sx={{ color: '#3b82f6' }} />;
+      return <Folder className="w-5 h-5 text-blue-500" />;
     }
 
     const ext = fileName.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'pdf':
-        return <PictureAsPdf sx={{ color: '#ef4444' }} />;
+        return <FileText className="w-5 h-5 text-red-500" />;
       case 'doc':
       case 'docx':
-        return <Description sx={{ color: '#2563eb' }} />;
+        return <FileText className="w-5 h-5 text-blue-600" />;
       case 'xls':
       case 'xlsx':
-        return <TableChart sx={{ color: '#059669' }} />;
+        return <FileSpreadsheet className="w-5 h-5 text-green-600" />;
       case 'ppt':
       case 'pptx':
-        return <Slideshow sx={{ color: '#dc2626' }} />;
+        return <Presentation className="w-5 h-5 text-red-600" />;
       case 'jpg':
       case 'jpeg':
       case 'png':
       case 'gif':
       case 'bmp':
       case 'svg':
-        return <Image sx={{ color: '#7c3aed' }} />;
+        return <Image className="w-5 h-5 text-purple-600" />;
       case 'mp4':
       case 'avi':
       case 'mov':
       case 'wmv':
-        return <VideoFile sx={{ color: '#db2777' }} />;
+        return <Video className="w-5 h-5 text-pink-600" />;
       case 'mp3':
       case 'wav':
       case 'flac':
-        return <AudioFile sx={{ color: '#059669' }} />;
+        return <Music className="w-5 h-5 text-green-600" />;
       case 'js':
       case 'ts':
       case 'jsx':
@@ -88,13 +79,13 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
       case 'java':
       case 'cpp':
       case 'c':
-        return <Code sx={{ color: '#6366f1' }} />;
+        return <Code className="w-5 h-5 text-indigo-500" />;
       case 'zip':
       case 'rar':
       case '7z':
-        return <Archive sx={{ color: '#8b5cf6' }} />;
+        return <Archive className="w-5 h-5 text-purple-500" />;
       default:
-        return <InsertDriveFile sx={{ color: '#6b7280' }} />;
+        return <File className="w-5 h-5 text-gray-500" />;
     }
   };
 
@@ -192,85 +183,68 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <CircularProgress />
-        <Typography variant="body2" color="text.secondary">
-          載入中...
-        </Typography>
-      </Box>
+      <div className="flex justify-center items-center h-full flex-col gap-2">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+        <span className="text-sm text-gray-500">載入中...</span>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">
-          {error}
-        </Alert>
-      </Box>
+      <div className="p-2">
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm">{error}</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-full flex flex-col">
       {/* Breadcrumbs */}
-      <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0' }}>
-        <Breadcrumbs>
+      <div className="p-2 border-b border-slate-200">
+        <nav className="flex items-center space-x-1 text-sm text-gray-500">
           {getPathSegments(currentPath).map((segment, index) => (
-            <Link
-              key={index}
-              component="button"
-              variant="body2"
-              onClick={() => handleBreadcrumbClick(segment.path)}
-              sx={{
-                textDecoration: 'none',
-                color: '#64748b',
-                '&:hover': {
-                  color: '#3b82f6',
-                },
-              }}
-            >
-              {segment.name}
-            </Link>
+            <React.Fragment key={index}>
+              {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+              <button
+                onClick={() => handleBreadcrumbClick(segment.path)}
+                className="text-slate-600 hover:text-blue-500 transition-colors"
+              >
+                {segment.name}
+              </button>
+            </React.Fragment>
           ))}
-        </Breadcrumbs>
-      </Box>
+        </nav>
+      </div>
 
       {/* File List */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
-        <List>
+      <div className="flex-1 overflow-auto">
+        <div className="divide-y divide-slate-100">
           {items.map((item, index) => (
-            <ListItem
+            <div
               key={index}
-              button
               onClick={() => handleItemClick(item)}
-              sx={{
-                '&:hover': {
-                  backgroundColor: '#f8fafc',
-                },
-              }}
+              className="flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors"
             >
-              <ListItemIcon>
+              <div className="flex-shrink-0">
                 {getFileIcon(item.name, item.isDirectory)}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.name}
-                secondary={item.isDirectory ? '資料夾' : '文件'}
-              />
-            </ListItem>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">
+                  {item.name}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {item.isDirectory ? '資料夾' : '文件'}
+                </div>
+              </div>
+            </div>
           ))}
-        </List>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

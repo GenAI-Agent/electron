@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
-import { AttachFile, Image, Headset, Article, Extension, Psychology, Send, Edit } from '@mui/icons-material';
+import { Paperclip, Image, Headphones, FileText, Puzzle, Brain, Send, Edit } from 'lucide-react';
 import { useRouter } from 'next/router';
 import ResultPanel from './ResultPanel';
 import { sessionManager, FileContext } from '@/utils/sessionManager';
+import { cn } from '@/utils/cn';
 
 type PanelMode = 'result' | 'rules' | 'skills';
 
@@ -191,7 +191,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       };
 
       const lowerMessage = message.trim().toLowerCase();
-      const testCommand = testCommands[lowerMessage];
+      const testCommand = testCommands[lowerMessage as keyof typeof testCommands];
 
       if (testCommand) {
         console.log(`🧪 檢測到測試命令: ${lowerMessage}`);
@@ -461,107 +461,56 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   return (
-    <Box
+    <div
       ref={containerRef}
       data-agent-panel
-      sx={{
-        width: '100%',
-        height: '100%',
-        bgcolor: '#f0f4f8',
-        display: 'grid',
-        gridTemplateRows: `${heightPct}% 8px 1fr`,   // 上/分隔條/下
-        position: 'relative',
-      }}
+      className="w-full h-full bg-[#f0f4f8] grid relative"
+      style={{ gridTemplateRows: `${heightPct}% 8px 1fr` }}
     >
       {/* Top Panel */}
-      <Box
-        sx={{
-          position: 'relative',
-          // 移除白色背景，讓內容直接顯示在背景上
-          m: '4px',
-          mb: 0,
-          minHeight: 120,
-          overflow: 'hidden',
-          zIndex: 1, // 確保面板有正確的層級
-        }}
-      >
+      <div className="relative m-1 mb-0 min-h-[120px] overflow-hidden z-[1]">
+        {/* 移除白色背景，讓內容直接顯示在背景上 */}
         {/* 刷新按鈕 - 左上角 */}
-        <Box sx={{
-          position: 'absolute',
-          top: 8,
-          left: 10,
-          zIndex: 10,
-          bgcolor: 'rgba(240, 244, 248, 0.95)',
-          borderRadius: '6px',
-          padding: '4px',
-          border: '1px solid rgba(226, 232, 240, 0.5)'
-        }}>
-          <IconButton
-            size="small"
+        <div className="absolute top-2 left-[10px] z-10 bg-[rgba(240,244,248,0.95)] rounded-md p-1 border border-[rgba(226,232,240,0.5)]">
+          <button
             onClick={handleRefreshSession}
-            sx={{
-              color: '#64748b',
-              '&:hover': { bgcolor: '#f1f5f9' },
-              width: 24,
-              height: 24
-            }}
+            className="text-slate-600 hover:bg-slate-100 w-6 h-6 flex items-center justify-center rounded transition-colors"
             title="新建 Session"
           >
-            <Edit sx={{ fontSize: 14 }} />
-          </IconButton>
-        </Box>
+            <Edit className="w-[14px] h-[14px]" />
+          </button>
+        </div>
 
         {/* Toggle - 右上角 */}
-        <Box sx={{
-          position: 'absolute',
-          top: 8,
-          right: 10, // 增加 2px 距離，從 8px 改為 10px
-          display: 'flex',
-          gap: '4px',
-          zIndex: 10, // 增加 z-index 確保不被遮蓋
-          bgcolor: 'rgba(240, 244, 248, 0.95)', // 改為背景色的半透明版本
-          borderRadius: '6px',
-          padding: '4px',
-          border: '1px solid rgba(226, 232, 240, 0.5)' // 添加淡邊框
-        }}>
-          <IconButton
-            size="small"
+        <div className="absolute top-2 right-[10px] flex gap-1 z-10 bg-[rgba(240,244,248,0.95)] rounded-md p-1 border border-[rgba(226,232,240,0.5)]">
+          <button
             onClick={() => setPanelMode('result')}
-            sx={{
-              color: panelMode === 'result' ? '#64748b' : '#cbd5e1',
-              '&:hover': { bgcolor: '#f1f5f9' },
-              width: 24,
-              height: 24
-            }}
+            className={cn(
+              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
+              panelMode === 'result' ? "text-slate-600" : "text-slate-300"
+            )}
           >
-            <Article sx={{ fontSize: 14 }} />
-          </IconButton>
-          <IconButton
-            size="small"
+            <FileText className="w-[14px] h-[14px]" />
+          </button>
+          <button
             onClick={() => setPanelMode('rules')}
-            sx={{
-              color: panelMode === 'rules' ? '#64748b' : '#cbd5e1',
-              '&:hover': { bgcolor: '#f1f5f9' },
-              width: 24,
-              height: 24
-            }}
+            className={cn(
+              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
+              panelMode === 'rules' ? "text-slate-600" : "text-slate-300"
+            )}
           >
-            <Extension sx={{ fontSize: 14 }} />
-          </IconButton>
-          <IconButton
-            size="small"
+            <Puzzle className="w-[14px] h-[14px]" />
+          </button>
+          <button
             onClick={() => setPanelMode('skills')}
-            sx={{
-              color: panelMode === 'skills' ? '#64748b' : '#cbd5e1',
-              '&:hover': { bgcolor: '#f1f5f9' },
-              width: 24,
-              height: 24
-            }}
+            className={cn(
+              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
+              panelMode === 'skills' ? "text-slate-600" : "text-slate-300"
+            )}
           >
-            <Psychology sx={{ fontSize: 14 }} />
-          </IconButton>
-
-        </Box>
+            <Brain className="w-[14px] h-[14px]" />
+          </button>
+        </div>
 
         <ResultPanel
           mode={panelMode}
@@ -571,36 +520,14 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           isLoading={isLoading}
           messages={messages}
         />
-      </Box>
+      </div>
 
       {/* Resizer */}
-      <Box
+      <div
         role="separator"
         aria-orientation="horizontal"
-        className="drag-handle drag-handle-vertical"
-        sx={{
-          height: '8px',
-          width: '100%',
-          cursor: 'row-resize',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          zIndex: 1000,
-          WebkitAppRegion: 'no-drag',
-          userSelect: 'none',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            left: 8, right: 8,
-            top: '50%',
-            height: '1px',
-            bgcolor: '#e2e8f0',
-            transform: 'translateY(-50%)',
-            pointerEvents: 'none',
-          },
-          '&:hover': { backgroundColor: '#f8fafc' },
-        }}
+        className="drag-handle drag-handle-vertical h-2 w-full cursor-row-resize flex items-center justify-center relative z-[1000] select-none hover:bg-slate-50 before:content-[''] before:absolute before:left-2 before:right-2 before:top-1/2 before:h-px before:bg-slate-200 before:-translate-y-1/2 before:pointer-events-none"
+        style={{ WebkitAppRegion: 'no-drag' }}
         onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -611,132 +538,74 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           e.stopPropagation();
           startDrag(e.touches[0].clientY);
         }}
-      />
+      ></div>
 
       {/* Bottom Panel (Input) */}
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        p: '8px',
-        pr: '10px', // 增加右邊距 2px，從 8px 改為 10px
-        position: 'relative',
-        zIndex: 2, // 確保輸入框區域在上層
-        bgcolor: '#f0f4f8' // 確保有背景色
-      }}>
-        <Box
-          component="form"
+      <div className="flex flex-col min-h-0 p-2 pr-[10px] relative z-[2] bg-[#f0f4f8]">
+        <form
           onSubmit={handleSubmit}
-          sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}
+          className="flex-1 flex flex-col min-h-0 relative"
         >
-          <TextField
-            fullWidth
-            multiline
-            placeholder="輸入文字"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-            autoFocus
-            onClick={(e) => {
-              // 確保點擊任何地方都能聚焦到輸入框
-              const textarea = e.currentTarget.querySelector('textarea');
-              if (textarea) {
-                textarea.focus();
-              }
-            }}
-            sx={{
-              flex: 1,
-              cursor: 'text',
-              maxWidth: '50vw', // 限制最大寬度為頁面寬度的一半
-              '& .MuiOutlinedInput-root': {
-                bgcolor: '#f0f4f8', // 改為與背景色一致
-                borderRadius: '8px',
-                height: '100%',
-                alignItems: 'flex-start',
-                cursor: 'text',
-                '& fieldset': { borderColor: '#e2e8f0' },
-                '&:hover fieldset': { borderColor: '#cbd5e1' },
-                '&.Mui-focused fieldset': { borderColor: '#94a3b8' },
-              },
-              // 多行 textarea 本體
-              '& .MuiOutlinedInput-inputMultiline': {
-                paddingTop: '8px',
-                paddingLeft: '12px',
-                paddingRight: '40px',
-                paddingBottom: '8px',
-                margin: 0,
-                fontSize: '10px !important',  // 更小的字體
-                lineHeight: 1.3,
-                color: '#1a202c',
-                cursor: 'text !important',
-                '&::placeholder': { color: '#a0aec0', opacity: 1 },
-              },
-              '& textarea': {
-                cursor: 'text !important',
-                resize: 'none',
-                fontSize: '12px !important'  // 確保 textarea 也是小字體
-              },
-              // 額外確保所有輸入相關元素都是小字體
-              '& input, & textarea, & .MuiInputBase-input': {
-                fontSize: '12px !important'
-              }
-            }}
-            slotProps={{
-              input: {
-                style: { cursor: 'text' }
-              }
-            }}
-          />
+          <div className="flex-1 cursor-text max-w-[50vw] relative">
+            <textarea
+              className="w-full h-full bg-[#f0f4f8] rounded-lg border border-slate-200 hover:border-slate-300 focus:border-slate-400 focus:outline-none pt-2 pl-3 pr-10 pb-2 text-xs leading-tight text-gray-800 cursor-text resize-none placeholder:text-gray-400"
+              placeholder="輸入文字"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              autoFocus
+              onClick={(e) => {
+                e.currentTarget.focus();
+              }}
+              style={{
+                fontSize: '12px',
+                cursor: 'text'
+              }}
+            />
+          </div>
 
           {/* 發送按鈕 */}
-          <IconButton
+          <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            sx={{
-              position: 'absolute',
-              bottom: '8px',
-              right: '8px',
-              width: '28px',
-              height: '28px',
-              color: input.trim() && !isLoading ? '#3b82f6' : '#94a3b8',
-              '&:hover': {
-                bgcolor: input.trim() && !isLoading ? '#f1f5f9' : 'transparent'
-              },
-              '&:disabled': {
-                color: '#94a3b8'
-              }
-            }}
+            className={cn(
+              "absolute bottom-2 right-2 w-7 h-7 flex items-center justify-center rounded transition-colors",
+              input.trim() && !isLoading
+                ? "text-blue-500 hover:bg-slate-100"
+                : "text-slate-400",
+              "disabled:text-slate-400"
+            )}
           >
             {isLoading ? (
-              <CircularProgress size={16} />
+              <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
             ) : (
-              <Send sx={{ fontSize: 16 }} />
+              <Send className="w-4 h-4" />
             )}
-          </IconButton>
-        </Box>
+          </button>
+        </form>
 
         {/* Bottom Icons */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: '4px', flexShrink: 0 }}>
-          <Box sx={{ display: 'flex', gap: '4px' }}>
-            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 20, height: 20 }}>
-              <AttachFile sx={{ fontSize: 14 }} />
-            </IconButton>
-            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 20, height: 20 }}>
-              <Image sx={{ fontSize: 14 }} />
-            </IconButton>
-            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' }, width: 20, height: 20 }}>
-              <Headset sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Box>
-          <Box />
-        </Box>
-      </Box>
-    </Box>
+        <div className="flex justify-between items-center pt-1 flex-shrink-0">
+          <div className="flex gap-1">
+            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
+              <Paperclip className="w-[14px] h-[14px]" />
+            </button>
+            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
+              <Image className="w-[14px] h-[14px]" />
+            </button>
+            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
+              <Headphones className="w-[14px] h-[14px]" />
+            </button>
+          </div>
+          <div />
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, IconButton, Grid, Chip } from '@mui/material';
-import { Refresh, Download, ZoomIn, ZoomOut, Fullscreen } from '@mui/icons-material';
+import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface ChartInfo {
   filename: string;
@@ -146,172 +146,149 @@ const ChartViewer: React.FC<ChartViewerProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography>載入圖表中...</Typography>
-      </Box>
+      <div className="p-2 text-center">
+        <p>載入圖表中...</p>
+      </div>
     );
   }
 
   if (charts.length === 0) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography color="text.secondary">
+      <div className="p-2 text-center">
+        <p className="text-gray-500">
           尚未創建任何圖表
-        </Typography>
-        <IconButton onClick={handleRefresh} sx={{ mt: 1 }}>
-          <Refresh />
-        </IconButton>
-      </Box>
+        </p>
+        <button
+          onClick={handleRefresh}
+          className="mt-2 p-2 rounded hover:bg-gray-100 transition-colors"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 2 }}>
+    <div className="p-2">
       {/* 標題和刷新按鈕 */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
+      <div className="flex justify-between items-center mb-2">
+        <h6 className="text-lg font-semibold">
           圖表庫 ({charts.length})
-        </Typography>
-        <IconButton onClick={handleRefresh} size="small">
-          <Refresh />
-        </IconButton>
-      </Box>
+        </h6>
+        <button
+          onClick={handleRefresh}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* 圖表網格 */}
-      <Grid container spacing={2}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {charts.map((chart, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            <Card 
-              sx={{ 
-                cursor: 'pointer',
-                '&:hover': { 
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)',
-                  transition: 'all 0.2s ease-in-out'
-                }
-              }}
-              onClick={() => setSelectedChart(chart)}
-            >
-              <CardContent sx={{ p: 2 }}>
-                {/* 圖表類型標籤 */}
-                <Box sx={{ mb: 1 }}>
-                  <Chip
-                    label={getChartTypeName(chart.filename)}
-                    size="small"
-                    sx={{
-                      bgcolor: getChartTypeColor(chart.filename),
-                      color: 'white',
-                      fontSize: '0.75rem'
-                    }}
-                  />
-                </Box>
-
-                {/* 文件名 */}
-                <Typography 
-                  variant="subtitle2" 
-                  sx={{ 
-                    fontWeight: 'bold',
-                    mb: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                  title={chart.filename}
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+            onClick={() => setSelectedChart(chart)}
+          >
+            <div className="p-4">
+              {/* 圖表類型標籤 */}
+              <div className="mb-2">
+                <span
+                  className="inline-block px-2 py-1 text-xs text-white rounded-full"
+                  style={{ backgroundColor: getChartTypeColor(chart.filename) }}
                 >
-                  {chart.filename}
-                </Typography>
+                  {getChartTypeName(chart.filename)}
+                </span>
+              </div>
 
-                {/* 文件信息 */}
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  大小: {formatFileSize(chart.size)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  創建: {formatDate(chart.created)}
-                </Typography>
+              {/* 文件名 */}
+              <h3
+                className="font-semibold text-sm mb-2 truncate"
+                title={chart.filename}
+              >
+                {chart.filename}
+              </h3>
 
-                {/* 操作按鈕 */}
-                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                  <IconButton 
-                    size="small" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(chart);
-                    }}
-                    title="下載"
-                  >
-                    <Download sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              {/* 文件信息 */}
+              <p className="text-xs text-gray-500">
+                大小: {formatFileSize(chart.size)}
+              </p>
+              <p className="text-xs text-gray-500">
+                創建: {formatDate(chart.created)}
+              </p>
+
+              {/* 操作按鈕 */}
+              <div className="mt-2 flex gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(chart);
+                  }}
+                  title="下載"
+                  className="p-1 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
       {/* 圖表預覽對話框 */}
       {selectedChart && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            p: 2
-          }}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999] p-2"
           onClick={() => setSelectedChart(null)}
         >
-          <Box
-            sx={{
-              bgcolor: 'white',
-              borderRadius: 2,
-              p: 2,
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              overflow: 'auto'
-            }}
+          <div
+            className="bg-white rounded-lg p-4 max-w-[90vw] max-h-[90vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 預覽標題 */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
+            <div className="flex justify-between items-center mb-4">
+              <h6 className="text-lg font-semibold">
                 {selectedChart.filename}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton size="small" onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}>
-                  <ZoomOut />
-                </IconButton>
-                <IconButton size="small" onClick={() => setZoomLevel(Math.min(3, zoomLevel + 0.25))}>
-                  <ZoomIn />
-                </IconButton>
-                <IconButton size="small" onClick={() => handleDownload(selectedChart)}>
-                  <Download />
-                </IconButton>
-              </Box>
-            </Box>
+              </h6>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}
+                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(Math.min(3, zoomLevel + 0.25))}
+                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDownload(selectedChart)}
+                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
             {/* 圖片顯示 */}
-            <Box sx={{ textAlign: 'center' }}>
+            <div className="text-center">
               <img
                 src={`file://${selectedChart.filepath}`}
                 alt={selectedChart.filename}
+                className="max-w-full transition-transform duration-200 ease-in-out"
                 style={{
-                  maxWidth: '100%',
                   maxHeight: '70vh',
-                  transform: `scale(${zoomLevel})`,
-                  transition: 'transform 0.2s ease-in-out'
+                  transform: `scale(${zoomLevel})`
                 }}
               />
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

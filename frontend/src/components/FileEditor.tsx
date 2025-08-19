@@ -1,29 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-  Toolbar,
-  Divider,
-  Alert,
-  CircularProgress,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  Close as CloseIcon,
-  Highlight as HighlightIcon,
-  Edit as EditIcon,
-  Refresh as RefreshIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+  Save,
+  X,
+  Highlighter,
+  Edit,
+  RefreshCw,
+  Trash2,
+  Loader2
+} from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface FileEditorProps {
   filePath: string;
@@ -205,145 +190,142 @@ const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSave }) =>
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-        <CircularProgress />
-        <Typography variant="body1" sx={{ ml: 2 }}>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        <span className="ml-2 text-base">
           正在加載文件...
-        </Typography>
-      </Box>
+        </span>
+      </div>
     );
   }
 
   return (
-    <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-full flex flex-col bg-white rounded-lg shadow-lg">
       {/* 工具欄 */}
-      <Toolbar variant="dense" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="h6" sx={{ flex: 1, fontSize: '1rem' }}>
+      <div className="flex items-center px-4 py-2 border-b border-gray-200">
+        <h6 className="flex-1 text-base font-medium">
           {filePath.split(/[/\\]/).pop()}
-        </Typography>
+        </h6>
         
         {isModified && (
-          <Chip
-            label="已修改"
-            size="small"
-            color="warning"
-            sx={{ mr: 1 }}
-          />
+          <span className="mr-2 px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full">
+            已修改
+          </span>
         )}
         
-        <IconButton
-          size="small"
+        <button
           onClick={loadFile}
           title="重新加載"
           disabled={loading}
+          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <RefreshIcon />
-        </IconButton>
+          <RefreshCw className="w-4 h-4" />
+        </button>
         
-        <IconButton
-          size="small"
+        <button
           onClick={clearHighlights}
           title="清除高亮"
           disabled={highlightRanges.length === 0}
+          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <HighlightIcon />
-        </IconButton>
+          <Highlighter className="w-4 h-4" />
+        </button>
         
-        <IconButton
-          size="small"
+        <button
           onClick={saveFile}
           title="保存文件"
           disabled={!isModified || saving}
+          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {saving ? <CircularProgress size={20} /> : <SaveIcon />}
-        </IconButton>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        </button>
         
-        <IconButton
-          size="small"
+        <button
           onClick={() => setShowDeleteDialog(true)}
           title="刪除文件"
-          color="error"
+          className="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors"
         >
-          <DeleteIcon />
-        </IconButton>
+          <Trash2 className="w-4 h-4" />
+        </button>
         
-        <IconButton
-          size="small"
+        <button
           onClick={onClose}
           title="關閉"
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
         >
-          <CloseIcon />
-        </IconButton>
-      </Toolbar>
+          <X className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* 錯誤和成功消息 */}
       {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ m: 1 }}>
-          {error}
-        </Alert>
+        <div className="m-2 p-3 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 text-red-500 hover:text-red-700"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
       
       {success && (
-        <Alert severity="success" onClose={() => setSuccess(null)} sx={{ m: 1 }}>
-          {success}
-        </Alert>
+        <div className="m-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+          <span className="text-sm text-green-700">{success}</span>
+          <button
+            onClick={() => setSuccess(null)}
+            className="ml-2 text-green-500 hover:text-green-700"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* 文件內容編輯區 */}
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex-1 flex overflow-hidden p-2">
         {/* 編輯模式 */}
-        <TextField
-          multiline
-          fullWidth
+        <textarea
+          className="w-full h-full p-3 border border-gray-300 rounded-md font-mono text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          variant="outlined"
-          sx={{
-            flex: 1,
-            '& .MuiOutlinedInput-root': {
-              height: '100%',
-              alignItems: 'flex-start',
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-              lineHeight: 1.5
-            },
-            '& .MuiOutlinedInput-input': {
-              height: '100% !important',
-              overflow: 'auto !important'
-            }
-          }}
-          InputProps={{
-            style: {
-              fontFamily: 'Consolas, Monaco, "Courier New", monospace'
-            }
+          style={{
+            fontFamily: 'Consolas, Monaco, "Courier New", monospace'
           }}
         />
-      </Box>
+      </div>
 
       {/* 刪除確認對話框 */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-      >
-        <DialogTitle>確認刪除</DialogTitle>
-        <DialogContent>
-          <Typography>
-            確定要刪除文件 "{filePath.split(/[/\\]/).pop()}" 嗎？
-          </Typography>
-          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-            此操作無法撤銷！
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)}>
-            取消
-          </Button>
-          <Button onClick={deleteFile} color="error" variant="contained">
-            刪除
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Paper>
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
+              <p className="text-gray-700 mb-2">
+                確定要刪除文件 "{filePath.split(/[/\\]/).pop()}" 嗎？
+              </p>
+              <p className="text-sm text-red-600">
+                此操作無法撤銷！
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 rounded-b-lg">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={deleteFile}
+                className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors"
+              >
+                刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -4,19 +4,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Alert,
-  CircularProgress,
-  Box,
-  Stepper,
-  Step,
-  StepLabel
-} from '@mui/material';
+import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
 
 interface OAuthConfig {
   clientId: string;
@@ -173,82 +163,98 @@ const GoogleAuth: React.FC = () => {
   }, [router]);
 
   return (
-    <Card sx={{ maxWidth: 600, margin: 'auto', mt: 4 }}>
-      <CardContent>
-        <Typography variant="h5" component="h2" gutterBottom>
+    <div className="max-w-[600px] mx-auto mt-8 bg-white rounded-lg shadow-sm border border-slate-200">
+      <div className="p-6">
+        <h2 className="text-2xl font-semibold mb-2">
           Google OAuth 登入
-        </Typography>
+        </h2>
 
-        <Typography variant="body2" color="text.secondary" paragraph>
+        <p className="text-sm text-gray-600 mb-6">
           使用 OAuth 2.0 + PKCE 進行安全的 Google 帳戶登入
-        </Typography>
+        </p>
 
         {isAuthenticating && (
-          <Box sx={{ mb: 3 }}>
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              {steps.map((label, index) => (
+                <div key={label} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center">
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                      index < activeStep ? "bg-green-500 text-white" :
+                      index === activeStep ? "bg-primary-500 text-white" :
+                      "bg-gray-200 text-gray-500"
+                    )}>
+                      {index < activeStep ? <Check className="w-4 h-4" /> : index + 1}
+                    </div>
+                    <span className="text-xs mt-1 text-center">{label}</span>
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className={cn(
+                      "flex-1 h-0.5 mx-2",
+                      index < activeStep ? "bg-green-500" : "bg-gray-200"
+                    )} />
+                  )}
+                </div>
               ))}
-            </Stepper>
-          </Box>
+            </div>
+          </div>
         )}
 
         {authResult && (
-          <Alert 
-            severity={authResult.success ? 'success' : 'error'} 
-            sx={{ mb: 2 }}
-          >
+          <div className={cn(
+            "p-4 mb-4 rounded-lg border",
+            authResult.success 
+              ? "bg-green-50 border-green-200 text-green-900" 
+              : "bg-red-50 border-red-200 text-red-900"
+          )}>
             {authResult.success ? (
               <div>
-                <Typography variant="subtitle2">認證成功！瀏覽器登入狀態已設置</Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <h3 className="font-semibold mb-1">認證成功！瀏覽器登入狀態已設置</h3>
+                <p className="text-sm mt-1">
                   ✅ Google 登入狀態已複製到瀏覽器
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold', color: 'success.main' }}>
+                </p>
+                <p className="text-sm mt-1 font-bold">
                   現在可以點擊「前往 Google 」來進入登入狀態！
-                </Typography>
+                </p>
               </div>
             ) : (
-              <Typography variant="body2">
+              <p className="text-sm">
                 錯誤: {authResult.error}
-              </Typography>
+              </p>
             )}
-          </Alert>
+          </div>
         )}
 
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button
-            variant="contained"
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             onClick={handleStartAuth}
             disabled={isAuthenticating}
-            startIcon={isAuthenticating ? <CircularProgress size={20} /> : null}
           >
+            {isAuthenticating && <Loader2 className="w-4 h-4 animate-spin" />}
             {isAuthenticating ? '登入中...' : '開始 Google 登入'}
-          </Button>
+          </button>
 
-          <Button
-            variant="outlined"
+          <button
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             onClick={() => router.push('/')}
             disabled={isAuthenticating}
           >
             返回首頁
-          </Button>
+          </button>
 
           {authResult?.success && (
-            <Button
-              variant="contained"
-              color="success"
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               onClick={handleNavigateToGoogle}
-              sx={{ mr: 1 }}
             >
               前往 Google (已登入)
-            </Button>
+            </button>
           )}
-        </Box>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 };
 
