@@ -1,5 +1,5 @@
 {
-  "id": "email-assistant-rule",
+  "id": "email-assistant",
   "name": "email_assistant",
   "description": "專門協助撰寫和管理郵件的規則",
   "model": "gpt-4.1",

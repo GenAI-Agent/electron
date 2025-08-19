@@ -49,8 +49,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
   // 刷新 session 功能
   const handleRefreshSession = () => {
-    // 創建新的 session
-    const newSessionId = sessionManager.createNewSession();
+    // 強制刷新 session ID（保留文件上下文）
+    const newSessionId = sessionManager.forceRefreshSession();
 
     // 清空當前狀態
     setMessages([]);
@@ -59,7 +59,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     setUsedTools([]);
     setInput('');
 
-    console.log(`🔄 已創建新 session: ${newSessionId}`);
+    console.log(`🔄 已刷新 session: ${newSessionId}`);
   };
 
   // 內部百分比狀態（可被 props 初始化）

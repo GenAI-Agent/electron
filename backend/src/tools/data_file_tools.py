@@ -104,7 +104,7 @@ class DataFileTools:
                 "success": True,
                 "format": "csv",
                 "schema": schema,
-                "data": df.to_dict('records'),
+                "data": df.head(1).to_dict('records'),  # 只返回1筆樣本數據，而不是完整數據
                 "total_rows": len(df),
                 "session_id": session_id
             }
@@ -164,7 +164,7 @@ class DataFileTools:
                     "success": True,
                     "format": "json",
                     "schema": schema,
-                    "data": filtered_data,
+                    "data": filtered_data[:1] if filtered_data else [],  # 只返回1筆樣本數據
                     "session_id": session_id
                 }
             else:
@@ -279,8 +279,8 @@ class DataFileTools:
                     'columns': df.columns.tolist(),
                     'types': {col: str(df[col].dtype) for col in df.columns},
                     'row_count': len(df),
-                    'data': df.to_dict('records'),
-                    'sample_data': df.head(3).to_dict('records') if len(df) > 0 else []
+                    'data': df.head(1).to_dict('records'),  # 只返回1筆樣本數據
+                    'sample_data': df.head(1).to_dict('records') if len(df) > 0 else []
                 }
             
             return {

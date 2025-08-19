@@ -17,17 +17,6 @@ logger = logging.getLogger(__name__)
 
 class ContentAnalyzer:
     """內容分析器"""
-    
-    def __init__(self):
-        self.code_patterns = {
-            'python': [r'def\s+\w+', r'class\s+\w+', r'import\s+\w+', r'from\s+\w+\s+import'],
-            'javascript': [r'function\s+\w+', r'const\s+\w+', r'let\s+\w+', r'var\s+\w+'],
-            'html': [r'<\w+[^>]*>', r'</\w+>', r'<!DOCTYPE'],
-            'css': [r'\w+\s*{', r'}\s*$', r'@\w+'],
-            'json': [r'^\s*{', r'^\s*\[', r'"\w+":\s*'],
-            'markdown': [r'^#+\s+', r'^\*\s+', r'^\d+\.\s+', r'\[.*\]\(.*\)'],
-        }
-    
     def analyze_segment(self, segment: Dict[str, Any], file_path: str = "") -> Dict[str, Any]:
         """
         分析文件段落
@@ -569,19 +558,21 @@ class ContentAnalyzer:
     def _detect_column_type(self, values: List[str]) -> str:
         """檢測列的數據類型"""
         non_empty_values = [v for v in values if v.strip()]
-        
+
         if not non_empty_values:
             return 'empty'
-        
+
         # 檢查是否為數字
         numeric_count = 0
+        numeric_values = []
         for value in non_empty_values:
             try:
-                float(value)
+                num_val = float(value)
+                numeric_values.append(num_val)
                 numeric_count += 1
             except ValueError:
                 pass
-        
+
         if numeric_count == len(non_empty_values):
             # 檢查是否為整數
             integer_count = 0
@@ -591,9 +582,22 @@ class ContentAnalyzer:
                     integer_count += 1
                 except ValueError:
                     pass
-            
-            return 'integer' if integer_count == len(non_empty_values) else 'float'
-        
+
+            if integer_count == len(non_empty_values):
+                # 檢查是否為ID類型
+                unique_ratio = len(set(non_empty_values)) / len(non_empty_values)
+                all_positive = all(float(v) > 0 for v in non_empty_values)
+                avg_value = sum(numeric_values) / len(numeric_values) if numeric_values else 0
+                has_large_values = avg_value > 1000
+
+                # ID判斷條件：高唯一性 + 正整數 + 較大數值
+                if unique_ratio > 0.9 and all_positive and has_large_values:
+                    return 'id'
+                else:
+                    return 'integer'
+            else:
+                return 'float'
+
         # 檢查是否為布爾值
         boolean_values = {'true', 'false', '1', '0', 'yes', 'no', 'y', 'n'}
         if all(v.lower() in boolean_values for v in non_empty_values):

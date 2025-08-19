@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
+import DataFileViewer from './DataFileViewer';
 
 interface FileViewerProps {
   filePath: string;
@@ -45,7 +46,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
   };
 
   const isOfficeFile = (ext: string) => {
-    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+    return ['doc', 'docx', 'ppt', 'pptx'].includes(ext);
   };
 
   const isVideoFile = (ext: string) => {
@@ -268,13 +269,11 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       );
     }
 
-    // Word/Excel文件
-    if (['doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
+    // Word文件
+    if (['doc', 'docx'].includes(ext)) {
       const fileTypeNames = {
         'doc': 'Word 文檔',
-        'docx': 'Word 文檔',
-        'xls': 'Excel 試算表',
-        'xlsx': 'Excel 試算表'
+        'docx': 'Word 文檔'
       };
 
       return (

@@ -50,12 +50,48 @@ class DataAnalysisTools:
                 result["metadata"]["original_format"] = "json"
 
             elif file_ext == '.csv':
-                # CSV 轉換為 JSON 格式
-                df = pd.read_csv(file_path)
-                result["data"] = df.to_dict('records')
-                result["metadata"]["original_format"] = "csv"
-                result["metadata"]["columns"] = list(df.columns)
-                result["metadata"]["shape"] = df.shape
+                # CSV 轉換為 JSON 格式，處理多行欄位和編碼問題
+                try:
+                    # 嘗試不同的編碼和參數組合
+                    encodings = ['utf-8', 'utf-8-sig', 'big5', 'gbk', 'cp1252']
+                    df = None
+
+                    for encoding in encodings:
+                        try:
+                            df = pd.read_csv(
+                                file_path,
+                                encoding=encoding,
+                                quotechar='"',           # 指定引號字符
+                                quoting=1,               # QUOTE_ALL
+                                skipinitialspace=True,   # 跳過初始空格
+                                on_bad_lines='skip',     # 跳過有問題的行
+                                engine='python'          # 使用Python引擎，更好處理複雜CSV
+                            )
+                            logger.info(f"✅ 成功使用編碼 {encoding} 讀取CSV檔案")
+                            break
+                        except (UnicodeDecodeError, pd.errors.ParserError) as e:
+                            logger.warning(f"⚠️ 編碼 {encoding} 讀取失敗: {e}")
+                            continue
+
+                    if df is None:
+                        raise ValueError("無法使用任何編碼成功讀取CSV檔案")
+
+                    # 清理數據：移除完全空白的行
+                    df = df.dropna(how='all')
+
+                    # 處理多行內容：將換行符號轉換為空格
+                    for col in df.columns:
+                        if df[col].dtype == 'object':  # 字符串列
+                            df[col] = df[col].astype(str).str.replace('\n', ' ').str.replace('\r', ' ')
+
+                    result["data"] = df.to_dict('records')
+                    result["metadata"]["original_format"] = "csv"
+                    result["metadata"]["columns"] = list(df.columns)
+                    result["metadata"]["shape"] = df.shape
+
+                except Exception as csv_error:
+                    logger.error(f"CSV讀取失敗: {csv_error}")
+                    raise ValueError(f"CSV檔案讀取失敗: {csv_error}")
 
             elif file_ext in ['.xlsx', '.xls']:
                 # Excel 轉換為 JSON 格式
@@ -75,7 +111,7 @@ class DataAnalysisTools:
             raise
     
     async def group_by_analysis(self, file_path: str, group_column: str, value_column: str,
-                               session_id: str = "default") -> Dict[str, Any]:
+                               operation: str = "sum", session_id: str = "default") -> Dict[str, Any]:
         """
         通用分組分析工具（基於 JSON 數據）
 
@@ -83,6 +119,7 @@ class DataAnalysisTools:
             file_path: 數據文件路徑
             group_column: 分組列名
             value_column: 數值列名
+            operation: 統計操作 (sum, mean, count, max, min)
             session_id: 會話ID
 
         Returns:
@@ -120,10 +157,23 @@ class DataAnalysisTools:
                 group_val = str(item.get(group_column, "未知"))
                 value_val = item.get(value_column, 0)
 
-                # 嘗試轉換為數字
+                # 嘗試轉換為數字，處理各種格式
                 try:
-                    value_val = float(value_val)
+                    if value_val is None or value_val == "":
+                        value_val = 0
+                    else:
+                        # 處理字符串格式的數字
+                        if isinstance(value_val, str):
+                            # 移除逗號和空格
+                            value_val = value_val.replace(",", "").replace(" ", "").strip()
+                            if value_val == "":
+                                value_val = 0
+                            else:
+                                value_val = float(value_val)
+                        else:
+                            value_val = float(value_val)
                 except (ValueError, TypeError):
+                    logger.warning(f"⚠️ 無法轉換數值: {repr(item.get(value_column))} -> 設為 0")
                     value_val = 0
 
                 if group_val not in groups:
@@ -139,13 +189,14 @@ class DataAnalysisTools:
                 "session_id": session_id,
                 "group_column": group_column,
                 "value_column": value_column,
+                "operation": operation,
                 "results": {}
             }
 
             for group_val, values in groups.items():
                 if values:
                     values_array = np.array(values)
-                    result["results"][group_val] = {
+                    stats = {
                         "count": len(values),
                         "sum": float(np.sum(values_array)),
                         "mean": float(np.mean(values_array)),
@@ -155,6 +206,15 @@ class DataAnalysisTools:
                         "max": float(np.max(values_array))
                     }
 
+                    # 根據operation返回主要結果
+                    if operation in stats:
+                        result["results"][group_val] = {
+                            "value": stats[operation],
+                            "all_stats": stats
+                        }
+                    else:
+                        result["results"][group_val] = stats
+
             # 計算總體統計和佔比
             result["summary"] = {
                 "total_value": float(total_value),
@@ -163,7 +223,19 @@ class DataAnalysisTools:
 
             for group_val in result["results"]:
                 if total_value > 0:
-                    percentage = (result["results"][group_val]["sum"] / total_value) * 100
+                    # 安全地獲取 sum 值
+                    group_result = result["results"][group_val]
+                    if isinstance(group_result, dict):
+                        if "all_stats" in group_result:
+                            sum_value = group_result["all_stats"]["sum"]
+                        elif "sum" in group_result:
+                            sum_value = group_result["sum"]
+                        else:
+                            sum_value = 0
+                    else:
+                        sum_value = 0
+
+                    percentage = (sum_value / total_value) * 100
                     result["summary"]["group_percentages"][group_val] = round(percentage, 2)
 
             return result
@@ -380,7 +452,7 @@ class DataAnalysisTools:
                     "slope": float(model.coef_[0]),
                     "intercept": float(model.intercept_)
                 },
-                "data_points": len(clean_df)
+                "data_points": len(x_values)
             }
 
         except Exception as e:
@@ -550,63 +622,160 @@ class DataAnalysisTools:
             columns = list(first_item.keys())
             row_count = len(data_list)
 
+            # 選擇最少NaN值的資料筆作為樣本
+            def count_nan_values(row_dict):
+                """計算一筆資料中的NaN值數量"""
+                nan_count = 0
+                for value in row_dict.values():
+                    if value is None or value == "" or \
+                       (isinstance(value, float) and np.isnan(value)) or \
+                       (isinstance(value, str) and value.lower() in ['nan', 'null', 'none', 'na', '']):
+                        nan_count += 1
+                return nan_count
+
+            # 對所有資料按NaN數量排序，選擇最少NaN的1筆作為樣本
+            sorted_data = sorted(data_list, key=count_nan_values)
+            best_sample_data = sorted_data[:1]  # 確保只返回1筆最完整的資料
+
             info = {
-                "success": True,
                 "session_id": session_id,
-                "file_path": file_path,
-                "shape": [row_count, len(columns)],
+                "total_rows": row_count,
                 "columns": columns,
-                "sample_data": data_list[:3]
+                "sample_data": best_sample_data,  # 只包含1筆最完整的樣本數據
+                "data_shape": [row_count, len(columns)]  # 添加數據形狀信息
             }
 
             # 分析列類型和統計
             numeric_columns = []
             categorical_columns = []
+            id_columns = []
             column_stats = {}
+
+            def _is_id_column(col_name: str, numeric_values: list, non_null_values: list) -> bool:
+                """檢測是否為ID類型的列"""
+                if not numeric_values:
+                    return False
+
+                # 檢查列名是否包含ID相關關鍵字
+                id_keywords = ['id', 'no', 'code', 'pk', 'key', 'ref']
+                col_lower = col_name.lower()
+                has_id_keyword = any(keyword in col_lower for keyword in id_keywords)
+
+                # 檢查唯一性比例
+                unique_ratio = len(set(str(v) for v in non_null_values)) / len(non_null_values) if non_null_values else 0
+
+                # 檢查是否都是正整數
+                all_positive_integers = all(isinstance(v, (int, float)) and v > 0 and v == int(v) for v in numeric_values)
+
+                # 檢查數值範圍（ID通常是較大的數字）
+                if numeric_values:
+                    avg_value = sum(numeric_values) / len(numeric_values)
+                    has_large_values = avg_value > 1000  # ID通常是較大的數字
+                else:
+                    has_large_values = False
+
+                # 檢查長度一致性（轉為字符串後）
+                str_lengths = [len(str(int(v))) for v in numeric_values if v == int(v)]
+                length_consistency = len(set(str_lengths)) <= 2 if str_lengths else False  # 允許1-2種長度
+
+                # ID判斷條件：
+                # 1. 有ID關鍵字 + 高唯一性
+                # 2. 或者：高唯一性 + 正整數 + 大數值 + 長度一致
+                is_id = (has_id_keyword and unique_ratio > 0.8) or \
+                       (unique_ratio > 0.95 and all_positive_integers and has_large_values and length_consistency)
+
+                return is_id
+
+            def _filter_valid_values(values: list) -> list:
+                """過濾有效的數值，排除NaN和無效值"""
+                valid_values = []
+                for v in values:
+                    if v is not None and v != "" and not (isinstance(v, float) and np.isnan(v)):
+                        # 排除字符串形式的nan
+                        if isinstance(v, str) and v.lower() in ['nan', 'null', 'none', '']:
+                            continue
+                        valid_values.append(v)
+                return valid_values
 
             for col in columns:
                 values = [item.get(col) for item in data_list if col in item]
-                non_null_values = [v for v in values if v is not None and v != ""]
+                non_null_values = _filter_valid_values(values)
 
                 # 嘗試判斷是否為數值列
                 numeric_values = []
                 for v in non_null_values:
                     try:
-                        numeric_values.append(float(v))
+                        num_val = float(v)
+                        # 排除NaN值
+                        if not np.isnan(num_val):
+                            numeric_values.append(num_val)
                     except (ValueError, TypeError):
                         break
 
                 if len(numeric_values) == len(non_null_values) and numeric_values:
-                    # 數值列
-                    numeric_columns.append(col)
-                    column_stats[col] = {
-                        "type": "numeric",
-                        "count": len(numeric_values),
-                        "mean": np.mean(numeric_values),
-                        "std": np.std(numeric_values),
-                        "min": np.min(numeric_values),
-                        "max": np.max(numeric_values)
-                    }
+                    # 檢查是否為ID類型
+                    if _is_id_column(col, numeric_values, non_null_values):
+                        # ID列
+                        id_columns.append(col)
+                        column_stats[col] = {
+                            "type": "id",
+                            "count": len(numeric_values),
+                            "valid_count": len(numeric_values),
+                            "unique_count": len(set(numeric_values)),
+                            "min": float(np.min(numeric_values)),
+                            "max": float(np.max(numeric_values)),
+                            "sample_values": [float(v) for v in numeric_values[:5]]
+                        }
+                    else:
+                        # 數值列
+                        numeric_columns.append(col)
+                        # 使用有效數值計算統計量
+                        valid_numeric = [v for v in numeric_values if not np.isnan(v)]
+                        if valid_numeric:
+                            column_stats[col] = {
+                                "type": "numeric",
+                                "count": len(values),  # 總數量
+                                "valid_count": len(valid_numeric),  # 有效數字數量
+                                "mean": float(np.mean(valid_numeric)),
+                                "std": float(np.std(valid_numeric)),
+                                "min": float(np.min(valid_numeric)),
+                                "max": float(np.max(valid_numeric))
+                            }
+                        else:
+                            column_stats[col] = {
+                                "type": "numeric",
+                                "count": len(values),
+                                "valid_count": 0,
+                                "mean": None,
+                                "std": None,
+                                "min": None,
+                                "max": None
+                            }
                 else:
                     # 分類列
                     categorical_columns.append(col)
                     value_counts = {}
+                    # 只統計有效值，排除各種形式的空值
                     for v in non_null_values:
                         str_v = str(v)
-                        value_counts[str_v] = value_counts.get(str_v, 0) + 1
+                        # 排除各種形式的空值
+                        if str_v.lower() not in ['nan', 'null', 'none', '', 'na']:
+                            value_counts[str_v] = value_counts.get(str_v, 0) + 1
 
                     # 取前5個最常見的值
                     top_values = dict(sorted(value_counts.items(), key=lambda x: x[1], reverse=True)[:5])
 
                     column_stats[col] = {
                         "type": "categorical",
-                        "count": len(non_null_values),
+                        "count": len(values),  # 總數量
+                        "valid_count": len(non_null_values),  # 有效數據數量
                         "unique_count": len(value_counts),
                         "top_values": top_values
                     }
 
             info["numeric_columns"] = numeric_columns
             info["categorical_columns"] = categorical_columns
+            info["id_columns"] = id_columns
             info["column_stats"] = column_stats
 
             return info
@@ -629,10 +798,8 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> Dic
     return await data_analysis_tools.get_data_info(file_path, session_id)
 
 
-async def group_by_analysis_tool(file_path: str, group_column: str, value_column: str,
-                                session_id: str = "default") -> Dict[str, Any]:
-    """分組分析工具函數"""
-    return await data_analysis_tools.group_by_analysis(file_path, group_column, value_column, session_id)
+# 注意：group_by_analysis_tool 已在 langchain_local_file_tools.py 中定義
+# 這裡移除重複定義以避免衝突
 
 
 async def threshold_analysis_tool(file_path: str, value_column: str, threshold: float,

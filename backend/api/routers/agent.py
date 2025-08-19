@@ -5,7 +5,8 @@ Agent API 路由
 """
 
 import json
-from typing import AsyncGenerator, Dict, Any, Optional
+import numpy as np
+from typing import AsyncGenerator, Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -27,159 +28,65 @@ from supervisor_agent.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-# 工具轉換函數已移除，直接使用 LangChain 工具
-
-async def _preprocess_file(file_path: str, session_id: str) -> dict:
+def convert_numpy_types(obj):
     """
-    真正的文件預處理函數
+    遞歸轉換numpy類型為Python原生類型，解決JSON序列化問題
+    """
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    else:
+        return obj
+
+
+def compress_tool_result(tool_result: dict, max_data_items: int = 5) -> dict:
+    """
+    壓縮工具結果，避免對話歷史過長
 
     Args:
-        file_path: 文件路徑
-        session_id: 會話ID
+        tool_result: 工具執行結果
+        max_data_items: 最大保留的數據項目數量
 
     Returns:
-        文件 summary 字典，如果失敗返回 None
+        壓縮後的結果
     """
-    logger.info(f"🔧 [_preprocess_file] 開始執行文件預處理")
-    logger.info(f"📥 輸入參數: file_path='{file_path}', session_id='{session_id}'")
+    if not isinstance(tool_result, dict):
+        return tool_result
 
-    try:
-        import os
-        from pathlib import Path
+    compressed = tool_result.copy()
 
-        # 步驟1: 創建 session 目錄
-        logger.info(f"📋 步驟1: 創建 session 目錄")
-        session_dir = os.path.join(os.getcwd(), 'temp', session_id)
-        os.makedirs(session_dir, exist_ok=True)
-        logger.info(f"✓ Session 目錄: {session_dir}")
+    # 壓縮大數據量字段
+    for key in ['data', 'filtered_data', 'sample_data', 'results']:
+        if key in compressed and isinstance(compressed[key], list):
+            original_length = len(compressed[key])
+            if original_length > max_data_items:
+                compressed[key] = compressed[key][:max_data_items]
+                compressed[f'{key}_truncated'] = True
+                compressed[f'{key}_original_count'] = original_length
+                compressed[f'{key}_truncated_message'] = f"數據已截斷，原有 {original_length} 項，只顯示前 {max_data_items} 項"
 
-        # 步驟2: 檢查是否已有 summary
-        logger.info(f"📋 步驟2: 檢查已存在的 summary")
-        summary_file = os.path.join(session_dir, 'file_summary.json')
-        if os.path.exists(summary_file):
-            logger.info(f"📁 發現已存在的 summary 文件: {summary_file}")
-            with open(summary_file, 'r', encoding='utf-8') as f:
-                existing_summary = json.load(f)
-            logger.info(f"✅ [_preprocess_file] 使用已存在的 summary")
-            return existing_summary
+    # 移除或壓縮其他大字段
+    large_fields_to_remove = ['raw_data', 'full_results', 'detailed_analysis']
+    for field in large_fields_to_remove:
+        if field in compressed:
+            compressed[f'{field}_removed'] = f"大字段 {field} 已移除以節省空間"
+            del compressed[field]
 
-        # 步驟3: 檢查文件存在性和基本信息
-        logger.info(f"📋 步驟3: 檢查文件基本信息")
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"文件不存在: {file_path}")
+    return compressed
 
-        file_size = os.path.getsize(file_path)
-        file_extension = Path(file_path).suffix.lower()
-        logger.info(f"✓ 文件存在，大小: {file_size} bytes")
-        logger.info(f"✓ 文件擴展名: {file_extension}")
 
-        # 步驟4: 導入處理工具
-        logger.info(f"📋 步驟4: 導入處理工具")
-        from tools.local_file_tools import local_file_tools
-        from tools.data_analysis_tools import data_analysis_tools
-        logger.info(f"✓ 工具導入完成")
+# 工具轉換函數已移除，直接使用 LangChain 工具
 
-        # 步驟5: 根據文件類型選擇處理方式
-        logger.info(f"📋 步驟5: 根據文件類型選擇處理方式")
-        if file_extension in ['.csv', '.json', '.xlsx', '.xls']:
-            # 數據文件處理
-            logger.info("📊 識別為數據文件，開始數據處理")
-            try:
-                data_info = await data_analysis_tools.get_data_info(file_path, session_id)
-                if data_info.get('success'):
-                    summary = {
-                        'type': 'data',
-                        'file_path': file_path,
-                        'file_extension': file_extension,
-                        'file_size': file_size,
-                        'data_info': data_info,
-                        'processed_at': __import__('datetime').datetime.now().isoformat(),
-                        'session_id': session_id
-                    }
-                    logger.info(f"✅ 數據文件處理成功: {data_info.get('data_shape', 'unknown')}")
-                else:
-                    raise Exception(f"數據文件處理失敗: {data_info}")
-            except Exception as e:
-                logger.warning(f"⚠️ 數據文件處理失敗: {e}，嘗試文本處理")
-                return await _process_as_text_file(file_path, session_id, session_dir)
-        else:
-            # 文本文件處理
-            logger.info("📄 識別為文本文件，開始文本處理")
-            return await _process_as_text_file(file_path, session_id, session_dir)
-
-        # 步驟6: 保存 summary 到文件
-        logger.info(f"📋 步驟6: 保存 summary 到文件")
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            json.dump(summary, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"💾 Summary 已保存到: {summary_file}")
-        logger.info(f"📤 Summary 內容前300字符: {str(summary)[:300]}")
-        logger.info(f"✅ [_preprocess_file] 執行完成")
-        return summary
-
-    except Exception as e:
-        logger.error(f"❌ [_preprocess_file] 執行失敗: {e}")
-        return None
-
-async def _process_as_text_file(file_path: str, session_id: str, session_dir: str) -> dict:
-    """處理文本文件"""
-    try:
-        import os
-        from pathlib import Path
-        from tools.local_file_tools import local_file_tools
-
-        # 生成文本摘要
-        summary_result = await local_file_tools.read_file_with_summary(file_path, session_id)
-        if summary_result.get('success'):
-            summary = {
-                'type': 'text',
-                'file_path': file_path,
-                'file_extension': Path(file_path).suffix.lower(),
-                'text_summary': summary_result,
-                'processed_at': __import__('datetime').datetime.now().isoformat(),
-                'session_id': session_id
-            }
-
-            # 保存到文件
-            summary_file = os.path.join(session_dir, 'file_summary.json')
-            with open(summary_file, 'w', encoding='utf-8') as f:
-                json.dump(summary, f, ensure_ascii=False, indent=2)
-
-            logger.info(f"✅ 文本文件處理成功: {summary_result.get('file_info', {}).get('lines', 'unknown')} 行")
-            return summary
-        else:
-            raise Exception(f"文本摘要生成失敗: {summary_result}")
-
-    except Exception as e:
-        logger.error(f"❌ 文本文件處理失敗: {e}")
-        # 最後嘗試直接讀取
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            lines = content.split('\n')
-            summary = {
-                'type': 'raw_text',
-                'file_path': file_path,
-                'file_extension': Path(file_path).suffix.lower(),
-                'content': content[:1000],  # 只保存前1000字符
-                'char_count': len(content),
-                'line_count': len(lines),
-                'processed_at': __import__('datetime').datetime.now().isoformat(),
-                'session_id': session_id
-            }
-
-            # 保存到文件
-            summary_file = os.path.join(session_dir, 'file_summary.json')
-            with open(summary_file, 'w', encoding='utf-8') as f:
-                json.dump(summary, f, ensure_ascii=False, indent=2)
-
-            logger.info(f"✅ 直接讀取文件成功: {len(content)} 字符, {len(lines)} 行")
-            return summary
-
-        except Exception as raw_error:
-            logger.error(f"❌ 直接讀取文件也失敗: {raw_error}")
-            return None
+# 移除不需要的函數，簡化邏輯
 
 def _determine_request_type(context_data: dict, page_data: dict) -> str:
     """
@@ -190,96 +97,62 @@ def _determine_request_type(context_data: dict, page_data: dict) -> str:
         page_data: 頁面數據 (web)
 
     Returns:
-        請求類型: 'local_file', 'web', 'default'
+        請求類型: 'local_file', 'web'
     """
-    if context_data and context_data.get('type') == 'file':
-        return 'local_file'
-    elif page_data:
+    if page_data:
         return 'web'
     else:
-        return 'default'
+        return 'local_file'
 
-async def _load_session_summary(session_id: str) -> dict:
-    """
-    載入 session 中的文件 summary
-
-    Args:
-        session_id: 會話ID
-
-    Returns:
-        文件 summary 字典，如果不存在返回 None
-    """
-    try:
-        import os
-        session_dir = os.path.join(os.getcwd(), 'temp', session_id)
-        summary_file = os.path.join(session_dir, 'file_summary.json')
-
-        if os.path.exists(summary_file):
-            logger.info(f"📁 載入 session summary: {summary_file}")
-            with open(summary_file, 'r', encoding='utf-8') as f:
-                summary = json.load(f)
-            logger.info(f"✅ Session summary 載入成功，類型: {summary.get('type', 'unknown')}")
-            return summary
-        else:
-            logger.info(f"📁 Session summary 不存在: {summary_file}")
-            return None
-    except Exception as e:
-        logger.error(f"❌ 載入 session summary 失敗: {e}")
-        return None
-
-async def _update_session_summary(session_id: str, updated_summary: dict) -> bool:
-    """
-    更新 session 中的文件 summary
-
-    Args:
-        session_id: 會話ID
-        updated_summary: 更新後的 summary
-
-    Returns:
-        是否更新成功
-    """
-    try:
-        import os
-        session_dir = os.path.join(os.getcwd(), 'temp', session_id)
-        os.makedirs(session_dir, exist_ok=True)
-        summary_file = os.path.join(session_dir, 'file_summary.json')
-
-        # 添加更新時間戳
-        updated_summary['last_updated'] = __import__('datetime').datetime.now().isoformat()
-
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            json.dump(updated_summary, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"✅ Session summary 已更新: {summary_file}")
-        return True
-    except Exception as e:
-        logger.error(f"❌ 更新 session summary 失敗: {e}")
-        return False
+# 移除 session summary 相關函數
 
 router = APIRouter()
 
-# 全局 agent 實例
-_agent_instance = None
+# Session-based Agent 管理
+class AgentManager:
+    """Agent管理器，為每個session維護獨立的agent實例"""
 
+    def __init__(self):
+        self.agents: Dict[str, SupervisorAgent] = {}
+        # 從 backend/api/routers/agent.py 到 data/rules 的正確路徑
+        self.rules_dir = Path(__file__).parent.parent.parent.parent / "data" / "rules"
+        logger.info(f"📁 AgentManager rules_dir: {self.rules_dir}")
+        logger.info(f"📁 rules_dir 是否存在: {self.rules_dir.exists()}")
+        if self.rules_dir.exists():
+            rule_files = list(self.rules_dir.glob("*.json"))
+            logger.info(f"📁 找到的 rule 文件: {[f.name for f in rule_files]}")
 
-def get_agent() -> SupervisorAgent:
-    """獲取 Agent 實例"""
-    global _agent_instance
+    def get_agent(self, session_id: str, stream_callback=None) -> SupervisorAgent:
+        """獲取指定session的Agent實例"""
+        if session_id not in self.agents:
+            logger.info(f"🆕 為session {session_id} 創建新的Agent實例")
+            self.agents[session_id] = SupervisorAgent(str(self.rules_dir), stream_callback)
+        else:
+            # 更新現有agent的stream_callback
+            self.agents[session_id].stream_callback = stream_callback
+        return self.agents[session_id]
 
-    if _agent_instance is None:
-        # 創建新實例（備用方案）
-        from pathlib import Path
-        rules_dir = Path(__file__).parent.parent.parent / "data" / "rules"
-        logger.info(f"🔧 創建新 Agent 實例，規則目錄: {rules_dir}")
-        _agent_instance = SupervisorAgent(str(rules_dir))
+    def cleanup_agent(self, session_id: str):
+        """清理指定session的Agent實例"""
+        if session_id in self.agents:
+            logger.info(f"🗑️ 清理session {session_id} 的Agent實例")
+            del self.agents[session_id]
 
-    return _agent_instance
+    def get_active_sessions(self) -> List[str]:
+        """獲取活躍的session列表"""
+        return list(self.agents.keys())
 
-def set_agent(agent: SupervisorAgent):
-    """設置 Agent 實例"""
-    global _agent_instance
-    _agent_instance = agent
-    logger.info("✅ Agent 實例已設置")
+# 全域Agent管理器實例
+_agent_manager = AgentManager()
+
+def get_agent(session_id: str = "default", stream_callback=None) -> SupervisorAgent:
+    """獲取指定session的Agent實例"""
+    return _agent_manager.get_agent(session_id, stream_callback)
+
+def set_agent(agent: SupervisorAgent, session_id: str = "default"):
+    """設置指定session的Agent實例"""
+    _agent_manager.agents[session_id] = agent
+    logger.info(f"✅ Session {session_id} 的Agent實例已設置")
 
 
 class StreamRequest(BaseModel):
@@ -293,6 +166,15 @@ class StreamRequest(BaseModel):
 
 async def generate_stream_response(message: str, agent: SupervisorAgent, session_id: str = "default_session", context_data: dict = None, page_data: dict = None, request_type: str = 'default') -> AsyncGenerator[str, None]:
     """生成流式響應"""
+
+    # 用於存儲stream事件的列表
+    stream_events = []
+
+    # 定義stream回調函數
+    async def stream_callback(event_data):
+        """收集工具執行結果"""
+        stream_events.append(event_data)
+
     try:
         logger.info(f"🚀 開始生成流式響應")
         logger.info(f"  - message: {message}")
@@ -307,43 +189,55 @@ async def generate_stream_response(message: str, agent: SupervisorAgent, session
         final_context = None
 
         if request_type == 'local_file':
-            logger.info("📁 LOCAL FILE 模式 - Session 記憶系統")
+            logger.info("📁 LOCAL FILE 模式 - 直接處理文件")
             available_tools = get_langchain_local_file_tools()
 
-            # 🧠 **步驟1：載入 Session 中的 Summary (記憶系統)**
-            logger.info("🧠 步驟1: 載入 Session 記憶中的文件 Summary")
-            session_summary = await _load_session_summary(session_id)
+            # 🔄 **直接處理文件，獲取 data_info**
+            if context_data and context_data.get('file_path'):
+                file_path = context_data.get('file_path')
+                logger.info(f"📄 處理文件: {file_path}")
 
-            if session_summary:
-                logger.info("✅ 找到 Session 記憶中的 Summary，使用現有記憶")
-                file_summary = session_summary
-                summary_preview = str(file_summary)[:300]
-                logger.info(f"� Session Summary 前300字符: {summary_preview}")
+                # 直接調用底層的數據分析函數獲取數據信息
+                from src.tools.data_analysis_tools import data_analysis_tools
+
+                try:
+                    data_info_result = await data_analysis_tools.get_data_info(file_path, session_id)
+                    logger.info(f"� get_data_info_tool 執行結果: {str(data_info_result)[:500]}...")
+
+                    # 構建 final_context，只包含 data_info
+                    final_context = {
+                        'file_path': file_path,
+                        'data_info': data_info_result
+                    }
+
+                    # 詳細記錄傳給 agent 的內容
+                    logger.info("� 傳給 Agent 的 final_context 內容:")
+                    logger.info(f"  - file_path: {final_context['file_path']}")
+                    logger.info(f"  - data_info 類型: {type(final_context['data_info'])}")
+
+                    if isinstance(data_info_result, dict):
+                        # 記錄 data_info 的關鍵信息
+                        sample_data = data_info_result.get('sample_data', [])
+                        total_rows = data_info_result.get('total_rows', 0)
+                        columns = data_info_result.get('columns', [])
+
+                        logger.info(f"  - sample_data 數量: {len(sample_data)}")
+                        logger.info(f"  - total_rows: {total_rows}")
+                        logger.info(f"  - columns: {columns}")
+                        logger.info(f"  - sample_data 內容: {sample_data}")
+
+                        # 確保有 sample_data
+                        if sample_data:
+                            logger.info("✅ 成功獲取 sample_data，將傳給 Agent")
+                        else:
+                            logger.warning("⚠️ sample_data 為空")
+
+                except Exception as e:
+                    logger.error(f"❌ 處理文件失敗: {e}")
+                    final_context = {'error': f'文件處理失敗: {str(e)}'}
             else:
-                # �🔄 **步驟2：如果沒有 Summary，執行初始文件預處理**
-                if context_data and context_data.get('file_path'):
-                    logger.info("🔄 步驟2: Session 中無 Summary，執行初始文件預處理")
-                    file_path = context_data.get('file_path')
-                    file_summary = await _preprocess_file(file_path, session_id)
-
-                    if file_summary:
-                        logger.info(f"✅ 初始文件預處理完成，Summary 已存入 Session 記憶")
-                        summary_preview = str(file_summary)[:300]
-                        logger.info(f"📄 新建 Summary 前300字符: {summary_preview}")
-                    else:
-                        logger.error("❌ 初始文件預處理失敗")
-                        file_summary = None
-                else:
-                    logger.error("❌ 沒有提供 file_path 且 Session 中無 Summary")
-                    file_summary = None
-
-            # 🎯 **將 Summary 添加到 context_data 中 (永遠包含最新的 Session 記憶)**
-            final_context = context_data.copy() if context_data else {}
-            if file_summary:
-                final_context['file_summary'] = file_summary
-                logger.info("✅ Session Summary 已添加到 context_data，作為 SupervisorAgent 的默認輸入")
-            else:
-                logger.warning("⚠️ 沒有可用的 Summary")
+                logger.error("❌ 沒有提供 file_path")
+                final_context = {'error': '沒有提供文件路徑'}
 
         elif request_type == 'web':
             logger.info("🌐 WEB 模式 - 使用 Web Tools")
@@ -429,12 +323,36 @@ async def generate_stream_response(message: str, agent: SupervisorAgent, session
 
         logger.info(f"🔄 步驟3: 準備調用 SupervisorAgent，工具數量: {len(available_tools)}")
 
+        # 獲取agent實例並設置stream回調
+        agent = get_agent(session_id, stream_callback)
+
+        # 執行agent，stream回調會自動處理工具執行結果
         result = await agent.run(query, rule_id=rule_name, context=context, available_tools=available_tools)
+
+        # 轉換numpy類型以避免序列化問題
+        result = convert_numpy_types(result)
+
+        # 發送所有工具執行事件（壓縮後）
+        for event_data in stream_events:
+            if event_data['type'] == 'tool_result':
+                # 壓縮工具結果
+                compressed_result = compress_tool_result(event_data['wrapped_result'])
+
+                tool_event = {
+                    'type': 'tool_execution',
+                    'tool_name': event_data['tool_name'],
+                    'parameters': event_data['parameters'],
+                    'execution_time': event_data['execution_time'],
+                    'result': compressed_result
+                }
+                tool_event = convert_numpy_types(tool_event)
+                yield f"data: {json.dumps(tool_event, ensure_ascii=False)}\n\n"
 
         # 發送工具使用事件
         tools_used = result.get('tools_used', [])
         if tools_used:
             tools_event = {'type': 'tools', 'message': f'使用了工具: {", ".join(tools_used)}'}
+            tools_event = convert_numpy_types(tools_event)
             yield f"data: {json.dumps(tools_event, ensure_ascii=False)}\n\n"
 
         # 發送內容事件
@@ -444,6 +362,7 @@ async def generate_stream_response(message: str, agent: SupervisorAgent, session
             'execution_time': result.get('execution_time', 0),
             'tools_used': tools_used
         }
+        content_event = convert_numpy_types(content_event)
         yield f"data: {json.dumps(content_event, ensure_ascii=False)}\n\n"
 
         # 發送完成事件
@@ -452,6 +371,7 @@ async def generate_stream_response(message: str, agent: SupervisorAgent, session
             'message': '任務執行完成',
             'success': result.get('success', True)
         }
+        complete_event = convert_numpy_types(complete_event)
         yield f"data: {json.dumps(complete_event, ensure_ascii=False)}\n\n"
 
     except Exception as e:
@@ -470,7 +390,6 @@ async def stream_chat(request: StreamRequest):
     """流式聊天接口"""
     try:
         logger.info(f"收到流式聊天請求: {request.message[:100]}...")
-        logger.info(f"  - message: {request.message}")
         logger.info(f"  - user_id: {request.user_id}")
         logger.info(f"  - context_data: {request.context_data}")
         logger.info(f"  - page_data: {request.page_data}")
@@ -479,10 +398,8 @@ async def stream_chat(request: StreamRequest):
         request_type = _determine_request_type(request.context_data, request.page_data)
         logger.info(f"🎯 請求類型: {request_type}")
 
-        agent = get_agent()
-
         return StreamingResponse(
-            generate_stream_response(request.message, agent, request.session_id, request.context_data, request.page_data, request_type),
+            generate_stream_response(request.message, None, request.session_id, request.context_data, request.page_data, request_type),
             media_type="text/event-stream; charset=utf-8",
             headers={
                 "Cache-Control": "no-cache",
