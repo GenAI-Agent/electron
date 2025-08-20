@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Monitor,
   Folder,
   HardDrive,
-  FolderOpen,
-  RefreshCw
+  FolderOpen
 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
@@ -49,25 +48,25 @@ const LocalFileCards: React.FC = () => {
     documents: 'Documents',
     drives: 'C:\\'
   });
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadPaths = async () => {
-    setIsRefreshing(true);
     try {
       if (window.electronAPI?.getDesktopPath) {
         const desktopPath = await window.electronAPI.getDesktopPath();
         const documentsPath = await window.electronAPI.getDocumentsPath();
+
+        console.log('Loaded paths:', { desktopPath, documentsPath });
 
         setPaths({
           desktop: desktopPath,
           documents: documentsPath,
           drives: process.platform === 'win32' ? 'C:\\' : '/'
         });
+      } else {
+        console.error('electronAPI not available');
       }
     } catch (error) {
       console.error('Failed to load system paths:', error);
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
@@ -98,36 +97,8 @@ const LocalFileCards: React.FC = () => {
 
   return (
     <div>
-      {/* 標題和刷新按鈕 */}
-      <div className="flex justify-between items-center mb-2 px-2">
-        <h6 className="text-gray-700 font-semibold text-lg">
-          本地文件
-        </h6>
-        <div className="relative group">
-          <button
-            onClick={loadPaths}
-            disabled={isRefreshing}
-            className={cn(
-              "p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors",
-              isRefreshing && "cursor-not-allowed"
-            )}
-          >
-            <RefreshCw 
-              className={cn(
-                "w-5 h-5",
-                isRefreshing && "animate-spin"
-              )}
-            />
-          </button>
-          {/* Tooltip */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            刷新文件列表
-          </div>
-        </div>
-      </div>
-
       {/* 文件卡片 */}
-      <div className="flex gap-3 justify-center items-center flex-wrap mt-2">
+      <div className="flex gap-3 justify-center items-center flex-wrap">
         {cards.map((card, index) => (
           <FileCard
             key={index}

@@ -3,17 +3,23 @@ import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import DataFileViewer from './DataFileViewer';
+import DataTable from './DataTable';
+import path from 'path';
 
 interface FileViewerProps {
   filePath: string;
 }
 
 interface FileContent {
-  type: 'text' | 'pdf' | 'presentation' | 'binary';
+  type: 'text' | 'csv' | 'json' | 'image' | 'video' | 'audio' | 'pdf' | 'presentation' | 'office' | 'binary';
   content?: string;
   filePath?: string;
   size?: number;
   extension?: string;
+  data?: {
+    headers: string[];
+    rows: Record<string, string>[];
+  };
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
@@ -137,6 +143,21 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
       );
     }
 
+    // CSV文件
+    if (fileContent.type === 'csv') {
+      if (fileContent.data?.headers && fileContent.data?.rows) {
+        return <DataTable headers={fileContent.data.headers} rows={fileContent.data.rows} />;
+      } else {
+        return (
+          <div className="h-full overflow-auto p-4">
+            <pre className="whitespace-pre-wrap font-mono text-sm">
+              {fileContent.content}
+            </pre>
+          </div>
+        );
+      }
+    }
+
     // 文本文件
     if (fileContent.type === 'text') {
       return (
@@ -146,6 +167,70 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
           }}>
             {fileContent.content}
           </pre>
+        </div>
+      );
+    }
+
+    // JSON文件
+    if (fileContent.type === 'json') {
+      return (
+        <div className="h-full overflow-auto p-4">
+            <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto">
+              {JSON.stringify(fileContent.data, null, 2)}
+            </pre>
+        </div>
+      );
+    }
+
+    // 圖片文件
+    if (fileContent.type === 'image') {
+      return (
+        <div className="h-full overflow-auto p-4 flex items-center justify-center">
+            <img
+              src={`file://${fileContent.filePath}`}
+              alt="圖片預覽"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain'
+              }}
+            />
+        </div>
+      );
+    }
+
+    // 視頻文件
+    if (fileContent.type === 'video') {
+      return (
+        <div className="h-full overflow-auto p-4 flex items-center justify-center">
+            <video
+              controls
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%'
+              }}
+            >
+              <source src={`file://${fileContent.filePath}`} />
+              您的瀏覽器不支持視頻播放
+            </video>
+        </div>
+      );
+    }
+
+    // 音頻文件
+    if (fileContent.type === 'audio') {
+      return (
+        <div className="h-full overflow-auto p-4 flex items-center justify-center">
+            <audio
+              controls
+              style={{
+                width: '100%',
+                maxWidth: '500px'
+              }}
+            >
+              <source src={`file://${fileContent.filePath}`} />
+              您的瀏覽器不支持音頻播放
+            </audio>
         </div>
       );
     }

@@ -75,9 +75,12 @@ async def smart_batch_processor_tool(
         import os
         import shutil
         from datetime import datetime
+        from pathlib import Path
 
-        backup_dir = f"tmp/{session_id}/batch_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        os.makedirs(backup_dir, exist_ok=True)
+        # 使用統一的 task_memory 路徑結構
+        session_dir = Path("task_memory") / "sessions" / session_id
+        backup_dir = session_dir / "batch_processing" / f"batch_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        backup_dir.mkdir(parents=True, exist_ok=True)
 
         # 如果需要文件備份，先備份相關文件
         if use_file_backup:

@@ -519,8 +519,8 @@ async def filter_data_tool(
             temp_filename = f"{original_name}_filtered_{timestamp}.json"
             temp_file_path = temp_dir / temp_filename
 
-            # 保存過濾後的數據為JSON格式
-            filtered_df.to_json(temp_file_path, orient="records", indent=2)
+            # 保存過濾後的數據為JSON格式，確保中文字符正確顯示
+            filtered_df.to_json(temp_file_path, orient='records', indent=2, force_ascii=False)
 
             # 更新會話數據狀態
             session_data_manager.update_data_state(
@@ -655,6 +655,7 @@ async def clear_session_data_tool(session_id: str = "default") -> str:
         清理結果的JSON字符串
     """
     try:
+        import json
         result = session_data_manager.clear_session_data(session_id)
         result["success"] = True
 
@@ -677,6 +678,7 @@ async def suggest_analysis_operation_tool(analysis_purpose: str) -> str:
         建議的操作類型和說明
     """
     try:
+        import json
         purpose_lower = analysis_purpose.lower()
 
         suggestions = {
@@ -886,11 +888,11 @@ async def create_data_file_tool(
             return f'{{"success": false, "error": "數據格式不正確"}}'
 
         # 根據文件類型保存
-        if file_type.lower() == "csv":
-            df.to_csv(file_path, index=False, encoding="utf-8")
-        elif file_type.lower() == "json":
-            df.to_json(file_path, orient="records", indent=2)
-        elif file_type.lower() == "xlsx":
+        if file_type.lower() == 'csv':
+            df.to_csv(file_path, index=False, encoding='utf-8')
+        elif file_type.lower() == 'json':
+            df.to_json(file_path, orient='records', indent=2, force_ascii=False)
+        elif file_type.lower() == 'xlsx':
             df.to_excel(file_path, index=False)
         else:
             return f'{{"success": false, "error": "不支持的文件類型: {file_type}"}}'
@@ -1070,11 +1072,11 @@ async def delete_data_rows_tool(
         deleted_rows = original_rows - len(df_filtered)
 
         # 保存文件
-        if file_ext == ".csv":
-            df_filtered.to_csv(file_path, index=False, encoding="utf-8")
-        elif file_ext == ".json":
-            df_filtered.to_json(file_path, orient="records", indent=2)
-        elif file_ext == ".xlsx":
+        if file_ext == '.csv':
+            df_filtered.to_csv(file_path, index=False, encoding='utf-8')
+        elif file_ext == '.json':
+            df_filtered.to_json(file_path, orient='records', indent=2, force_ascii=False)
+        elif file_ext == '.xlsx':
             df_filtered.to_excel(file_path, index=False)
 
         result = {

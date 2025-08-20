@@ -5,12 +5,12 @@
   "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently \"bun dev:next\" \"bun dev:electron\"",
+    "dev": "concurrently \"yarn dev:next\" \"yarn dev:electron\"",
     "dev:next": "next dev --port 4081",
     "dev:electron": "wait-on http://localhost:4081 && cross-env NODE_ENV=development electron .",
     "build": "next build",
-    "build:electron": "bun run build && electron-builder",
-    "start": "bun run build && electron .",
+    "build:electron": "yarn run build && electron-builder",
+    "start": "yarn run build && electron .",
     "lint": "next lint"
   },
   "dependencies": {

@@ -838,7 +838,30 @@ class SupervisorAgent:
                 return rule_prompt
 
         # 預設提示
-        return f"你是一個智能助手。當前時間: {current_time}\n請根據用戶需求智能地選擇和使用工具來完成任務。"
+        return f"""你是一個智能數據分析助手。當前時間: {current_time}
+
+🎯 **核心任務**：主動進行分析，而不只是提供建議
+
+📊 **數據分析優先原則**：
+當用戶提到統計、分析、計算、過濾等需求時，請立即執行實際的數據分析：
+
+1. **過濾數據**：使用 filter_data_tool 過濾出符合條件的數據
+   - 例如：過濾特定部門、日期範圍、金額範圍等
+   - 設置 save_filtered_data=True 保存過濾結果
+
+2. **分組分析**：使用 group_by_analysis_tool 進行統計計算
+   - 支持操作：sum(總和)、mean(平均)、count(計數)、max(最大)、min(最小)
+   - 例如：按部門分組計算支出總額
+
+3. **組合分析**：使用 filter_and_analyze_tool 一步完成過濾和分析
+
+🚀 **執行策略**：
+- 看到"統計XX部門支出"→立即過濾該部門數據並計算總額
+- 看到"分析XX趨勢"→過濾相關數據並進行分組分析
+- 看到"計算平均值"→使用group_by_analysis_tool執行mean操作
+- 不要只提供建議，要直接執行分析並給出具體結果
+
+請根據用戶需求智能地選擇和使用工具來完成任務。"""
 
     def _build_context_query(
         self, query: str, context: Dict[str, Any], has_rule: bool = False
@@ -892,10 +915,18 @@ class SupervisorAgent:
         else:
             instruction = f"""{data_summary}
 
-                請參考上面的數據架構，使用專業工具進行分析。
+🎯 **立即執行數據分析**：
+根據用戶需求，請直接使用以下工具進行實際分析：
 
-                用戶需求: "{query}" 
-            """
+1. 如果需要過濾數據：使用 filter_data_tool
+2. 如果需要統計計算：使用 group_by_analysis_tool
+3. 如果需要組合操作：使用 filter_and_analyze_tool
+
+⚠️ **重要**：不要只提供建議或說明，請立即執行實際的數據分析並提供具體結果。
+
+用戶需求: "{query}"
+
+請立即開始分析並執行相應的工具。"""
 
         return instruction
 
@@ -940,20 +971,50 @@ class SupervisorAgent:
             # 有工具調用結果，生成基於結果的回答
             system_prompt = """你是一個專業的助手，請根據工具執行結果為用戶生成簡潔明瞭的回答。
 
-                要求：
-                1. 回答要具體且有用
-                2. 如果有數據，請提供具體數字
-                3. 如果有錯誤，請說明原因並提供解決建議
-                4. 保持專業且友好的語調
-                5. 用繁體中文回答
-            """
+要求：
+1. 回答要具體且有用
+2. 如果有數據，請提供具體數字
+3. 如果有錯誤，請說明原因並提供解決建議
+4. 保持專業且友好的語調
+5. 用繁體中文回答
+
+📊 **特別注意 - 數據分析回答格式**：
+當回答涉及數據分析結果時，請按以下格式提供豐富的內容：
+
+## 📈 分析結果
+
+### 🎯 核心發現
+[直接回答用戶問題的主要數字和結論]
+
+### 📊 詳細數據
+```
+| 項目 | 數值 | 佔比 |
+|------|------|------|
+| ... | ... | ... |
+```
+
+### 💡 重點整理 範例
+- 重點1：[具體發現]
+- 重點2：[異常或特殊情況]
+- 重點3：[其他延伸資訊，或是用戶可能想要知道的內容]
+
+### 📋 補充說明 範例
+- 數據來源：[說明數據範圍]
+- 統計方法：[說明使用的分析方法]
+- 相關建議：[基於數據的建議，或是用戶可能想要知道的內容]
+
+不要只給一個單薄的數字或是文字回覆，要提供完整的分析報告。"""
 
             response_messages = [SystemMessage(content=system_prompt)]
             response_messages.extend(messages)
 
-            final_instruction = (
-                f"""用戶問題：{query} 請根據上述工具執行結果生成最終回答。"""
-            )
+            final_instruction = f"""用戶問題：{query}
+
+請根據上述工具執行結果生成最終回答。
+
+⚠️ 如果涉及數據分析，請務必使用上述指定的格式：
+- 包含核心發現、詳細數據表格、重點整理、補充說明
+- 不要只給一個簡單的數字答案"""
 
             response_messages.append(HumanMessage(content=final_instruction))
             final_response = await self.llm.ainvoke(response_messages)
