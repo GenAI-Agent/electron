@@ -114,15 +114,8 @@ async function extractWebviewContent(webContents) {
                   // 提取標題
                   const title = document.title || 'Untitled';
 
-                  // 單一最佳提取策略：遍歷所有元素，生成完整的 markdown
-                  const extractionResult = extractAllElementsAsMarkdown();
-                  const content = extractionResult.content;
-                  const interactiveElements = extractionResult.interactiveElements;
-                  const links = extractionResult.links;
-
                   // 遍歷所有元素並轉換為 markdown (按順序，整合所有元素)
                   function extractAllElementsAsMarkdown() {
-                    console.log('開始按順序遍歷所有元素生成完整的 markdown');
 
                     let markdown = '';
                     const links = []; // 只保留 links，用於返回數據
@@ -138,7 +131,7 @@ async function extractWebviewContent(webContents) {
                     const processedElements = new Set(); // 避免重複處理
                     const selectorCounts = {}; // 追蹤 selector 使用次數
 
-                    console.log('總共找到元素數量:', allElements.length);
+
 
                     // 按 DOM 順序處理每個元素
                     for (let i = 0; i < allElements.length && i < 1500; i++) {
@@ -166,12 +159,11 @@ async function extractWebviewContent(webContents) {
 
                     // 限制最大字數為 30000 字
                     if (markdown.length > 30000) {
-                      console.log('內容超過 30000 字，進行截斷');
+
                       markdown = markdown.substring(0, 30000) + '\\\\\\\\n\\\\\\\\n[內容已截斷，總長度超過 30000 字]';
                     }
 
-                    console.log('最終 markdown 長度:', markdown.length);
-                    console.log('連結數量:', links.length);
+
 
                     return {
                       content: markdown,
@@ -436,11 +428,8 @@ async function extractWebviewContent(webContents) {
                             const rowLinks = element.querySelectorAll('a[href]');
                             let emailLink = null;
 
-                            console.log('郵件行找到連結數量:', rowLinks.length);
-
                             // 找到郵件的主要連結
                             for (const link of rowLinks) {
-                              console.log('檢查連結:', link.href);
                               if (link.href && link.href.includes('mail.google.com')) {
                                 // 找到包含郵件 ID 的連結
                                 if (link.href.includes('#inbox/') || link.href.includes('#thread/') || link.href.includes('#label/')) {
@@ -448,7 +437,6 @@ async function extractWebviewContent(webContents) {
                                     href: link.href,
                                     text: cleanText(link.textContent) || '開啟郵件'
                                   };
-                                  console.log('找到郵件連結:', emailLink.href);
                                   break;
                                 }
                               }
@@ -621,9 +609,18 @@ async function extractWebviewContent(webContents) {
                     return tableMarkdown + '\\\\\\\\n';
                   }
 
+                  }
+
+                  // 單一最佳提取策略：遍歷所有元素，生成完整的 markdown
+                  const extractionResult = extractAllElementsAsMarkdown();
+                  const content = extractionResult.content;
+                  const interactiveElements = extractionResult.interactiveElements;
+                  const links = extractionResult.links;
+
                   return {
                     title,
                     content,
+                    interactiveElements,
                     links
                   };
 

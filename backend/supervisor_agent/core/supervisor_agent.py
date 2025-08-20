@@ -119,6 +119,8 @@ class ParallelToolNode(BaseToolNode):
                 and message.tool_calls
             ):
                 tool_calls = message.tool_calls
+                # 調試日誌：檢查原始 tool_calls
+                logger.info(f"🔍 找到 AI 消息的 tool_calls: {tool_calls}")
                 break
 
         if not tool_calls:
@@ -133,6 +135,9 @@ class ParallelToolNode(BaseToolNode):
             tool_name = tool_call["name"]
             tool_args = tool_call.get("args", {})
             tool_call_id = tool_call.get("id", "")
+
+            # 調試日誌：檢查 tool_call_id
+            logger.info(f"🔍 工具調用詳情: name={tool_name}, id={tool_call_id}, args={tool_args}")
 
             if tool_name in self.tools_by_name:
                 tool = self.tools_by_name[tool_name]
@@ -536,7 +541,6 @@ class SupervisorAgent:
 
                 for tool in browser_tools:
                     self.current_tools.append(tool)
-                    logger.info(f"🌐 添加默認瀏覽器工具: {tool.name}")
 
             except Exception as e:
                 logger.warning(f"⚠️ 瀏覽器工具導入失敗: {e}")
@@ -654,14 +658,15 @@ class SupervisorAgent:
         current_tokens = self.calculate_messages_tokens(messages)
         logger.info(f"📊 當前上下文Token數: {current_tokens}")
 
-        # 智能記憶管理
-        if current_tokens > 12000:  # 如果token數量過多，進行壓縮
+        # 智能記憶管理 - 暫時禁用以調試 tool_call_id 問題
+        if current_tokens > 20000:  # 提高閾值，暫時減少壓縮
             logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
-            messages = self.compress_tool_messages(messages, max_tool_results=3)
-            compressed_tokens = self.calculate_messages_tokens(messages)
-            logger.info(
-                f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})"
-            )
+            # messages = self.compress_tool_messages(messages, max_tool_results=3)  # 暫時禁用
+            # compressed_tokens = self.calculate_messages_tokens(messages)
+            logger.info(f"🧠 記憶壓縮已暫時禁用以調試 tool_call_id 問題")
+            # logger.info(
+            #     f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})"
+            # )
             state["messages"] = messages
 
             # 壓縮後，將會話狀態信息注入到上下文中，確保不丟失重要信息
@@ -916,14 +921,62 @@ class SupervisorAgent:
 
         # 提取關鍵信息
         context_data = context.get("context_data", {})
-        # TODO: 看起來目前這裡只有針對file去寫
         file_path = context_data.get("file_path", "未知文件")
         data_info = context_data.get("data_info", {})
+        file_summary = context_data.get("file_summary", {})
         mails = context_data.get("mails", [])
+
+        # 檢查是否為 Gmail 數據
+        email_address = context_data.get("email_address", "")
+        gmail_metadata = context_data.get("gmail_metadata", {})
+        original_query = context_data.get("original_query", "")
 
         # 構建簡潔的數據摘要
         data_summary = ""
-        if data_info:
+
+        # Gmail 數據摘要（優先使用 file_summary）
+        if file_summary and file_summary.get("file_type") == "gmail_csv":
+            total_emails = file_summary.get("total_emails", 0)
+            unread_emails = file_summary.get("unread_emails", 0)
+            top_senders = file_summary.get("top_senders", [])
+
+            data_summary = f"""
+                📧 Gmail 郵件數據已載入並準備分析:
+                - 郵件帳戶: {email_address}
+                - 郵件數量: {total_emails} 封
+                - 未讀郵件: {unread_emails} 封
+                - 數據文件: {file_path}
+                - 主要發件人: {', '.join([f"{sender}({count}封)" for sender, count in top_senders[:3]])}
+                - 原始查詢: {original_query}
+                - 文件摘要: {file_summary.get('summary', '')}
+            """
+        # Gmail 數據摘要（回退到 gmail_metadata）
+        elif email_address and gmail_metadata:
+            total_emails = gmail_metadata.get("total_emails", 0)
+            data_summary = f"""
+                📧 Gmail 郵件數據已載入並準備分析:
+                - 郵件帳戶: {email_address}
+                - 郵件數量: {total_emails} 封
+                - 數據文件: {file_path}
+                - 原始查詢: {original_query}
+                - 成功批次: {gmail_metadata.get('successful_batches', 0)}
+                - 失敗批次: {gmail_metadata.get('failed_batches', 0)}
+            """
+        # 一般數據文件摘要（優先使用 file_summary）
+        elif file_summary:
+            total_rows = file_summary.get("total_emails", file_summary.get("total_rows", 0))
+            columns = file_summary.get("columns", [])
+            summary_text = file_summary.get("summary", "")
+
+            data_summary = f"""
+                📊 數據文件已載入並準備分析:
+                - 文件路徑: {file_path}
+                - 數據摘要: {summary_text}
+                - 數據量: {total_rows} 行
+                - 欄位: {', '.join(columns[:10])}{'...' if len(columns) > 10 else ''}
+            """
+        # 一般數據文件摘要（回退到 data_info）
+        elif data_info:
             total_rows = data_info.get("total_rows", 0)
             columns = data_info.get("columns", [])
             numeric_columns = data_info.get("numeric_columns", [])
@@ -1095,7 +1148,12 @@ class SupervisorAgent:
         logger.info(f"🔍 詳細參數:")
         logger.info(f"  - query: {query}")
         logger.info(f"  - rule_id: {rule_id}")
-        logger.info(f"  - context: {context}")
+
+        # 限制 context 日誌輸出長度
+        context_str = str(context)
+        if len(context_str) > 300:
+            context_str = context_str[:300] + "..."
+        logger.info(f"  - context: {context_str}")
 
         # 根據 rule_id 載入規則
         rule_data = None

@@ -1,6 +1,82 @@
 const { ipcMain } = require('electron');
 const { extractRealWebviewUrl, extractWebviewContent } = require('../utils/webview-utils');
 
+// 調用後端 agent API 進行 Gmail 批量抓取
+async function callBackendAgentAPI(contextData) {
+  try {
+    console.log('📡 調用後端 agent API:', contextData.type);
+
+    const response = await fetch('http://localhost:8021/api/agent/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: '幫我分析這些 Gmail 郵件',
+        user_id: 'electron_user',
+        session_id: 'electron_session',
+        context_data: contextData
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`後端 API 調用失敗: ${response.status}`);
+    }
+
+    // 讀取流式響應
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let result = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            break;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'final_result') {
+              result = parsed.content;
+            }
+          } catch (e) {
+            // 忽略解析錯誤
+          }
+        }
+      }
+    }
+
+    console.log('✅ 後端 Gmail 批量抓取完成');
+
+    // 返回模擬的 webview 數據結構
+    return {
+      title: contextData.title,
+      content: result || '後端處理完成',
+      mails: [], // 後端已經處理並存成 CSV，這裡不需要返回郵件列表
+      metadata: {
+        source: 'backend_gmail_batch',
+        processed: true
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ 調用後端 agent API 失敗:', error);
+    return {
+      error: error.message,
+      title: contextData.title || 'Gmail',
+      content: '',
+      mails: []
+    };
+  }
+}
+
 // Token 驗證和刷新功能
 async function validateAndRefreshToken(accessToken, refreshToken, clientConfig) {
   try {
@@ -1244,14 +1320,34 @@ function register(window) {
       const isGmail = targetUrl.includes('mail.google.com');
 
       if (isGmail) {
-        // Gmail 特殊處理 - 傳遞 access token 和選項
-        const gmailOptions = {
-          accessToken: options.accessToken,
-          useAPI: options.useAPI !== false, // 預設使用 API
-          maxResults: options.maxResults || 100
+        // Gmail 特殊處理 - 不提取 webpage data，直接返回 Gmail 類型的數據
+        console.log('🔍 檢測到 Gmail 頁面，準備 Gmail 類型數據');
+
+        // 提取 email address（從頁面標題）
+        let emailAddress = '';
+        try {
+          const titleMatch = pageTitle.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+          if (titleMatch) {
+            emailAddress = titleMatch[1];
+            console.log('✅ 從頁面標題提取到 email:', emailAddress);
+          }
+        } catch (e) {
+          console.warn('⚠️ 無法從頁面標題提取 email:', e);
+        }
+
+        // 構建 Gmail 類型的 webview 數據（不包含 webpage content）
+        const webviewContent = {
+          type: 'gmail',
+          email_address: emailAddress,
+          oauth_tokens: {
+            access_token: options.accessToken,
+            refresh_token: options.refreshToken,
+            client_id: options.clientConfig?.clientId || '',
+            client_secret: options.clientConfig?.clientSecret || ''
+          },
+          url: targetUrl,
+          title: pageTitle
         };
-        console.log('🔄 開始從 Gmail 提取郵件列表...', gmailOptions);
-        const webviewContent = await extractGmailEmails(webContents, gmailOptions);
 
         if (!webviewContent || webviewContent.error) {
           throw new Error(`Gmail 內容提取失敗: ${webviewContent?.error || '未知錯誤'}`);
@@ -1260,16 +1356,18 @@ function register(window) {
         pageTitle = webviewContent.title || pageTitle;
 
         const webviewData = {
+          type: 'gmail',
           url: targetUrl,
           title: pageTitle,
+          email_address: webviewContent.email_address,
+          oauth_tokens: webviewContent.oauth_tokens,
           metadata: {
             timestamp: Date.now(),
             viewport: { width: 1200, height: 800 },
             scrollPosition: { x: 0, y: 0 },
             loadState: 'complete',
             extractionMethod: 'gmail'
-          },
-          mails: webviewContent.mails || []
+          }
         };
         try {
           const fs = require('fs');

@@ -9,6 +9,7 @@ function register(window) {
 
   // OAuth 2.0 handlers
   ipcMain.handle('oauth-start-flow', async (_, config) => {
+    let authWindow = null;
     try {
       oauthUtils = new OAuthUtils();
 
@@ -19,7 +20,7 @@ function register(window) {
       const callbackPromise = oauthUtils.startCallbackServer();
 
       // Create a new window for OAuth instead of using system browser
-      const authWindow = new BrowserWindow({
+      authWindow = new BrowserWindow({
         width: 500,
         height: 600,
         show: true,
@@ -28,6 +29,11 @@ function register(window) {
           contextIsolation: true,
           partition: 'oauth-session' // Use separate session for OAuth
         }
+      });
+
+      // Handle window closed event
+      authWindow.on('closed', () => {
+        authWindow = null;
       });
 
       // Load the authorization URL
@@ -39,6 +45,11 @@ function register(window) {
       // Verify state parameter
       if (state !== oauthUtils.state) {
         throw new Error('State parameter mismatch - possible CSRF attack');
+      }
+
+      // Check if window is still available before accessing cookies
+      if (!authWindow || authWindow.isDestroyed()) {
+        throw new Error('Auth window was closed before completing OAuth flow');
       }
 
       // Get cookies from auth window and copy to main window
@@ -144,15 +155,30 @@ function register(window) {
         console.log('⚠️ 沒有獲取到任何 cookies');
       }
 
-      // Close auth window
-      authWindow.close();
+      // Close auth window safely
+      if (authWindow && !authWindow.isDestroyed()) {
+        authWindow.close();
+      }
+
+      // Stop callback server after successful completion
+      if (oauthUtils) {
+        oauthUtils.stopCallbackServer();
+      }
 
       return { success: true, code, state, cookiesCopied: cookies.length };
     } catch (error) {
       console.error('OAuth flow error:', error);
+
+      // Clean up auth window
+      if (authWindow && !authWindow.isDestroyed()) {
+        authWindow.close();
+      }
+
+      // Clean up OAuth utils
       if (oauthUtils) {
         oauthUtils.stopCallbackServer();
       }
+
       return { success: false, error: error.message };
     }
   });
