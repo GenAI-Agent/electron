@@ -1,187 +1,168 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, FolderOpen, Globe, Monitor, Building, Calendar, MessageCircle, HardDrive, Video, Brain } from 'lucide-react';
+import { Send, Globe, Monitor, Building, Brain, Mail, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
-import TitleBar from '@/components/TitleBar';
-import LocalFileCards from '@/components/LocalFileCards';
+import Header from '@/components/ui/header';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { RainbowButton } from '@/components/RainbowButton';
+import { LensOSLogo } from '@/components/LensLogo';
 
 const HomePage: React.FC = () => {
-  const [url, setUrl] = useState('');
+  const [agentInput, setAgentInput] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent, type: 'web' | 'local' | 'sass') => {
+  const handleAgentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (url.trim()) {
-      switch (type) {
-        case 'web':
-          router.push(`/browser?url=${encodeURIComponent(url)}`);
-          break;
-        case 'local':
-          router.push(`/browser?path=${encodeURIComponent(url)}&mode=${type}`);
-          break;
-        case 'sass':
-          router.push(`/browser?path=${encodeURIComponent(url)}&mode=${type}`);
-          break;
-        default:
-          alert('Please select a valid option');
-          break;
-      }
-    } else {
-      alert('Please enter a valid URL');
+    if (agentInput.trim()) {
+      // TODO: 處理 Supervisor Agent 輸入
+      console.log('Supervisor Agent Input:', agentInput);
     }
-  };
-
-
-  const handleWebsiteClick = (websiteUrl: string) => {
-    router.push(`/browser?url=${encodeURIComponent(websiteUrl)}`);
   };
 
   const featureCards = [
     {
       icon: Globe,
-      title: 'Website',
+      title: 'Open Website',
+      subtitle: '開啟網站',
       path: '/browser?url=https://www.google.com',
-      description: 'Turn All website to AGI in a second',
-      gradientStyle: {
-        background: `linear-gradient(135deg, var(--primary), var(--primary) 50%, rgba(59, 130, 246, 0.8))`,
-      },
+      description: '將任何網站無縫接入AGI，自動處理網頁數據轉換為AI可理解的Context',
+      hoverColor: 'hover:border-primary hover:shadow-primary/20',
     },
     {
       icon: Monitor,
-      title: 'Desktop',
+      title: 'Open Desktop',
+      subtitle: '開啟桌面',
       path: '/local',
-      description: 'Enable your Desktop with Language model + multi Agent',
-      gradientStyle: {
-        background: `linear-gradient(135deg, var(--primary), var(--primary) 30%, rgba(59, 130, 246, 0.7))`,
-      },
+      description: '透過AGI處理桌面數據，自定義規則讓AI理解並處理您的本地文件',
+      hoverColor: 'hover:border-primary hover:shadow-primary/20',
     },
     {
       icon: Building,
-      title: 'SASS',
-      // path: '/business-intelligent',
+      title: 'Open SaaS System',
+      subtitle: '開啟SaaS系統',
       path: '/browser?url=https://www.taaze.ai/business-intelligent',
-      description: 'Enterprise-grade AI automation solutions',
-      gradientStyle: {
-        background: `linear-gradient(135deg, var(--primary), var(--primary) 20%, rgba(59, 130, 246, 0.6))`,
-      },
+      description: '接入企業SaaS系統，使用企業規則讓Supervisor Agent處理業務數據',
+      hoverColor: 'hover:border-primary hover:shadow-primary/20',
     },
-  ];
-
-  const commonWebsites = [
-    { name: 'Gmail', url: 'https://mail.google.com/mail/u/0/#inbox', icon: Mail, color: 'bg-primary', opacity: 'opacity-100' },
-    { name: 'Meet', url: 'https://meet.google.com', icon: Video, color: 'bg-primary', opacity: 'opacity-90' },
-    { name: 'Google Drive', url: 'https://drive.google.com', icon: HardDrive, color: 'bg-primary', opacity: 'opacity-80' },
-    { name: 'Telegram', url: 'https://web.telegram.org', icon: MessageCircle, color: 'bg-primary', opacity: 'opacity-70' },
-    { name: 'Google Calendar', url: 'https://calendar.google.com', icon: Calendar, color: 'bg-primary', opacity: 'opacity-60' },
-    { name: 'Len OS', url: 'https://www.ask-lens.ai', icon: Brain, color: 'bg-primary', opacity: 'opacity-100' },
   ];
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
-      {/* Title Bar */}
-      <TitleBar
-        title="Len OS"
-        showModeSwitch={true}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto p-6">
-          {/* Header Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Welcome to Len OS
-            </h1>
-            <p className="text-lg text-muted-foreground mb-6">
-              Your intelligent operating system powered by AI
-            </p>
-
-            {/* Lens Auth Button */}
+      {/* Header */}
+      <Header
+        rightContent={
+          !isAuthenticated && (
             <RainbowButton
               onClick={() => router.push('/gmail-auth')}
-              className="mb-8"
             >
-              <Brain className="w-5 h-5 mr-2" />
-              Len OS Auth
+              <Brain className="w-4 h-4 mr-2" />
+              Lens Auth with Google
             </RainbowButton>
+          )
+        }
+      />
+
+      {/* Main Content - 中央主視覺 */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 pb-32">
+        <div className="max-w-6xl w-full mx-auto">
+          {/* 主標題和描述 */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center space-x-4 mb-10">
+              <LensOSLogo size={100} />
+              <div>
+                <h1 className="text-5xl font-light tracking-wider bg-gradient-to-r from-blue-600 via-purple-600 to-blue-400 bg-clip-text text-transparent">
+                  LENS OS
+                </h1>
+              </div>
+            </div>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              幫助企業無縫銜接AGI的智能系統
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mt-2">
+              為傳統產業注入智能化動力，全方位整合網站、桌面和企業系統的數據處理能力
+            </p>
           </div>
-          <>
-            {/* URL Input Section */}
-            <div className="mb-8">
-              <form
-                onSubmit={(e) => handleSubmit(e, 'web')}
-                className="flex items-center max-w-2xl mx-auto"
-              >
-                <input
-                  className="flex-1 rounded-lg bg-card border border-border px-4 py-3 text-foreground placeholder-muted-foreground outline-none hover:border-ring/50 focus:border-ring focus:ring-2 focus:ring-ring/20 transition-colors"
-                  placeholder="輸入網址..."
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={(e) => handleSubmit(e, 'web')}
-                  className="ml-3 bg-primary text-primary-foreground p-3 rounded-lg hover:bg-primary/90 transition-colors"
+
+          {/* 三個主要卡片選項 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featureCards.map((card, index) => (
+              <div key={index} className="relative">
+                <Card
+                  onClick={() => router.push(card.path)}
+                  className={cn(
+                    "relative group cursor-pointer transition-all duration-300 border-2 border-border p-8",
+                    "hover:scale-105 hover:shadow-xl",
+                    card.hoverColor
+                  )}
                 >
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </form>
-            </div>
-
-            {/* Feature Cards */}
-            <div className="mb-12">
-              <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">
-                Choose Your Experience
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featureCards.map((card, index) => (
-                  <div
-                    key={index}
-                    onClick={() => router.push(card.path)}
-                    className="relative overflow-hidden rounded-xl p-6 text-white cursor-pointer hover:scale-105 transition-transform duration-300"
-                    style={card.gradientStyle}
-                  >
-                    <div className="relative z-10">
-                      <card.icon className="w-12 h-12 mb-4" />
-                      <h3 className="text-xl font-bold mb-2">{card.title}</h3>
-                      <p className="text-white/90">{card.description}</p>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                      <card.icon className="w-8 h-8 text-primary" />
                     </div>
-                    <div className="absolute inset-0 bg-black/10" />
+                    <h3 className="text-xl font-bold text-foreground mb-1">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {card.subtitle}
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {card.description}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
+                </Card>
 
-            {/* Common Websites */}
-            <div>
-              <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">
-                Quick Access
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {commonWebsites.map((website, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleWebsiteClick(website.url)}
-                    className="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:border-ring/50 hover:bg-accent/50 transition-colors group"
-                  >
-                    <div className={cn(
-                      "w-12 h-12 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform",
-                      website.color,
-                      website.opacity
-                    )}>
-                      <website.icon className="w-6 h-6 text-white" />
+                {/* 快捷按鈕 - 只在 Open Website 卡片上顯示 */}
+                {card.title === 'Open Website' && (
+                  <div className="absolute top-full left-0 right-0 mt-2 opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push('/browser?url=https://mail.google.com');
+                        }}
+                        className="flex items-center px-2 py-1 gap-2 text-sm bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg"
+                      >
+                        <Mail className="w-3 h-3" />
+                        Gmail
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push('/browser?url=https://www.ask-lens.ai');
+                        }}
+                        className="flex items-center px-2 py-1 gap-2 text-sm bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Lens
+                      </button>
                     </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {website.name}
-                    </span>
-                  </button>
-                ))}
+                  </div>
+                )}
               </div>
-            </div>
-          </>
-
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* 底部 Supervisor Agent Input */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border p-4">
+        <form
+          onSubmit={handleAgentSubmit}
+          className="max-w-4xl mx-auto flex gap-3"
+        >
+          <Input
+            value={agentInput}
+            onChange={(e) => setAgentInput(e.target.value)}
+            placeholder="向 Supervisor Agent 提問或下達指令..."
+            className="flex-1"
+          />
+          <Button type="submit" size="icon">
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
       </div>
     </div>
   );

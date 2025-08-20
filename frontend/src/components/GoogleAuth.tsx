@@ -242,7 +242,7 @@ const GoogleAuth: React.FC = () => {
                   <span>前往 Gmail</span>
                 </button>
 
-                <button
+                {/* <button
                   className="w-full px-6 py-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-base shadow-sm flex items-center justify-center gap-3"
                   onClick={() => handleWebsiteClick('https://drive.google.com')}
                 >
@@ -252,7 +252,7 @@ const GoogleAuth: React.FC = () => {
                     <path d="M13 3.5V9h5.5" fill="#FBBC04" />
                   </svg>
                   <span>前往雲端硬碟</span>
-                </button>
+                </button> */}
               </div>
             </div>
           )}

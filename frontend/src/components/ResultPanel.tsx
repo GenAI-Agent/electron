@@ -1,9 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import ReactMarkdown from 'react-markdown';
 import RulesPanel from './RulesPanel';
-import ChartViewer from './ChartViewer';
 import { ReactMarkdownCustom } from './ReactMarkdownCustom';
 
 interface ChatMessage {
@@ -35,7 +33,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 }) => {
   return (
     <div
-      className="w-full h-full p-3 pt-10 pr-3.5 pb-1 overflow-auto flex flex-col relative"
+      className="w-full h-full p-3 pr-3.5 pb-1 overflow-auto flex flex-col relative"
     >
       {mode === 'result' && (
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -111,7 +109,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       )}
 
       {mode === 'skills' && (
-        <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+        <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
           技能管理功能開發中...
         </div>
       )}

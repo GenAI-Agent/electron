@@ -133,7 +133,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
 
       // 重新載入規則列表
       await loadRules();
-      
+
       // 通知父組件規則已更新
       if (onRulesUpdate) {
         onRulesUpdate();
@@ -199,7 +199,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
 
       // 重新載入規則列表
       await loadRules();
-      
+
       // 通知父組件規則已更新
       if (onRulesUpdate) {
         onRulesUpdate();
@@ -233,7 +233,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
     if (loading) {
       return (
         <div className="flex justify-center items-center h-full">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       );
     }
@@ -242,11 +242,11 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
     if (error) {
       return (
         <div className="p-2">
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
-            <span className="text-base text-red-700">{error}</span>
+          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
+            <span className="text-sm text-destructive">{error}</span>
             <button
               onClick={() => setError(null)}
-              className="ml-2 text-red-500 hover:text-red-700"
+              className="ml-2 text-destructive hover:text-destructive/80 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -494,12 +494,12 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
       <div className="h-full flex flex-col">
         {/* 標題與新增按鈕 */}
         <div className="flex items-center justify-between p-2 pb-1">
-          <h6 className="text-base font-semibold text-gray-700">
+          <h6 className="text-base font-semibold text-foreground">
             規則管理
           </h6>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
           >
             <Plus className="w-3 h-3" />
             新增
@@ -511,25 +511,25 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
           {rules.map((rule) => (
             <div
               key={rule.id}
-              className="h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col"
+              className="h-[140px] bg-card rounded-lg border border-border cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-primary/50 flex flex-col group"
               onClick={() => handleRuleClick(rule)}
             >
               <div className="p-3 flex flex-col h-full">
                 {/* 標題 */}
-                <div className="mb-1">
-                  <h3 className="text-sm font-semibold leading-tight">
+                <div className="mb-2">
+                  <h3 className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                     {rule.name}
                   </h3>
                 </div>
 
                 {/* 描述 - 顯示 prompt 內容 */}
-                <p className="text-xs text-gray-600 mb-2 line-clamp-3 leading-relaxed flex-1">
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-3 leading-relaxed flex-1">
                   {rule.prompt || rule.description}
                 </p>
 
                 {/* 底部信息 - model chip 在左下角 */}
                 <div className="flex justify-start items-end">
-                  <span className="inline-block px-2 py-1 text-xs border border-gray-300 rounded-full">
+                  <span className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary border border-primary/20 rounded-full">
                     {rule.model}
                   </span>
                 </div>
@@ -538,7 +538,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
           ))}
 
           {rules.length === 0 && (
-            <div className="col-span-full flex justify-center items-center h-[200px] text-gray-500">
+            <div className="col-span-full flex justify-center items-center h-[200px] text-muted-foreground">
               <p className="text-sm">
                 沒有找到規則
               </p>

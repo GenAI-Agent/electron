@@ -4,7 +4,8 @@ import { cn } from '@/utils/cn';
 import BrowserView from '@/components/BrowserView';
 import ViewToggle from '@/components/ViewToggle';
 import AgentPanel from '@/components/AgentPanel';
-import TitleBar from '@/components/TitleBar';
+import Header from '@/components/ui/header';
+import { User } from 'lucide-react';
 
 type ViewMode = 'left-only' | 'right-only' | 'both';
 
@@ -57,14 +58,19 @@ const BrowserPage: React.FC = () => {
   if (!url && !path && !file) return null;
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#f0f4f8] relative overflow-hidden">
-      {/* Title Bar */}
-      <TitleBar
+    <div className="h-screen w-screen flex flex-col bg-background relative overflow-hidden">
+      {/* Header */}
+      <Header
         title={getTitle()}
         showHomeButton={true}
         showUrlInput={!isLocalMode}
         showNavigation={true}
+        showUserInfo={true}
         onUrlChange={handleUrlChange}
+        userInfo={{
+          name: 'User Name',
+          email: 'user@example.com'
+        }}
       />
 
       {/* Main Content Area */}
@@ -73,7 +79,7 @@ const BrowserPage: React.FC = () => {
         style={{
           gridTemplateColumns:
             viewMode === 'both'
-              ? `${leftWidth}% 6px ${100 - leftWidth}%`
+              ? `${leftWidth}% 8px ${100 - leftWidth}%`
               : '1fr',
           gridTemplateRows: '1fr',
         }}
@@ -101,12 +107,12 @@ const BrowserPage: React.FC = () => {
           <div
             className={cn(
               "drag-handle drag-handle-horizontal",
-              "h-full cursor-col-resize bg-transparent hover:bg-slate-200",
-              "z-[2000] relative select-none",
+              "h-full cursor-col-resize bg-transparent hover:bg-accent",
+              "z-[2000] relative select-none transition-colors",
               "after:content-[''] after:absolute after:top-1/2 after:left-1/2",
               "after:-translate-x-1/2 after:-translate-y-1/2",
-              "after:w-0.5 after:h-5 after:bg-slate-400 after:rounded-[1px]",
-              "after:opacity-50 hover:after:opacity-100"
+              "after:w-[2px] after:h-8 after:bg-border after:rounded-sm",
+              "after:opacity-70 hover:after:opacity-100"
             )}
             style={{
               gridColumn: 2,

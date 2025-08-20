@@ -1,73 +1,68 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, FolderOpen, Globe, Monitor, Building, Calendar, MessageCircle, HardDrive, Video, Brain } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { cn } from '@/utils/cn';
-import TitleBar from '@/components/TitleBar';
+import Header from '@/components/ui/header';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import LocalFileCards from '@/components/LocalFileCards';
-import { RainbowButton } from '@/components/RainbowButton';
 
-const HomePage: React.FC = () => {
-  const [url, setUrl] = useState('');
+const LocalPage: React.FC = () => {
+  const [path, setPath] = useState('');
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent, type: 'web' | 'local' | 'sass') => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (url.trim()) {
-      switch (type) {
-        case 'web':
-          router.push(`/browser?url=${encodeURIComponent(url)}`);
-          break;
-        case 'local':
-          router.push(`/browser?path=${encodeURIComponent(url)}&mode=${type}`);
-          break;
-        case 'sass':
-          router.push(`/browser?path=${encodeURIComponent(url)}&mode=${type}`);
-          break;
-        default:
-          alert('Please select a valid option');
-          break;
-      }
+    if (path.trim()) {
+      router.push(`/browser?path=${encodeURIComponent(path.trim())}&mode=local`);
     } else {
-      alert('Please enter a valid URL');
+      alert('請輸入有效的檔案路徑');
     }
   };
 
-
   return (
     <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
-      {/* Title Bar */}
-      <TitleBar
-        title="Lens"
-        showModeSwitch={true}
+      {/* Header */}
+      <Header
+        title="Desktop File Explorer"
+        showHomeButton={true}
+        showNavigation={true}
       />
 
       {/* Main Content Container */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
+        {/* 主標題和描述 */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            桌面文件瀏覽器
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            透過 AGI 處理桌面數據，自定義規則讓 AI 理解並處理您的本地文件
+          </p>
+        </div>
+
         {/* File Path Input */}
         <form
-          onSubmit={(e) => handleSubmit(e, 'local')}
-          className="flex items-center w-[500px] max-w-[90vw]"
+          onSubmit={handleSubmit}
+          className="flex items-center gap-3 w-full max-w-2xl"
         >
-          <input
-            className="w-full rounded-[25px] bg-white border border-slate-200 px-4 py-3 outline-none hover:border-slate-300 focus:border-slate-600 focus:ring-2 focus:ring-slate-600/20 transition-colors"
+          <Input
             placeholder="輸入檔案路徑..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            value={path}
+            onChange={(e) => setPath(e.target.value)}
+            className="flex-1"
           />
-          <button
-            type="submit"
-            className="ml-2 bg-slate-600 text-white p-3 rounded-full hover:bg-slate-700 transition-colors"
-          >
-            <FolderOpen className="w-5 h-5" />
-          </button>
+          <Button type="submit" size="lg">
+            <FolderOpen className="w-5 h-5 mr-2" />
+            開啟
+          </Button>
         </form>
 
-        {/* Local File Cards */}
+        {/* Local File Cards - 使用真實的文件系統組件 */}
         <LocalFileCards />
       </div>
     </div>
   );
 };
 
-export default HomePage;
+export default LocalPage;
 

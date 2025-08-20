@@ -250,12 +250,14 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
                 let emailAddress = '';
                 try {
                   const emailResult = await window.electronAPI.browserControl.executeScript(`
-                    const title = document.title;
-                    const titleMatch = title.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/);
-                    if (titleMatch) {
-                      return titleMatch[1];
-                    }
-                    return '';
+                    (function() {
+                      const title = document.title;
+                      const titleMatch = title.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/);
+                      if (titleMatch) {
+                        return titleMatch[1];
+                      }
+                      return '';
+                    })();
                   `);
 
                   if (emailResult && emailResult.result) {
@@ -532,52 +534,56 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     <div
       ref={containerRef}
       data-agent-panel
-      className="w-full h-full bg-[#f0f4f8] grid relative"
+      className="w-full h-full bg-card grid relative shadow-lg border-l border-border"
       style={{ gridTemplateRows: `${heightPct}% 8px 1fr` }}
     >
       {/* Top Panel */}
-      <div className="relative m-1 mb-0 min-h-[120px] overflow-hidden z-[1]">
-        {/* 移除白色背景，讓內容直接顯示在背景上 */}
-        {/* 刷新按鈕 - 左上角 */}
-        <div className="absolute top-2 left-[10px] z-10 bg-[rgba(240,244,248,0.9)] rounded-md p-0.5 border border-[rgba(226,232,240,0.3)]">
+      <div className="relative min-h-[120px] overflow-hidden z-[1] bg-card/95">
+        <div className="flex justify-between items-center p-4">
           <button
             onClick={handleRefreshSession}
-            className="text-slate-600 hover:bg-slate-100 w-6 h-6 flex items-center justify-center rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 bg-background/80 hover:bg-background border border-border text-muted-foreground hover:text-foreground shadow-sm"
             title="新建 Session"
           >
-            <Edit className="w-[14px] h-[14px]" />
+            <Edit className="w-4 h-4" />
           </button>
-        </div>
 
-        {/* Toggle - 右上角 */}
-        <div className="absolute top-2 right-[10px] flex gap-0.5 z-10 bg-[rgba(240,244,248,0.9)] rounded-md p-0.5 border border-[rgba(226,232,240,0.3)]">
-          <button
-            onClick={() => setPanelMode('result')}
-            className={cn(
-              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'result' ? "text-slate-600" : "text-slate-400"
-            )}
-          >
-            <FileText className="w-[14px] h-[14px]" />
-          </button>
-          <button
-            onClick={() => setPanelMode('rules')}
-            className={cn(
-              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'rules' ? "text-slate-600" : "text-slate-400"
-            )}
-          >
-            <Puzzle className="w-[14px] h-[14px]" />
-          </button>
-          <button
-            onClick={() => setPanelMode('skills')}
-            className={cn(
-              "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'skills' ? "text-slate-600" : "text-slate-400"
-            )}
-          >
-            <Brain className="w-[14px] h-[14px]" />
-          </button>
+          {/* Toggle - 右上角 */}
+          <div className="flex gap-1 z-10 bg-background/80 backdrop-blur-sm rounded-lg p-1 border border-border shadow-sm">
+            <button
+              onClick={() => setPanelMode('result')}
+              className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                panelMode === 'result'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPanelMode('rules')}
+              className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                panelMode === 'rules'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <Puzzle className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPanelMode('skills')}
+              className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                panelMode === 'skills'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <Brain className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <ResultPanel
@@ -595,7 +601,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       <div
         role="separator"
         aria-orientation="horizontal"
-        className="drag-handle drag-handle-vertical h-2 w-full cursor-row-resize flex items-center justify-center relative z-[1000] select-none hover:bg-slate-50 before:content-[''] before:absolute before:left-2 before:right-2 before:top-1/2 before:h-px before:bg-slate-200 before:-translate-y-1/2 before:pointer-events-none"
+        className="drag-handle drag-handle-vertical h-2 w-full cursor-row-resize flex items-center justify-center relative z-[1000] select-none hover:bg-accent transition-colors before:content-[''] before:absolute before:left-4 before:right-4 before:top-1/2 before:h-[2px] before:bg-border before:-translate-y-1/2 before:pointer-events-none"
         style={{ WebkitAppRegion: 'no-drag' }}
         onMouseDown={(e) => {
           e.preventDefault();
@@ -610,14 +616,14 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       ></div>
 
       {/* Bottom Panel (Input) - 更紧凑的输入区域 */}
-      <div className="flex flex-col min-h-0 p-3 relative z-[2] bg-[#f0f4f8]">
+      <div className="flex flex-col min-h-0 p-4 relative z-[2] bg-card border-t border-border">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col relative"
         >
           <div className="relative">
             <textarea
-              className="w-full bg-white rounded-lg border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 pt-3 pl-4 pr-12 pb-3 text-sm leading-relaxed text-gray-800 cursor-text resize-none placeholder:text-gray-400 shadow-sm min-h-[60px] max-h-[120px]"
+              className="w-full bg-background rounded-lg border border-border hover:border-ring/50 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 pt-3 pl-4 pr-12 pb-3 text-sm leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground transition-all duration-200 min-h-[60px] max-h-[120px]"
               placeholder="輸入文字開始對話..."
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
@@ -648,9 +654,9 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
               className={cn(
                 "absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200",
                 input.trim() && !isLoading && !isComposing
-                  ? "text-white bg-blue-500 hover:bg-blue-600 shadow-sm"
-                  : "text-slate-400 bg-slate-100",
-                "disabled:text-slate-400 disabled:bg-slate-100"
+                  ? "text-primary-foreground bg-primary hover:bg-primary/90 shadow-sm"
+                  : "text-muted-foreground bg-muted",
+                "disabled:text-muted-foreground disabled:bg-muted"
               )}
             >
               {isLoading ? (
@@ -691,14 +697,14 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         {/* Bottom Icons - 更紧凑的工具栏 */}
         <div className="flex justify-between items-center pt-2 flex-shrink-0">
           <div className="flex gap-1">
-            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
-              <Paperclip className="w-[16px] h-[16px]" />
+            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
+              <Paperclip className="w-4 h-4" />
             </button>
-            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
-              <Image className="w-[16px] h-[16px]" />
+            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
+              <Image className="w-4 h-4" />
             </button>
-            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
-              <Headphones className="w-[16px] h-[16px]" />
+            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
+              <Headphones className="w-4 h-4" />
             </button>
           </div>
         </div>

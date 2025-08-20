@@ -1,19 +1,18 @@
 import React from 'react';
 import GoogleAuth from '../components/GoogleAuth';
-import TitleBar from '../components/TitleBar';
+import Header from '../components/ui/header';
 
 const GmailAuthPage: React.FC = () => {
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#f0f4f8] m-0 p-0">
-      {/* Title Bar */}
-      <TitleBar
-        title="Google OAuth 登入"
-        showHomeButton={true}
+    <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
+      {/* Header */}
+      <Header
+        title="Sign in to Lens OS"
         showNavigation={true}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-2">
+      <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-background via-muted/30 to-background">
         <GoogleAuth />
       </div>
     </div>

@@ -1,0 +1,184 @@
+import React, { useState, useEffect } from 'react';
+import { Globe, Folder, Search, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { cn } from '@/utils/cn';
+import { Button } from './button';
+import { LensOSLogo } from '../LensLogo';
+
+// 擴展 CSSProperties 類型以支持 WebkitAppRegion
+declare module 'react' {
+  interface CSSProperties {
+    WebkitAppRegion?: 'drag' | 'no-drag';
+  }
+}
+
+interface HeaderProps {
+  title?: string;
+  showHomeButton?: boolean;
+  showUrlInput?: boolean;
+  showNavigation?: boolean;
+  showUserInfo?: boolean;
+  onUrlChange?: (url: string) => void;
+  userInfo?: {
+    name?: string;
+    email?: string;
+    avatar?: string;
+  };
+  rightContent?: React.ReactNode;
+}
+
+const Header: React.FC<HeaderProps> = ({
+  title = 'Lens OS',
+  showHomeButton = false,
+  showUrlInput = false,
+  showNavigation = false,
+  showUserInfo = false,
+  onUrlChange,
+  userInfo,
+  rightContent,
+}) => {
+  const router = useRouter();
+  const [urlInput, setUrlInput] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (title && title !== 'Lens OS' && !isEditing) {
+      setUrlInput(title);
+    }
+  }, [title, isEditing]);
+
+  const handleHomeClick = () => {
+    router.push('/');
+  };
+
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (urlInput.trim() && onUrlChange) {
+      onUrlChange(urlInput.trim());
+      setIsEditing(false);
+    }
+  };
+
+  const handleUrlInputClick = () => {
+    if (showUrlInput) {
+      setIsEditing(true);
+    }
+  };
+
+  return (
+    <header
+      className="h-[60px] bg-card flex items-center px-6 relative z-[1000] border-b border-border shadow-sm"
+      style={{ WebkitAppRegion: 'drag' }}
+    >
+      {/* Left section - Logo and Navigation */}
+      <div className="flex items-center gap-4 flex-1">
+        {/* Logo */}
+        <div className="flex items-center justify-center space-x-4">
+          <LensOSLogo size={35} />
+          <div>
+            <h1 className="text-2xl font-light tracking-wider bg-gradient-to-r from-blue-600 via-purple-600 to-blue-400 bg-clip-text text-transparent">
+              LENS OS
+            </h1>
+          </div>
+        </div>
+
+        {/* Navigation Arrows */}
+        {showNavigation && (
+          <div
+            className="flex items-center gap-1"
+            style={{ WebkitAppRegion: 'no-drag' }}
+          >
+            <button
+              onClick={() => router.back()}
+              className="p-2 rounded-lg hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+              title="上一頁"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => window.history.forward()}
+              className="p-2 rounded-lg hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+              title="下一頁"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Center section - Title or URL Input */}
+      <div
+        className="flex-1 max-w-2xl mx-auto px-4"
+        style={{ WebkitAppRegion: 'no-drag' }}
+      >
+        {showUrlInput && isEditing ? (
+          <form
+            onSubmit={handleUrlSubmit}
+            className="w-full"
+          >
+            <div className="relative w-full">
+              <input
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onBlur={() => setIsEditing(false)}
+                autoFocus
+                placeholder="輸入網址..."
+                className="w-full h-10 bg-background rounded-lg text-sm text-foreground px-4 pr-10 border border-border hover:border-ring focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground transition-all duration-200"
+              />
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div
+            onClick={handleUrlInputClick}
+            className={cn(
+              "h-10 bg-background rounded-lg border border-border flex items-center justify-center text-foreground text-sm px-4 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200",
+              showUrlInput ? "cursor-pointer hover:bg-accent hover:border-ring" : "cursor-default"
+            )}
+          >
+            {showUrlInput ? urlInput || title : title}
+          </div>
+        )}
+      </div>
+
+      {/* Right section - User info and actions */}
+      <div className="flex items-center gap-4 flex-1 justify-end" style={{ WebkitAppRegion: 'no-drag' }}>
+        {rightContent}
+
+        {showUserInfo && userInfo && (
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-sm font-medium text-foreground">{userInfo.name}</div>
+              <div className="text-xs text-muted-foreground">{userInfo.email}</div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              {userInfo.avatar ? (
+                <img src={userInfo.avatar} alt={userInfo.name} className="w-full h-full rounded-full" />
+              ) : (
+                <User className="w-5 h-5 text-primary" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {showHomeButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleHomeClick}
+            className="rounded-lg"
+          >
+            <Globe className="w-5 h-5" />
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;
