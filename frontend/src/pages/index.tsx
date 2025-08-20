@@ -59,7 +59,8 @@ const HomePage: React.FC = () => {
     {
       icon: Building,
       title: 'SASS',
-      path: '/local',
+      // path: '/business-intelligent',
+      path: '/browser?url=https://www.taaze.ai/business-intelligent',
       description: 'Enterprise-grade AI automation solutions',
       gradientStyle: {
         background: `linear-gradient(135deg, var(--primary), var(--primary) 20%, rgba(59, 130, 246, 0.6))`,
@@ -73,14 +74,14 @@ const HomePage: React.FC = () => {
     { name: 'Google Drive', url: 'https://drive.google.com', icon: HardDrive, color: 'bg-primary', opacity: 'opacity-80' },
     { name: 'Telegram', url: 'https://web.telegram.org', icon: MessageCircle, color: 'bg-primary', opacity: 'opacity-70' },
     { name: 'Google Calendar', url: 'https://calendar.google.com', icon: Calendar, color: 'bg-primary', opacity: 'opacity-60' },
-    { name: 'Lens', url: 'https://www.ask-lens.ai', icon: Brain, color: 'bg-primary', opacity: 'opacity-100' },
+    { name: 'Len OS', url: 'https://www.ask-lens.ai', icon: Brain, color: 'bg-primary', opacity: 'opacity-100' },
   ];
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
       {/* Title Bar */}
       <TitleBar
-        title="Lens"
+        title="Len OS"
         showModeSwitch={true}
       />
 
@@ -90,10 +91,10 @@ const HomePage: React.FC = () => {
           {/* Header Section */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-4">
-              Welcome to Lens
+              Welcome to Len OS
             </h1>
             <p className="text-lg text-muted-foreground mb-6">
-              Your AI-powered automation companion
+              Your intelligent operating system powered by AI
             </p>
 
             {/* Lens Auth Button */}
@@ -102,7 +103,7 @@ const HomePage: React.FC = () => {
               className="mb-8"
             >
               <Brain className="w-5 h-5 mr-2" />
-              Lens Auth
+              Len OS Auth
             </RainbowButton>
           </div>
           <>

@@ -7,6 +7,7 @@ Rules API 路由
 import json
 from pathlib import Path
 from typing import List, Dict, Any
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -43,22 +44,54 @@ class RuleDetail(BaseModel):
     updated_at: str = ""
 
 
-def load_rules_from_directory(rules_dir: str = "data/rules") -> List[Dict[str, Any]]:
-    """從目錄載入所有規則"""
-    # 使用與 main.py 相同的路徑解析邏輯
+class CreateRuleRequest(BaseModel):
+    """創建規則請求模型"""
+    name: str
+    description: str
+    model: str = "gpt-4o"
+    tools: List[str] = []
+    agents: List[str] = []
+    prompt: str = ""
+    enabled: bool = True
+
+
+def get_rules_directory_path(rules_dir: str = "data/rules") -> Path:
+    """獲取規則目錄的絕對路徑"""
     if not Path(rules_dir).is_absolute():
-        # 從當前文件位置找到項目根目錄
         current_file = Path(__file__)
-        # backend/api/routers/rules.py -> backend/api/routers -> backend/api -> backend -> project_root
         project_root = current_file.parent.parent.parent.parent
         rules_path = project_root / rules_dir
     else:
         rules_path = Path(rules_dir)
+    return rules_path
+
+
+def generate_rule_id(name: str, existing_rules: List[Dict[str, Any]]) -> str:
+    """生成唯一的規則 ID"""
+    # 基於名稱生成基礎 ID
+    base_id = name.lower().replace(' ', '_').replace('-', '_')
+    base_id = ''.join(c for c in base_id if c.isalnum() or c == '_')
+    
+    # 檢查是否已存在
+    existing_ids = {rule.get('id', '') for rule in existing_rules}
+    
+    if base_id not in existing_ids:
+        return base_id
+    
+    # 如果存在衝突，添加數字後綴
+    counter = 1
+    while f"{base_id}_{counter}" in existing_ids:
+        counter += 1
+    
+    return f"{base_id}_{counter}"
+
+
+def load_rules_from_directory(rules_dir: str = "data/rules") -> List[Dict[str, Any]]:
+    """從目錄載入所有規則"""
+    rules_path = get_rules_directory_path(rules_dir)
 
     rules = []
 
-    logger.info(f"🔍 當前文件: {current_file.absolute()}")
-    logger.info(f"🔍 項目根目錄: {project_root.absolute()}")
     logger.info(f"🔍 嘗試載入規則目錄: {rules_path.absolute()}")
 
     if not rules_path.exists():
@@ -202,4 +235,101 @@ async def get_rules_count():
 
     except Exception as e:
         logger.error(f"獲取規則統計失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/", response_model=RuleDetail)
+async def create_rule(rule_request: CreateRuleRequest):
+    """創建新規則"""
+    try:
+        # 載入現有規則以檢查 ID 衝突
+        existing_rules = load_rules_from_directory()
+        
+        # 生成唯一的 ID
+        rule_id = generate_rule_id(rule_request.name, existing_rules)
+        
+        # 創建時間戳
+        now = datetime.now().isoformat()
+        
+        # 構建規則數據
+        rule_data = {
+            "id": rule_id,
+            "name": rule_request.name,
+            "description": rule_request.description,
+            "model": rule_request.model,
+            "tools": rule_request.tools,
+            "agents": rule_request.agents,
+            "prompt": rule_request.prompt,
+            "enabled": rule_request.enabled,
+            "created_at": now,
+            "updated_at": now
+        }
+        
+        # 獲取規則目錄路徑
+        rules_path = get_rules_directory_path()
+        
+        # 確保目錄存在
+        rules_path.mkdir(parents=True, exist_ok=True)
+        
+        # 文件路徑
+        rule_file_path = rules_path / f"{rule_id}.json"
+        
+        # 檢查文件是否已存在
+        if rule_file_path.exists():
+            raise HTTPException(status_code=409, detail=f"規則文件已存在: {rule_id}")
+        
+        # 寫入 JSON 文件
+        with open(rule_file_path, 'w', encoding='utf-8') as f:
+            json.dump(rule_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"✅ 成功創建規則: {rule_data['name']} (ID: {rule_id})")
+        
+        # 返回創建的規則詳情
+        return RuleDetail(**rule_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"創建規則失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{rule_id}")
+async def delete_rule(rule_id: str):
+    """刪除指定的規則"""
+    try:
+        # 載入現有規則以確認規則存在
+        existing_rules = load_rules_from_directory()
+        
+        # 查找指定的規則
+        rule_exists = False
+        for rule in existing_rules:
+            if rule.get('id') == rule_id or rule.get('name') == rule_id:
+                rule_exists = True
+                break
+        
+        if not rule_exists:
+            raise HTTPException(status_code=404, detail=f"規則不存在: {rule_id}")
+        
+        # 獲取規則目錄路徑
+        rules_path = get_rules_directory_path()
+        
+        # 構建文件路徑（使用 rule_id 作為文件名）
+        rule_file_path = rules_path / f"{rule_id}.json"
+        
+        # 檢查文件是否存在
+        if not rule_file_path.exists():
+            raise HTTPException(status_code=404, detail=f"規則文件不存在: {rule_id}")
+        
+        # 刪除文件
+        rule_file_path.unlink()
+        
+        logger.info(f"✅ 成功刪除規則: {rule_id}")
+        
+        return {"message": f"規則 {rule_id} 已成功刪除", "deleted_rule_id": rule_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"刪除規則失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))

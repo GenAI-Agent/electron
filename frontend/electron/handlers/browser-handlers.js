@@ -1532,7 +1532,7 @@ function register(window) {
           rawWebviewContent: webviewContent,  // 包含原始的 webview 提取數據
           urlInfo: urlInfo,  // 包含 URL 提取信息
           extractionTimestamp: new Date().toISOString(),
-          apiResult: apiResult,
+          // apiResult: apiResult,
           debugInfo: {
             contentLength: content ? content.length : 0,
             linksCount: links ? links.length : 0,
@@ -1549,7 +1549,7 @@ function register(window) {
 
       return {
         success: true,
-        pageData: webviewData
+        pageData: webviewContent
       };
 
     } catch (error) {

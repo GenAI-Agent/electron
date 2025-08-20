@@ -850,6 +850,7 @@ class SupervisorAgent:
         # TODO: 看起來目前這裡只有針對file去寫
         file_path = context_data.get("file_path", "未知文件")
         data_info = context_data.get("data_info", {})
+        page_data = context_data.get("page", {})
         mails = context_data.get("mails", [])
 
         # 構建簡潔的數據摘要
@@ -872,11 +873,9 @@ class SupervisorAgent:
         if has_rule:
             instruction = f"""
                 {data_summary}
-                ✅ 數據已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
-
-                用戶需求: "{query}"
-
-                請立即開始分析，不需要再詢問用戶需求。
+                此為我的頁面資料 {context_data}
+                請根據我的需求，以及你的規則（System Prompt），幫助我解決問題
+                我的需求: "{query}"，如果是空字串，請根據你的規則（System Prompt），幫助我解決問題
             """
 
         elif mails:

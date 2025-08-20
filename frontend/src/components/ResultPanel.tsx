@@ -4,6 +4,7 @@ import { cn } from '@/utils/cn';
 import ReactMarkdown from 'react-markdown';
 import RulesPanel from './RulesPanel';
 import ChartViewer from './ChartViewer';
+import { ReactMarkdownCustom } from './ReactMarkdownCustom';
 
 interface ChatMessage {
   id: string;
@@ -20,6 +21,7 @@ interface ResultPanelProps {
   usedTools?: string[];
   isLoading?: boolean;
   messages?: ChatMessage[];
+  onRulesUpdate?: () => void;
 }
 
 const ResultPanel: React.FC<ResultPanelProps> = ({
@@ -28,7 +30,8 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   currentRule = null,
   usedTools = [],
   isLoading = false,
-  messages = []
+  messages = [],
+  onRulesUpdate
 }) => {
   return (
     <div
@@ -51,34 +54,13 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                   ) : (
                     /* AI 回复 - 左对齐卡片样式，使用 ReactMarkdown */
                     <div className="flex justify-start">
-                      <div className="bg-white border border-slate-200 px-3 py-2 rounded-lg max-w-[85%] shadow-sm">
+                      <div className="px-3 py-2 rounded-lg max-w-full">
                         <div className="text-sm leading-relaxed text-slate-700">
                           {message.content ? (
                             <div className="prose prose-sm max-w-none">
-                              <ReactMarkdown
-                                components={{
-                                  h1: ({ children }) => <h1 className="text-base font-semibold mt-2 mb-1 text-slate-800">{children}</h1>,
-                                  h2: ({ children }) => <h2 className="text-base font-semibold mt-2 mb-1 text-slate-800">{children}</h2>,
-                                  h3: ({ children }) => <h3 className="text-sm font-semibold mt-1 mb-1 text-slate-800">{children}</h3>,
-                                  h4: ({ children }) => <h4 className="text-sm font-medium mt-1 mb-1 text-slate-800">{children}</h4>,
-                                  p: ({ children }) => <p className="mb-2 last:mb-0 text-slate-700">{children}</p>,
-                                  ul: ({ children }) => <ul className="pl-4 mb-2 space-y-1">{children}</ul>,
-                                  ol: ({ children }) => <ol className="pl-4 mb-2 space-y-1">{children}</ol>,
-                                  li: ({ children }) => <li className="text-sm text-slate-700">{children}</li>,
-                                  strong: ({ children }) => <strong className="font-semibold text-slate-800">{children}</strong>,
-                                  em: ({ children }) => <em className="italic text-slate-600">{children}</em>,
-                                  code: ({ children, ...props }) => (
-                                    <code className="bg-slate-200 px-2 py-1 rounded text-xs font-mono text-slate-800 border border-slate-300">{children}</code>
-                                  ),
-                                  pre: ({ children }) => <pre className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-auto text-sm font-mono my-3 border border-slate-600 shadow-inner">{children}</pre>,
-                                  blockquote: ({ children }) => <blockquote className="border-l-4 border-slate-300 pl-4 italic text-slate-600 my-2">{children}</blockquote>,
-                                  table: ({ children }) => <table className="border-collapse w-full text-sm">{children}</table>,
-                                  th: ({ children }) => <th className="border border-slate-300 bg-slate-50 px-2 py-1 font-medium">{children}</th>,
-                                  td: ({ children }) => <td className="border border-slate-300 px-2 py-1">{children}</td>,
-                                }}
-                              >
+                              <ReactMarkdownCustom>
                                 {message.content}
-                              </ReactMarkdown>
+                              </ReactMarkdownCustom>
                             </div>
                           ) : message.isLoading ? (
                             <span className="text-slate-500">正在思考...</span>
@@ -125,7 +107,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       )}
 
       {mode === 'rules' && (
-        <RulesPanel />
+        <RulesPanel onRulesUpdate={onRulesUpdate} />
       )}
 
       {mode === 'skills' && (
