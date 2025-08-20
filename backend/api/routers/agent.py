@@ -88,24 +88,25 @@ def compress_tool_result(tool_result: dict, max_data_items: int = 5) -> dict:
 
     return compressed
 
-
-# 工具轉換函數已移除，直接使用 LangChain 工具
-
-# 移除不需要的函數，簡化邏輯
-
-
 def _determine_request_type(context_data: dict) -> str:
     """
     判斷請求類型
 
     Args:
-        context_data: 上下文數據 (local file)
+        context_data: 上下文數據
 
     Returns:
-        請求類型: 'local_file', 'web'
+        請求類型: 'local_file', 'web', 'gmail'
     """
+    if not context_data:
+        return "local_file"
+
     type = context_data.get("type")
-    if type == "web" or type == "page":
+
+    # 判斷是否為 Gmail 類型
+    if type == "gmail" or context_data.get("email_address"):
+        return "gmail"
+    elif type == "web" or type == "page":
         return "web"
     else:
         return "local_file"
@@ -200,7 +201,12 @@ async def generate_stream_response(
         logger.info(f"🚀 開始生成流式響應")
         logger.info(f"  - message: {message}")
         logger.info(f"  - session_id: {session_id}")
-        logger.info(f"  - context_data: {context_data}")
+
+        # 限制 context_data 日誌輸出長度
+        context_str = str(context_data)
+        if len(context_str) > 300:
+            context_str = context_str[:300] + "..."
+        logger.info(f"  - context_data: {context_str}")
         logger.info(f"  - request_type: {request_type}")
 
         # 🎯 根據請求類型選擇工具集和處理方式
@@ -265,6 +271,101 @@ async def generate_stream_response(
                 logger.error("❌ 沒有提供 file_path")
                 final_context = {"error": "沒有提供文件路徑"}
 
+        elif request_type == "gmail":
+            logger.info("📧 GMAIL 模式 - 批量抓取郵件並轉換為 local file 處理")
+
+            # 提取 Gmail 相關信息
+            email_address = context_data.get("email_address", "")
+            oauth_tokens = context_data.get("oauth_tokens", {})
+            access_token = oauth_tokens.get("access_token", "")
+
+            if not access_token:
+                logger.error("❌ 缺少 OAuth access token")
+                raise ValueError("Gmail 模式需要 OAuth access token")
+
+            logger.info(f"📧 開始抓取 Gmail 郵件: {email_address}")
+
+            # 調用 Gmail 批量抓取工具
+            from src.tools.gmail_tools import fetch_gmail_emails_batch
+
+            gmail_result = await fetch_gmail_emails_batch(
+                access_token=access_token,
+                email_address=email_address,
+                total_emails=500,
+                session_id=session_id
+            )
+
+            if not gmail_result.get("success"):
+                logger.error(f"❌ Gmail 抓取失敗: {gmail_result.get('error')}")
+                raise ValueError(f"Gmail 抓取失敗: {gmail_result.get('error')}")
+
+            csv_path = gmail_result.get("csv_path")
+            logger.info(f"✅ Gmail 數據已保存到: {csv_path}")
+            logger.info(f"📊 抓取了 {gmail_result.get('total_emails')} 封郵件")
+
+            # 🔄 **重新設置為 file 模式，讓它走完整的 local file 處理流程**
+            logger.info("🔄 Gmail 抓取完成，轉換為 local file 模式處理...")
+
+            # 重新設置 context_data 和 request_type
+            context_data = {
+                "type": "file",
+                "file_path": csv_path,
+                # 保留 Gmail 相關信息
+                "original_query": message,
+                "email_address": email_address,
+                "gmail_metadata": {
+                    "total_emails": gmail_result.get("total_emails"),
+                    "successful_batches": gmail_result.get("successful_batches"),
+                    "failed_batches": gmail_result.get("failed_batches")
+                }
+            }
+            request_type = "file"
+
+            logger.info(f"📊 已轉換為 file 模式，將重新處理:")
+            logger.info(f"  - 文件路徑: {csv_path}")
+            logger.info(f"  - 新的 request_type: {request_type}")
+
+            # 🔄 **重新模擬 local file 請求，走完整的 local file 處理流程**
+            logger.info("🔄 Gmail 模式轉換為 local file 模式，重新處理...")
+
+            # 🔄 **重新走 local file 的完整處理邏輯**
+            logger.info("📄 重新處理 Gmail CSV 文件，獲取 data_info...")
+
+            # 直接調用底層的數據分析函數獲取數據信息（和 local file 模式一樣）
+            from src.tools.data_analysis_tools import data_analysis_tools
+
+            try:
+                data_info_result = await data_analysis_tools.get_data_info(
+                    csv_path, session_id
+                )
+                logger.info(f"📊 get_data_info_tool 執行結果: {str(data_info_result)[:500]}...")
+
+                # 構建 final_context，和 local file 模式完全一樣
+                final_context = {
+                    "file_path": csv_path,
+                    "data_info": data_info_result,
+                    # 保留 Gmail 相關的額外信息
+                    "original_query": message,
+                    "email_address": email_address,
+                    "gmail_metadata": {
+                        "total_emails": gmail_result.get("total_emails"),
+                        "successful_batches": gmail_result.get("successful_batches"),
+                        "failed_batches": gmail_result.get("failed_batches")
+                    }
+                }
+
+                # 使用 local file 工具集
+                available_tools = get_langchain_local_file_tools()
+
+                logger.info("� Gmail 模式已完全轉換為 local file 處理模式:")
+                logger.info(f"  - 文件路徑: {csv_path}")
+                logger.info(f"  - 郵件數量: {gmail_result.get('total_emails')}")
+                logger.info(f"  - data_info 類型: {type(final_context['data_info'])}")
+
+            except Exception as e:
+                logger.error(f"❌ 處理 Gmail CSV 文件失敗: {e}")
+                raise ValueError(f"Gmail 數據處理失敗: {e}")
+
         elif request_type == "web":
             logger.info("🌐 WEB 模式 - 使用 Web Tools")
             # TODO: 添加 Web Tools
@@ -292,6 +393,11 @@ async def generate_stream_response(
             start_event = {
                 "type": "start",
                 "message": "📁 Local File 模式：文件預處理已完成，開始分析...",
+            }
+        elif request_type == "gmail":
+            start_event = {
+                "type": "start",
+                "message": f"📧 Gmail 模式：已成功抓取 {final_context.get('gmail_metadata', {}).get('total_emails', 0)} 封郵件，開始分析...",
             }
         elif request_type == "web":
             start_event = {
@@ -447,7 +553,12 @@ async def stream_chat(request: StreamRequest):
     try:
         logger.info(f"收到流式聊天請求: {request.message[:100]}...")
         logger.info(f"  - user_id: {request.user_id}")
-        logger.info(f"  - context_data: {request.context_data}")
+
+        # 限制 context_data 日誌輸出長度
+        context_str = str(request.context_data)
+        if len(context_str) > 300:
+            context_str = context_str[:300] + "..."
+        logger.info(f"  - context_data: {context_str}")
 
         # 🔍 判斷請求類型並選擇對應的處理方式
         request_type = _determine_request_type(request.context_data)

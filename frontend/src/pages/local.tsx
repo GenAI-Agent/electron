@@ -41,7 +41,8 @@ const HomePage: React.FC = () => {
         showModeSwitch={true}
       />
 
-      <>
+      {/* Main Content Container */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
         {/* File Path Input */}
         <form
           onSubmit={(e) => handleSubmit(e, 'local')}
@@ -63,7 +64,7 @@ const HomePage: React.FC = () => {
 
         {/* Local File Cards */}
         <LocalFileCards />
-      </>
+      </div>
     </div>
   );
 };

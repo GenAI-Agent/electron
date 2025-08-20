@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Folder,
   File,
@@ -10,7 +10,11 @@ import {
   FileText,
   Code,
   FileIcon,
-  Loader2
+  Loader2,
+  FileSpreadsheet,
+  Presentation,
+  Archive,
+  RefreshCw
 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
@@ -31,6 +35,7 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
   const getFileIcon = (fileName: string, isDirectory: boolean) => {
@@ -39,37 +44,72 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
     }
 
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
-    
+
     // 圖片文件
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
       return <Image className="w-12 h-12 text-green-500" />;
     }
-    
+
     // 影片文件
     if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(ext)) {
       return <Video className="w-12 h-12 text-amber-500" />;
     }
-    
+
     // 音頻文件
     if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext)) {
       return <Music className="w-12 h-12 text-purple-500" />;
     }
-    
+
+    // Excel 文件
+    if (['xlsx', 'xls'].includes(ext)) {
+      return <FileSpreadsheet className="w-12 h-12 text-green-600" />;
+    }
+
+    // PowerPoint 文件
+    if (['ppt', 'pptx'].includes(ext)) {
+      return <Presentation className="w-12 h-12 text-orange-500" />;
+    }
+
+    // CSV 文件
+    if (ext === 'csv') {
+      return <FileSpreadsheet className="w-12 h-12 text-emerald-500" />;
+    }
+
+    // JSON 文件
+    if (ext === 'json') {
+      return <Code className="w-12 h-12 text-yellow-500" />;
+    }
+
+    // Word 文件
+    if (['doc', 'docx'].includes(ext)) {
+      return <FileText className="w-12 h-12 text-blue-600" />;
+    }
+
     // PDF 文件
     if (ext === 'pdf') {
       return <FileText className="w-12 h-12 text-red-500" />;
     }
-    
+
+    // 文本文件
+    if (['txt', 'md', 'rtf'].includes(ext)) {
+      return <FileText className="w-12 h-12 text-gray-600" />;
+    }
+
     // 程式碼文件
     if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'java', 'cpp', 'c', 'h'].includes(ext)) {
       return <Code className="w-12 h-12 text-indigo-500" />;
     }
-    
-    // 文本文件
-    if (['txt', 'md', 'json', 'xml', 'yaml', 'yml'].includes(ext)) {
+
+    // 壓縮文件
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+      return <Archive className="w-12 h-12 text-purple-600" />;
+    }
+
+    // 其他文件
+    if (['xml', 'yaml', 'yml'].includes(ext)) {
       return <FileText className="w-12 h-12 text-slate-500" />;
     }
-    
+
     // 默認文件圖標
     return <File className="w-12 h-12 text-slate-500" />;
   };
@@ -87,13 +127,21 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
     return previewableExtensions.includes(ext);
   };
 
-  const loadDirectory = async (path: string) => {
-    setLoading(true);
+  const loadDirectory = useCallback(async (path: string, isRefresh: boolean = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
+
+    console.log('Loading directory:', path);
 
     try {
       if (window.electronAPI?.readDirectory) {
         const result = await window.electronAPI.readDirectory(path);
+        console.log('Directory read result:', result);
+
         if (result.success && result.items) {
           // 排序：文件夾在前，然後按名稱排序
           const sortedItems = result.items.sort((a, b) => {
@@ -107,19 +155,41 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
           // 更新 URL 以反映當前路徑，這樣標題欄也會更新
           router.push(`/browser?path=${encodeURIComponent(path)}&mode=local`, undefined, { shallow: true });
         } else {
+          console.error('Failed to read directory:', result.error);
           setError(result.error || '無法讀取目錄');
         }
+      } else {
+        console.error('electronAPI.readDirectory not available');
+        setError('文件系統 API 不可用');
       }
     } catch (err) {
+      console.error('Error loading directory:', err);
       setError(err instanceof Error ? err.message : '讀取目錄時發生錯誤');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, []);
+
+  // 手動刷新功能
+  const handleRefresh = () => {
+    loadDirectory(currentPath, true);
   };
 
   useEffect(() => {
     loadDirectory(initialPath);
-  }, [initialPath]);
+  }, [initialPath, loadDirectory]);
+
+  // 自動刷新功能 - 每30秒檢查一次
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading && !refreshing) {
+        loadDirectory(currentPath, true);
+      }
+    }, 30000); // 30秒
+
+    return () => clearInterval(interval);
+  }, [currentPath, loading, refreshing, loadDirectory]);
 
   const handleItemClick = async (item: FileItem) => {
     if (item.isDirectory) {
@@ -179,6 +249,15 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
           <ArrowLeft className="w-4 h-4" />
         </button>
 
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+          title="刷新文件列表"
+        >
+          <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
+        </button>
+
         <nav className="flex-1 flex items-center text-sm">
           {pathSegments.map((segment, index) => {
             const isLast = index === pathSegments.length - 1;
@@ -217,15 +296,22 @@ const FileCardBrowser: React.FC<FileCardBrowserProps> = ({ initialPath }) => {
           {items.map((item) => (
             <div
               key={item.path}
-              className="w-[120px] h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+              className="relative group w-[120px] h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
               onClick={() => handleItemClick(item)}
             >
               <div className="flex flex-col items-center justify-center h-full text-center p-2">
                 {getFileIcon(item.name, item.isDirectory)}
-                <span className="mt-2 text-[11px] font-medium text-gray-700 leading-tight overflow-hidden line-clamp-2 break-words">
-                  {item.name}
+                <span className="mt-2 text-[11px] font-medium text-gray-700 leading-tight overflow-hidden text-ellipsis max-w-full px-1">
+                  {item.name.length > 15 ? `${item.name.substring(0, 15)}...` : item.name}
                 </span>
               </div>
+
+              {/* Tooltip for long file names */}
+              {item.name.length > 15 && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                  {item.name}
+                </div>
+              )}
             </div>
           ))}
         </div>

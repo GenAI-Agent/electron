@@ -25,15 +25,9 @@ class SessionStorage:
         # 創建子目錄
         self.sessions_dir = self.base_dir / "sessions"
         self.global_cache_dir = self.base_dir / "global_cache"
-        # 新增：重要資料表目錄
-        self.data_tables_dir = self.base_dir / "data_tables"
-        # 新增：批次處理目錄
-        self.batch_processing_dir = self.base_dir / "batch_processing"
 
         self.sessions_dir.mkdir(exist_ok=True)
         self.global_cache_dir.mkdir(exist_ok=True)
-        self.data_tables_dir.mkdir(exist_ok=True)
-        self.batch_processing_dir.mkdir(exist_ok=True)
     
     def create_session(self, session_id: str) -> Dict[str, Any]:
         """
@@ -53,6 +47,7 @@ class SessionStorage:
             (session_dir / "temp_data").mkdir(exist_ok=True)
             (session_dir / "file_summaries").mkdir(exist_ok=True)
             (session_dir / "task_states").mkdir(exist_ok=True)
+            (session_dir / "batch_processing").mkdir(exist_ok=True)
             
             # 創建會話元數據
             session_info = {
@@ -63,7 +58,8 @@ class SessionStorage:
                 "directories": {
                     "temp_data": str(session_dir / "temp_data"),
                     "file_summaries": str(session_dir / "file_summaries"),
-                    "task_states": str(session_dir / "task_states")
+                    "task_states": str(session_dir / "task_states"),
+                    "batch_processing": str(session_dir / "batch_processing")
                 }
             }
             
@@ -411,7 +407,11 @@ class SessionStorage:
             是否創建成功
         """
         try:
-            session_batch_dir = self.batch_processing_dir / session_id
+            session_dir = self.sessions_dir / session_id
+            if not session_dir.exists():
+                self.create_session(session_id)
+
+            session_batch_dir = session_dir / "batch_processing"
             session_batch_dir.mkdir(exist_ok=True)
 
             batch_info = {
@@ -455,7 +455,8 @@ class SessionStorage:
             是否保存成功
         """
         try:
-            batch_file = self.batch_processing_dir / session_id / f"{task_id}.json"
+            session_dir = self.sessions_dir / session_id
+            batch_file = session_dir / "batch_processing" / f"{task_id}.json"
 
             if not batch_file.exists():
                 logger.error(f"批次處理任務不存在: {session_id}/{task_id}")
@@ -503,7 +504,8 @@ class SessionStorage:
             批次處理狀態信息
         """
         try:
-            batch_file = self.batch_processing_dir / session_id / f"{task_id}.json"
+            session_dir = self.sessions_dir / session_id
+            batch_file = session_dir / "batch_processing" / f"{task_id}.json"
 
             if not batch_file.exists():
                 return None
@@ -547,7 +549,8 @@ class SessionStorage:
             完整的處理結果
         """
         try:
-            batch_file = self.batch_processing_dir / session_id / f"{task_id}.json"
+            session_dir = self.sessions_dir / session_id
+            batch_file = session_dir / "batch_processing" / f"{task_id}.json"
 
             if not batch_file.exists():
                 return None

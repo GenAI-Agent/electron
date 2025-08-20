@@ -143,10 +143,8 @@ class OAuthUtils {
           reject(new Error('Missing required parameters'));
         }
 
-        // Close server after handling request
-        setTimeout(() => {
-          this.stopCallbackServer();
-        }, 1000);
+        // Don't automatically close server - let the OAuth handler manage cleanup
+        // This prevents race conditions where the server closes before cookie processing completes
       } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');

@@ -231,40 +231,92 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             let pageDataOptions = {};
 
             if (isGmailPage()) {
-              const tokens = getOAuthTokens();
-              console.log('🔑 OAuth tokens:', tokens);
+              // 直接從 localStorage 拿 OAuth tokens
+              const storedTokens = localStorage.getItem("google_oauth_tokens");
+
+              let tokens = null;
+              if (storedTokens) {
+                try {
+                  tokens = JSON.parse(storedTokens);
+                } catch (e) {
+                  console.error('🔑 解析 tokens 失敗:', e);
+                }
+              }
+
               if (tokens && tokens.access_token) {
-                pageDataOptions = {
-                  accessToken: tokens.access_token,
-                  refreshToken: tokens.refresh_token,
-                  clientConfig: {
-                    clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
-                    clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || ''
-                  },
-                  useAPI: true,
-                  maxResults: 100,
-                  query: 'category:primary'  // 只獲取主要區域的郵件
+                console.log('📧 Gmail 頁面：使用 Gmail 專用流程（批量抓取模式）');
+
+                // 提取 email address
+                let emailAddress = '';
+                try {
+                  const emailResult = await window.electronAPI.browserControl.executeScript(`
+                    const title = document.title;
+                    const titleMatch = title.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/);
+                    if (titleMatch) {
+                      return titleMatch[1];
+                    }
+                    return '';
+                  `);
+
+                  if (emailResult && emailResult.result) {
+                    emailAddress = emailResult.result;
+                    console.log('✅ 從頁面標題提取到 email:', emailAddress);
+                  }
+                } catch (e) {
+                  console.warn('⚠️ 無法提取 email:', e);
+                }
+
+                // Gmail 模式：直接設置 contextData，不調用 getPageData
+                contextData = {
+                  type: 'gmail',
+                  query: message,
+                  email_address: emailAddress,
+                  oauth_tokens: {
+                    access_token: tokens.access_token,
+                    refresh_token: tokens.refresh_token,
+                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+                    client_secret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || ''
+                  }
                 };
-                console.log('📧 Gmail 頁面：使用 OAuth token 調用 API');
+
+                console.log('📧 Gmail 模式 contextData:', {
+                  type: contextData.type,
+                  email_address: contextData.email_address,
+                  has_access_token: !!contextData.oauth_tokens.access_token
+                });
+
               } else {
-                console.warn('⚠️ Gmail 頁面但未找到 OAuth token，使用 DOM 解析');
+                console.warn('⚠️ Gmail 頁面但未找到 OAuth token，需要先進行認證');
+
+                // 提示用戶進行 OAuth 認證
+                const shouldAuth = confirm('檢測到 Gmail 頁面，但需要先進行 Google OAuth 認證才能使用 Gmail API 功能。\n\n是否現在進行認證？');
+
+                if (shouldAuth) {
+                  // 導航到 OAuth 認證頁面
+                  window.location.href = '/gmail-auth';
+                  return;
+                }
+
+                // 用戶選擇不認證，回退到普通頁面模式
                 pageDataOptions = { useAPI: false };
               }
             } else {
               console.log('📄 一般頁面：使用標準解析');
             }
 
-            const pageResult = await window.electronAPI.browserControl.getPageData(pageDataOptions);
-            console.log('📄 完整的頁面結果:', pageResult);
+            // 只有在非 Gmail 模式或 Gmail 模式失敗時才調用 getPageData
+            if (!contextData) {
+              const pageResult = await window.electronAPI.browserControl.getPageData(pageDataOptions);
 
-            if (pageResult.success) {
-              contextData = {
-                type: 'page',
-                ...pageResult.pageData
-              };
-              console.log('📄 獲取到真實頁面資料:', contextData);
-            } else {
-              console.warn('⚠️ 獲取頁面資料失敗:', pageResult.error);
+              if (pageResult.success) {
+                contextData = {
+                  type: 'page',
+                  ...pageResult.pageData
+                };
+                console.log('📄 獲取到頁面資料 (已隱藏詳細內容)');
+              } else {
+                console.warn('⚠️ 獲取頁面資料失敗:', pageResult.error);
+              }
             }
           } else {
             console.warn('⚠️ Electron API 不可用');

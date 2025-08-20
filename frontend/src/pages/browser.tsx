@@ -88,9 +88,9 @@ const BrowserPage: React.FC = () => {
           >
             <BrowserView
               url={currentUrl || url as string}
-              // path={path as string}  
-              // file={file as string}
-              // mode={isLocalMode ? 'local' : 'web'}
+              path={path as string}
+              file={file as string}
+              mode={isLocalMode ? 'local' : 'web'}
               disablePointerEvents={isDragging}
             />
           </div>

@@ -174,16 +174,154 @@ ipcMain.handle('get-file-stats', async (_, filePath) => {
 
 ipcMain.handle('read-file', async (_, filePath) => {
   try {
-    // 檢查文件大小，避免讀取過大的文件
+    // 檢查文件大小，根據文件類型設置不同限制
     const stats = await fs.promises.stat(filePath);
-    const maxSize = 10 * 1024 * 1024; // 10MB 限制
+    const ext = path.extname(filePath).toLowerCase();
 
-    if (stats.size > maxSize) {
-      throw new Error('文件過大，無法預覽');
+    // 根據文件類型設置不同的大小限制
+    let maxSize;
+    if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'].includes(ext)) {
+      maxSize = 2048 * 1024 * 1024; // 視頻文件 2G 限制
+    } else if (['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a'].includes(ext)) {
+      maxSize = 2048 * 1024 * 1024; // 音頻文件 2G 限制
+    } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'].includes(ext)) {
+      maxSize = 500 * 1024 * 1024; // 圖片文件 500MB 限制
+    } else if (['.pdf'].includes(ext)) {
+      maxSize = 1024 * 1024 * 1024; // PDF 文件 1G 限制
+    } else {
+      maxSize = 500 * 1024 * 1024; // 其他文件 500MB 限制
     }
 
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    return content;
+    if (stats.size > maxSize) {
+      throw new Error(`文件過大，無法預覽。文件大小: ${(stats.size / 1024 / 1024).toFixed(2)}MB，限制: ${(maxSize / 1024 / 1024).toFixed(2)}MB`);
+    }
+
+    // 獲取文件名
+    const fileName = path.basename(filePath);
+
+    // 根據文件類型返回不同的結果
+    if (ext === '.csv') {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+
+      // 解析 CSV 內容
+      const lines = content.split('\n').filter(line => line.trim());
+      if (lines.length === 0) {
+        throw new Error('CSV 文件為空');
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        return row;
+      });
+
+      return {
+        type: 'csv',
+        content: content,
+        data: {
+          headers: headers,
+          rows: rows
+        },
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (ext === '.json') {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      try {
+        const jsonData = JSON.parse(content);
+        return {
+          type: 'json',
+          content: content,
+          data: jsonData,
+          size: stats.size,
+          extension: ext,
+          filePath: filePath
+        };
+      } catch (e) {
+        return {
+          type: 'text',
+          content: content,
+          size: stats.size,
+          extension: ext,
+          filePath: filePath
+        };
+      }
+    } else if (['.txt', '.md', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.py', '.java', '.cpp', '.c', '.h', '.xml', '.yaml', '.yml', '.ini', '.cfg', '.log'].includes(ext)) {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      return {
+        type: 'text',
+        content: content,
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'].includes(ext)) {
+      return {
+        type: 'image',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'].includes(ext)) {
+      return {
+        type: 'video',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a'].includes(ext)) {
+      return {
+        type: 'audio',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (ext === '.pdf') {
+      return {
+        type: 'pdf',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (['.ppt', '.pptx'].includes(ext)) {
+      return {
+        type: 'presentation',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else if (['.doc', '.docx', '.xls', '.xlsx'].includes(ext)) {
+      return {
+        type: 'office',
+        size: stats.size,
+        extension: ext,
+        filePath: filePath
+      };
+    } else {
+      // 嘗試作為文本文件讀取
+      try {
+        const content = await fs.promises.readFile(filePath, 'utf-8');
+        return {
+          type: 'text',
+          content: content,
+          size: stats.size,
+          extension: ext,
+          filePath: filePath
+        };
+      } catch (textError) {
+        return {
+          type: 'binary',
+          size: stats.size,
+          extension: ext,
+          filePath: filePath
+        };
+      }
+    }
   } catch (error) {
     throw new Error(`無法讀取文件: ${error.message}`);
   }

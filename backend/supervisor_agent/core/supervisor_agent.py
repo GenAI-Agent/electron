@@ -15,7 +15,8 @@ import sys
 from typing import List, Optional, Dict, Any, Annotated, Literal
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
-from langchain.callbacks.tracers import LangChainTracer
+
+# from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -119,6 +120,8 @@ class ParallelToolNode(BaseToolNode):
                 and message.tool_calls
             ):
                 tool_calls = message.tool_calls
+                # 調試日誌：檢查原始 tool_calls
+                logger.info(f"🔍 找到 AI 消息的 tool_calls: {tool_calls}")
                 break
 
         if not tool_calls:
@@ -133,6 +136,11 @@ class ParallelToolNode(BaseToolNode):
             tool_name = tool_call["name"]
             tool_args = tool_call.get("args", {})
             tool_call_id = tool_call.get("id", "")
+
+            # 調試日誌：檢查 tool_call_id
+            logger.info(
+                f"🔍 工具調用詳情: name={tool_name}, id={tool_call_id}, args={tool_args}"
+            )
 
             if tool_name in self.tools_by_name:
                 tool = self.tools_by_name[tool_name]
@@ -182,7 +190,7 @@ class SupervisorAgent:
         self.rules_dir = rules_dir
         # 設置stream回調函數
         self.stream_callback = stream_callback
-        self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
+        # self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
         # 初始化 LLM
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -536,7 +544,6 @@ class SupervisorAgent:
 
                 for tool in browser_tools:
                     self.current_tools.append(tool)
-                    logger.info(f"🌐 添加默認瀏覽器工具: {tool.name}")
 
             except Exception as e:
                 logger.warning(f"⚠️ 瀏覽器工具導入失敗: {e}")
@@ -654,14 +661,15 @@ class SupervisorAgent:
         current_tokens = self.calculate_messages_tokens(messages)
         logger.info(f"📊 當前上下文Token數: {current_tokens}")
 
-        # 智能記憶管理
-        if current_tokens > 12000:  # 如果token數量過多，進行壓縮
+        # 智能記憶管理 - 暫時禁用以調試 tool_call_id 問題
+        if current_tokens > 20000:  # 提高閾值，暫時減少壓縮
             logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
-            messages = self.compress_tool_messages(messages, max_tool_results=3)
-            compressed_tokens = self.calculate_messages_tokens(messages)
-            logger.info(
-                f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})"
-            )
+            # messages = self.compress_tool_messages(messages, max_tool_results=3)  # 暫時禁用
+            # compressed_tokens = self.calculate_messages_tokens(messages)
+            logger.info(f"🧠 記憶壓縮已暫時禁用以調試 tool_call_id 問題")
+            # logger.info(
+            #     f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})"
+            # )
             state["messages"] = messages
 
             # 壓縮後，將會話狀態信息注入到上下文中，確保不丟失重要信息
@@ -784,8 +792,12 @@ class SupervisorAgent:
                     HumanMessage(content=evaluation_prompt),
                 ]
 
-                # 添加對話歷史（最近的消息）
-                llm_messages.extend(messages[-10:])  # 只保留最近10條消息避免token過多
+                # 添加對話歷史，確保 tool_call_id 完整性
+                # 找到最後一個完整的 AI -> Tool 對話組
+                recent_messages = self._get_recent_complete_messages(
+                    messages, max_messages=10
+                )
+                llm_messages.extend(recent_messages)
             else:
                 # 沒有工具消息，直接使用現有消息
                 llm_messages = [
@@ -804,6 +816,56 @@ class SupervisorAgent:
             logger.info("💬 決定直接回應用戶")
 
         return {"messages": [response]}
+
+    def _get_recent_complete_messages(
+        self, messages: List, max_messages: int = 10
+    ) -> List:
+        """
+        獲取最近的完整消息組，確保 AI 消息和對應的 ToolMessage 都被包含
+
+        Args:
+            messages: 所有消息列表
+            max_messages: 最大消息數量
+
+        Returns:
+            完整的消息列表
+        """
+        if len(messages) <= max_messages:
+            return messages
+
+        # 從後往前找，確保包含完整的 AI -> Tool 對話組
+        result_messages = []
+        i = len(messages) - 1
+
+        while i >= 0 and len(result_messages) < max_messages:
+            current_msg = messages[i]
+            result_messages.insert(0, current_msg)
+
+            # 如果是 ToolMessage，確保對應的 AI 消息也被包含
+            if isinstance(current_msg, ToolMessage):
+                # 向前查找對應的 AI 消息
+                j = i - 1
+                while j >= 0:
+                    prev_msg = messages[j]
+                    if (
+                        isinstance(prev_msg, AIMessage)
+                        and hasattr(prev_msg, "tool_calls")
+                        and prev_msg.tool_calls
+                    ):
+                        # 檢查是否包含對應的 tool_call_id
+                        tool_call_ids = [
+                            call.get("id", "") for call in prev_msg.tool_calls
+                        ]
+                        if current_msg.tool_call_id in tool_call_ids:
+                            # 確保這個 AI 消息也被包含
+                            if prev_msg not in result_messages:
+                                result_messages.insert(0, prev_msg)
+                            break
+                    j -= 1
+
+            i -= 1
+
+        return result_messages
 
     def _get_system_prompt(
         self, rule_id: Optional[str], context: Dict[str, Any]
@@ -838,7 +900,30 @@ class SupervisorAgent:
                 return rule_prompt
 
         # 預設提示
-        return f"你是一個智能助手。當前時間: {current_time}\n請根據用戶需求智能地選擇和使用工具來完成任務。"
+        return f"""你是一個智能數據分析助手。當前時間: {current_time}
+
+🎯 **核心任務**：主動進行分析，而不只是提供建議
+
+📊 **數據分析優先原則**：
+當用戶提到統計、分析、計算、過濾等需求時，請立即執行實際的數據分析：
+
+1. **過濾數據**：使用 filter_data_tool 過濾出符合條件的數據
+   - 例如：過濾特定部門、日期範圍、金額範圍等
+   - 設置 save_filtered_data=True 保存過濾結果
+
+2. **分組分析**：使用 group_by_analysis_tool 進行統計計算
+   - 支持操作：sum(總和)、mean(平均)、count(計數)、max(最大)、min(最小)
+   - 例如：按部門分組計算支出總額
+
+3. **組合分析**：使用 filter_and_analyze_tool 一步完成過濾和分析
+
+🚀 **執行策略**：
+- 看到"統計XX部門支出"→立即過濾該部門數據並計算總額
+- 看到"分析XX趨勢"→過濾相關數據並進行分組分析
+- 看到"計算平均值"→使用group_by_analysis_tool執行mean操作
+- 不要只提供建議，要直接執行分析並給出具體結果
+
+請根據用戶需求智能地選擇和使用工具來完成任務。"""
 
     def _build_context_query(
         self, query: str, context: Dict[str, Any], has_rule: bool = False
@@ -847,15 +932,65 @@ class SupervisorAgent:
 
         # 提取關鍵信息
         context_data = context.get("context_data", {})
-        # TODO: 看起來目前這裡只有針對file去寫
         file_path = context_data.get("file_path", "未知文件")
         data_info = context_data.get("data_info", {})
+        file_summary = context_data.get("file_summary", {})
         page_data = context_data.get("page", {})
         mails = context_data.get("mails", [])
 
+        # 檢查是否為 Gmail 數據
+        email_address = context_data.get("email_address", "")
+        gmail_metadata = context_data.get("gmail_metadata", {})
+        original_query = context_data.get("original_query", "")
+
         # 構建簡潔的數據摘要
         data_summary = ""
-        if data_info:
+
+        # Gmail 數據摘要（優先使用 file_summary）
+        if file_summary and file_summary.get("file_type") == "gmail_csv":
+            total_emails = file_summary.get("total_emails", 0)
+            unread_emails = file_summary.get("unread_emails", 0)
+            top_senders = file_summary.get("top_senders", [])
+
+            data_summary = f"""
+                📧 Gmail 郵件數據已載入並準備分析:
+                - 郵件帳戶: {email_address}
+                - 郵件數量: {total_emails} 封
+                - 未讀郵件: {unread_emails} 封
+                - 數據文件: {file_path}
+                - 主要發件人: {', '.join([f"{sender}({count}封)" for sender, count in top_senders[:3]])}
+                - 原始查詢: {original_query}
+                - 文件摘要: {file_summary.get('summary', '')}
+            """
+        # Gmail 數據摘要（回退到 gmail_metadata）
+        elif email_address and gmail_metadata:
+            total_emails = gmail_metadata.get("total_emails", 0)
+            data_summary = f"""
+                📧 Gmail 郵件數據已載入並準備分析:
+                - 郵件帳戶: {email_address}
+                - 郵件數量: {total_emails} 封
+                - 數據文件: {file_path}
+                - 原始查詢: {original_query}
+                - 成功批次: {gmail_metadata.get('successful_batches', 0)}
+                - 失敗批次: {gmail_metadata.get('failed_batches', 0)}
+            """
+        # 一般數據文件摘要（優先使用 file_summary）
+        elif file_summary:
+            total_rows = file_summary.get(
+                "total_emails", file_summary.get("total_rows", 0)
+            )
+            columns = file_summary.get("columns", [])
+            summary_text = file_summary.get("summary", "")
+
+            data_summary = f"""
+                📊 數據文件已載入並準備分析:
+                - 文件路徑: {file_path}
+                - 數據摘要: {summary_text}
+                - 數據量: {total_rows} 行
+                - 欄位: {', '.join(columns[:10])}{'...' if len(columns) > 10 else ''}
+            """
+        # 一般數據文件摘要（回退到 data_info）
+        elif data_info:
             total_rows = data_info.get("total_rows", 0)
             columns = data_info.get("columns", [])
             numeric_columns = data_info.get("numeric_columns", [])
@@ -891,10 +1026,18 @@ class SupervisorAgent:
         else:
             instruction = f"""{data_summary}
 
-                請參考上面的數據架構，使用專業工具進行分析。
+🎯 **立即執行數據分析**：
+根據用戶需求，請直接使用以下工具進行實際分析：
 
-                用戶需求: "{query}" 
-            """
+1. 如果需要過濾數據：使用 filter_data_tool
+2. 如果需要統計計算：使用 group_by_analysis_tool
+3. 如果需要組合操作：使用 filter_and_analyze_tool
+
+⚠️ **重要**：不要只提供建議或說明，請立即執行實際的數據分析並提供具體結果。
+
+用戶需求: "{query}"
+
+請立即開始分析並執行相應的工具。"""
 
         return instruction
 
@@ -939,20 +1082,50 @@ class SupervisorAgent:
             # 有工具調用結果，生成基於結果的回答
             system_prompt = """你是一個專業的助手，請根據工具執行結果為用戶生成簡潔明瞭的回答。
 
-                要求：
-                1. 回答要具體且有用
-                2. 如果有數據，請提供具體數字
-                3. 如果有錯誤，請說明原因並提供解決建議
-                4. 保持專業且友好的語調
-                5. 用繁體中文回答
-            """
+要求：
+1. 回答要具體且有用
+2. 如果有數據，請提供具體數字
+3. 如果有錯誤，請說明原因並提供解決建議
+4. 保持專業且友好的語調
+5. 用繁體中文回答
+
+📊 **特別注意 - 數據分析回答格式**：
+當回答涉及數據分析結果時，請按以下格式提供豐富的內容：
+
+## 📈 分析結果
+
+### 🎯 核心發現
+[直接回答用戶問題的主要數字和結論]
+
+### 📊 詳細數據
+```
+| 項目 | 數值 | 佔比 |
+|------|------|------|
+| ... | ... | ... |
+```
+
+### 💡 重點整理 範例
+- 重點1：[具體發現]
+- 重點2：[異常或特殊情況]
+- 重點3：[其他延伸資訊，或是用戶可能想要知道的內容]
+
+### 📋 補充說明 範例
+- 數據來源：[說明數據範圍]
+- 統計方法：[說明使用的分析方法]
+- 相關建議：[基於數據的建議，或是用戶可能想要知道的內容]
+
+不要只給一個單薄的數字或是文字回覆，要提供完整的分析報告。"""
 
             response_messages = [SystemMessage(content=system_prompt)]
             response_messages.extend(messages)
 
-            final_instruction = (
-                f"""用戶問題：{query} 請根據上述工具執行結果生成最終回答。"""
-            )
+            final_instruction = f"""用戶問題：{query}
+
+請根據上述工具執行結果生成最終回答。
+
+⚠️ 如果涉及數據分析，請務必使用上述指定的格式：
+- 包含核心發現、詳細數據表格、重點整理、補充說明
+- 不要只給一個簡單的數字答案"""
 
             response_messages.append(HumanMessage(content=final_instruction))
             final_response = await self.llm.ainvoke(response_messages)
@@ -987,7 +1160,12 @@ class SupervisorAgent:
         logger.info(f"🔍 詳細參數:")
         logger.info(f"  - query: {query}")
         logger.info(f"  - rule_id: {rule_id}")
-        logger.info(f"  - context: {context}")
+
+        # 限制 context 日誌輸出長度
+        context_str = str(context)
+        if len(context_str) > 300:
+            context_str = context_str[:300] + "..."
+        logger.info(f"  - context: {context_str}")
 
         # 根據 rule_id 載入規則
         rule_data = None
@@ -1025,7 +1203,7 @@ class SupervisorAgent:
         config = {
             "configurable": {"thread_id": str(uuid.uuid4())},
             "recursion_limit": 50,  # 增加遞歸限制到 50
-            "callbacks": [self.tracer],
+            # "callbacks": [self.tracer],  # 註解掉 LangSmith tracer
         }
 
         # 執行 graph
