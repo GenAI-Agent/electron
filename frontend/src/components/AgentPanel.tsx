@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import ResultPanel from './ResultPanel';
 import { sessionManager, FileContext } from '@/utils/sessionManager';
 import { cn } from '@/utils/cn';
+import { getOAuthTokens, isGmailPage } from '@/utils/PageDataExtractor';
 
 type PanelMode = 'result' | 'rules' | 'skills';
 
@@ -46,6 +47,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   const [usedTools, setUsedTools] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [fileContext, setFileContext] = useState<FileContext | null>(null);
+  const [isComposing, setIsComposing] = useState(false); // 中文输入法组合状态
 
   // 刷新 session 功能
   const handleRefreshSession = () => {
@@ -63,8 +65,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   // 內部百分比狀態（可被 props 初始化）
-  const [heightPct, setHeightPct] = useState(75);  // 預設上面 75%，下面輸入框 25%
-  useEffect(() => { setHeightPct(clamp(topHeight || 75, 70, 85)); }, [topHeight]);
+  const [heightPct, setHeightPct] = useState(85);  // 預設上面 85%，下面輸入框 15%
+  useEffect(() => { setHeightPct(clamp(topHeight || 85, 80, 90)); }, [topHeight]);
 
   // 檢測當前模式和文件上下文
   useEffect(() => {
@@ -114,7 +116,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
     const move = (y: number) => {
       const raw = ((y - rect.top) / rect.height) * 100;
-      const next = clamp(raw, 70, 85);        // 限制：上面 70%-85%（底部 15%-30%）
+      const next = clamp(raw, 80, 90);        // 限制：上面 80%-90%（底部 10%-20%）
       // 用 rAF 避免大量 reflow
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -182,119 +184,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     setUsedTools([]);
 
     try {
-      // 檢查是否是測試命令
-      const testCommands = {
-        'test_slide': { action: 'scroll', params: ['down', 300], description: '向下滑動300px' },
-        'test_navigate': { action: 'navigate', params: ['https://www.google.com'], description: '導覽到Google' },
-        'test_click': { action: 'click', params: ['button'], description: '點擊第一個按鈕' },
-        'test_input': { action: 'type', params: ['input[type="text"]', 'Hello World'], description: '在文字輸入框輸入Hello World' }
-      };
-
-      const lowerMessage = message.trim().toLowerCase();
-      const testCommand = testCommands[lowerMessage as keyof typeof testCommands];
-
-      if (testCommand) {
-        console.log(`🧪 檢測到測試命令: ${lowerMessage}`);
-
-        try {
-          let result;
-          const { action, params, description } = testCommand;
-
-          if (typeof window !== 'undefined' && window.electronAPI?.browserControl) {
-            switch (action) {
-              case 'scroll':
-                if (window.electronAPI.browserControl.testScroll) {
-                  result = await window.electronAPI.browserControl.testScroll(params[0], params[1]);
-                } else {
-                  throw new Error('testScroll 函數不存在');
-                }
-                break;
-
-              case 'navigate':
-                if (window.electronAPI.browserControl.testNavigate) {
-                  result = await window.electronAPI.browserControl.testNavigate(params[0]);
-                } else {
-                  throw new Error('testNavigate 函數不存在');
-                }
-                break;
-
-              case 'click':
-                if (window.electronAPI.browserControl.testClick) {
-                  result = await window.electronAPI.browserControl.testClick(params[0]);
-                } else {
-                  throw new Error('testClick 函數不存在');
-                }
-                break;
-
-              case 'type':
-                if (window.electronAPI.browserControl.testType) {
-                  result = await window.electronAPI.browserControl.testType(params[0], params[1]);
-                } else {
-                  throw new Error('testType 函數不存在');
-                }
-                break;
-
-              default:
-                throw new Error(`不支援的測試動作: ${action}`);
-            }
-
-            if (result && result.success) {
-              const testMessage = `✅ 測試${description}成功！`;
-              setStreamResponse(testMessage);
-
-              if (messageId) {
-                setMessages(prev => prev.map(msg =>
-                  msg.id === messageId
-                    ? { ...msg, content: testMessage, isLoading: false }
-                    : msg
-                ));
-              }
-            } else {
-              const errorMessage = `❌ 測試${description}失敗: ${result?.error || '未知錯誤'}`;
-              setStreamResponse(errorMessage);
-
-              if (messageId) {
-                setMessages(prev => prev.map(msg =>
-                  msg.id === messageId
-                    ? { ...msg, content: errorMessage, isLoading: false }
-                    : msg
-                ));
-              }
-            }
-          } else {
-            const errorMessage = '❌ Electron API 不可用';
-            setStreamResponse(errorMessage);
-            console.error('electronAPI狀態:', {
-              electronAPI: typeof window !== 'undefined' ? !!window.electronAPI : 'window undefined',
-              browserControl: typeof window !== 'undefined' && window.electronAPI ? !!window.electronAPI.browserControl : 'no electronAPI'
-            });
-
-            if (messageId) {
-              setMessages(prev => prev.map(msg =>
-                msg.id === messageId
-                  ? { ...msg, content: errorMessage, isLoading: false }
-                  : msg
-              ));
-            }
-          }
-        } catch (error) {
-          const errorMessage = `❌ 測試${testCommand.description}請求失敗: ${error.message}`;
-          setStreamResponse(errorMessage);
-          console.error('測試錯誤:', error);
-
-          if (messageId) {
-            setMessages(prev => prev.map(msg =>
-              msg.id === messageId
-                ? { ...msg, content: errorMessage, isLoading: false }
-                : msg
-            ));
-          }
-        }
-
-        setIsLoading(false);
-        return;
-      }
-
       // 獲取當前頁面資料或文件上下文
       let contextData = null;
       const currentContext = sessionManager.getCurrentContext();
@@ -311,13 +200,41 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         // Browser 模式：獲取頁面資料
         try {
           if (typeof window !== 'undefined' && window.electronAPI?.browserControl?.getPageData) {
-            const pageResult = await window.electronAPI.browserControl.getPageData();
+
+            // 檢查是否為 Gmail 頁面並準備 OAuth 參數
+            let pageDataOptions = {};
+
+            if (isGmailPage()) {
+              const tokens = getOAuthTokens();
+              console.log('🔑 OAuth tokens:', tokens);
+              if (tokens && tokens.access_token) {
+                pageDataOptions = {
+                  accessToken: tokens.access_token,
+                  refreshToken: tokens.refresh_token,
+                  clientConfig: {
+                    clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+                    clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || ''
+                  },
+                  useAPI: true,
+                  maxResults: 100,
+                  query: 'category:primary'  // 只獲取主要區域的郵件
+                };
+                console.log('📧 Gmail 頁面：使用 OAuth token 調用 API');
+              } else {
+                console.warn('⚠️ Gmail 頁面但未找到 OAuth token，使用 DOM 解析');
+                pageDataOptions = { useAPI: false };
+              }
+            } else {
+              console.log('📄 一般頁面：使用標準解析');
+            }
+
+            const pageResult = await window.electronAPI.browserControl.getPageData(pageDataOptions);
             console.log('📄 完整的頁面結果:', pageResult);
 
             if (pageResult.success) {
               contextData = {
                 type: 'page',
-                ...pageResult.data
+                ...pageResult.pageData
               };
               console.log('📄 獲取到真實頁面資料:', contextData);
             } else {
@@ -331,7 +248,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         }
       }
 
-      const response = await fetch('http://localhost:8000/api/agent/stream', {
+      const response = await fetch('http://localhost:8021/api/agent/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +348,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isComposing) return; // 添加 isComposing 检查
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -471,7 +388,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       <div className="relative m-1 mb-0 min-h-[120px] overflow-hidden z-[1]">
         {/* 移除白色背景，讓內容直接顯示在背景上 */}
         {/* 刷新按鈕 - 左上角 */}
-        <div className="absolute top-2 left-[10px] z-10 bg-[rgba(240,244,248,0.95)] rounded-md p-1 border border-[rgba(226,232,240,0.5)]">
+        <div className="absolute top-2 left-[10px] z-10 bg-[rgba(240,244,248,0.9)] rounded-md p-0.5 border border-[rgba(226,232,240,0.3)]">
           <button
             onClick={handleRefreshSession}
             className="text-slate-600 hover:bg-slate-100 w-6 h-6 flex items-center justify-center rounded transition-colors"
@@ -482,12 +399,12 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         </div>
 
         {/* Toggle - 右上角 */}
-        <div className="absolute top-2 right-[10px] flex gap-1 z-10 bg-[rgba(240,244,248,0.95)] rounded-md p-1 border border-[rgba(226,232,240,0.5)]">
+        <div className="absolute top-2 right-[10px] flex gap-0.5 z-10 bg-[rgba(240,244,248,0.9)] rounded-md p-0.5 border border-[rgba(226,232,240,0.3)]">
           <button
             onClick={() => setPanelMode('result')}
             className={cn(
               "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'result' ? "text-slate-600" : "text-slate-300"
+              panelMode === 'result' ? "text-slate-600" : "text-slate-400"
             )}
           >
             <FileText className="w-[14px] h-[14px]" />
@@ -496,7 +413,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             onClick={() => setPanelMode('rules')}
             className={cn(
               "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'rules' ? "text-slate-600" : "text-slate-300"
+              panelMode === 'rules' ? "text-slate-600" : "text-slate-400"
             )}
           >
             <Puzzle className="w-[14px] h-[14px]" />
@@ -505,7 +422,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             onClick={() => setPanelMode('skills')}
             className={cn(
               "w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-slate-100",
-              panelMode === 'skills' ? "text-slate-600" : "text-slate-300"
+              panelMode === 'skills' ? "text-slate-600" : "text-slate-400"
             )}
           >
             <Brain className="w-[14px] h-[14px]" />
@@ -540,69 +457,72 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         }}
       ></div>
 
-      {/* Bottom Panel (Input) */}
-      <div className="flex flex-col min-h-0 p-2 pr-[10px] relative z-[2] bg-[#f0f4f8]">
+      {/* Bottom Panel (Input) - 更紧凑的输入区域 */}
+      <div className="flex flex-col min-h-0 p-3 relative z-[2] bg-[#f0f4f8]">
         <form
           onSubmit={handleSubmit}
-          className="flex-1 flex flex-col min-h-0 relative"
+          className="flex flex-col relative"
         >
-          <div className="flex-1 cursor-text max-w-[50vw] relative">
+          <div className="relative">
             <textarea
-              className="w-full h-full bg-[#f0f4f8] rounded-lg border border-slate-200 hover:border-slate-300 focus:border-slate-400 focus:outline-none pt-2 pl-3 pr-10 pb-2 text-xs leading-tight text-gray-800 cursor-text resize-none placeholder:text-gray-400"
-              placeholder="輸入文字"
+              className="w-full bg-white rounded-lg border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 pt-3 pl-4 pr-12 pb-3 text-sm leading-relaxed text-gray-800 cursor-text resize-none placeholder:text-gray-400 shadow-sm min-h-[60px] max-h-[120px]"
+              placeholder="輸入文字開始對話..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
               }}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
               autoFocus
               onClick={(e) => {
                 e.currentTarget.focus();
               }}
               style={{
-                fontSize: '12px',
+                fontSize: '14px',
                 cursor: 'text'
               }}
             />
+            {/* 發送按鈕 - 调整位置 */}
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading || isComposing}
+              className={cn(
+                "absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200",
+                input.trim() && !isLoading && !isComposing
+                  ? "text-white bg-blue-500 hover:bg-blue-600 shadow-sm"
+                  : "text-slate-400 bg-slate-100",
+                "disabled:text-slate-400 disabled:bg-slate-100"
+              )}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
           </div>
-
-          {/* 發送按鈕 */}
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className={cn(
-              "absolute bottom-2 right-2 w-7 h-7 flex items-center justify-center rounded transition-colors",
-              input.trim() && !isLoading
-                ? "text-blue-500 hover:bg-slate-100"
-                : "text-slate-400",
-              "disabled:text-slate-400"
-            )}
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </button>
         </form>
 
-        {/* Bottom Icons */}
-        <div className="flex justify-between items-center pt-1 flex-shrink-0">
+        {/* Bottom Icons - 更紧凑的工具栏 */}
+        <div className="flex justify-between items-center pt-2 flex-shrink-0">
           <div className="flex gap-1">
-            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
-              <Paperclip className="w-[14px] h-[14px]" />
+            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
+              <Paperclip className="w-[16px] h-[16px]" />
             </button>
-            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
-              <Image className="w-[14px] h-[14px]" />
+            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
+              <Image className="w-[16px] h-[16px]" />
             </button>
-            <button className="text-slate-600 hover:bg-slate-100 w-5 h-5 flex items-center justify-center rounded transition-colors">
-              <Headphones className="w-[14px] h-[14px]" />
+            <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
+              <Headphones className="w-[16px] h-[16px]" />
             </button>
           </div>
-          <div />
+          <div className="text-xs text-slate-400">
+            Enter 發送，Shift+Enter 換行
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import ReactMarkdown from 'react-markdown';
 import RulesPanel from './RulesPanel';
 import ChartViewer from './ChartViewer';
 
@@ -35,43 +36,74 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
     >
       {mode === 'result' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* 全版面消息顯示 */}
+          {/* 优化的消息显示 */}
           {messages.length > 0 ? (
-            <div className="flex-1 overflow-auto p-1">
+            <div className="flex-1 overflow-auto space-y-3 p-2">
               {messages.map((message, index) => (
-                <div key={message.id} className="mb-1">
+                <div key={message.id} className="flex flex-col">
                   {message.type === 'user' ? (
-                    /* 用戶消息 - 深色底淺色字 */
-                    <div
-                      className="bg-slate-700 text-slate-200 p-1.5 text-xs leading-relaxed whitespace-pre-wrap break-words"
-                    >
-                      {message.content}
+                    /* 用户消息 - 右对齐气泡样式 */
+                    <div className="flex justify-end">
+                      <div className="bg-blue-500 text-white px-3 py-2 rounded-lg max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm">
+                        {message.content}
+                      </div>
                     </div>
                   ) : (
-                    /* AI 回覆 - 直接顯示在背景上 */
-                    <div
-                      className={cn(
-                        "text-xs leading-normal whitespace-pre-wrap break-words text-slate-800",
-                        "[&_h1]:text-sm [&_h1]:font-semibold [&_h1]:mt-1 [&_h1]:mb-0.5 [&_h1]:text-slate-800",
-                        "[&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-1 [&_h2]:mb-0.5 [&_h2]:text-slate-800",
-                        "[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-1 [&_h3]:mb-0.5 [&_h3]:text-slate-800",
-                        "[&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-1 [&_h4]:mb-0.5 [&_h4]:text-slate-800",
-                        "[&_h5]:text-sm [&_h5]:font-semibold [&_h5]:mt-1 [&_h5]:mb-0.5 [&_h5]:text-slate-800",
-                        "[&_h6]:text-sm [&_h6]:font-semibold [&_h6]:mt-1 [&_h6]:mb-0.5 [&_h6]:text-slate-800",
-                        "[&_p]:mb-1",
-                        "[&_ul]:pl-2 [&_ul]:mb-1",
-                        "[&_ol]:pl-2 [&_ol]:mb-1", 
-                        "[&_li]:mb-0.5",
-                        "[&_code]:bg-slate-100 [&_code]:px-0.5 [&_code]:py-0.5 [&_code]:rounded-sm [&_code]:text-xs [&_code]:font-mono",
-                        "[&_pre]:bg-slate-800 [&_pre]:text-slate-200 [&_pre]:p-1 [&_pre]:rounded [&_pre]:overflow-auto [&_pre]:text-xs [&_pre]:font-mono"
-                      )}
-                    >
-                      {message.content || (message.isLoading ? '思考中...' : '')}
-                      {message.isLoading && (
-                        <Loader2 className="inline w-3 h-3 ml-1 text-slate-500 animate-spin" />
-                      )}
+                    /* AI 回复 - 左对齐卡片样式，使用 ReactMarkdown */
+                    <div className="flex justify-start">
+                      <div className="bg-white border border-slate-200 px-3 py-2 rounded-lg max-w-[85%] shadow-sm">
+                        <div className="text-sm leading-relaxed text-slate-700">
+                          {message.content ? (
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown
+                                components={{
+                                  h1: ({ children }) => <h1 className="text-base font-semibold mt-2 mb-1 text-slate-800">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-base font-semibold mt-2 mb-1 text-slate-800">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-sm font-semibold mt-1 mb-1 text-slate-800">{children}</h3>,
+                                  h4: ({ children }) => <h4 className="text-sm font-medium mt-1 mb-1 text-slate-800">{children}</h4>,
+                                  p: ({ children }) => <p className="mb-2 last:mb-0 text-slate-700">{children}</p>,
+                                  ul: ({ children }) => <ul className="pl-4 mb-2 space-y-1">{children}</ul>,
+                                  ol: ({ children }) => <ol className="pl-4 mb-2 space-y-1">{children}</ol>,
+                                  li: ({ children }) => <li className="text-sm text-slate-700">{children}</li>,
+                                  strong: ({ children }) => <strong className="font-semibold text-slate-800">{children}</strong>,
+                                  em: ({ children }) => <em className="italic text-slate-600">{children}</em>,
+                                  code: ({ children, ...props }) => (
+                                    <code className="bg-slate-200 px-2 py-1 rounded text-xs font-mono text-slate-800 border border-slate-300">{children}</code>
+                                  ),
+                                  pre: ({ children }) => <pre className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-auto text-sm font-mono my-3 border border-slate-600 shadow-inner">{children}</pre>,
+                                  blockquote: ({ children }) => <blockquote className="border-l-4 border-slate-300 pl-4 italic text-slate-600 my-2">{children}</blockquote>,
+                                  table: ({ children }) => <table className="border-collapse w-full text-sm">{children}</table>,
+                                  th: ({ children }) => <th className="border border-slate-300 bg-slate-50 px-2 py-1 font-medium">{children}</th>,
+                                  td: ({ children }) => <td className="border border-slate-300 px-2 py-1">{children}</td>,
+                                }}
+                              >
+                                {message.content}
+                              </ReactMarkdown>
+                            </div>
+                          ) : message.isLoading ? (
+                            <span className="text-slate-500">正在思考...</span>
+                          ) : null}
+
+                          {message.isLoading && (
+                            <div className="flex items-center mt-2">
+                              <Loader2 className="w-4 h-4 text-blue-500 animate-spin mr-2" />
+                              <span className="text-slate-500 text-xs">AI 正在處理中...</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
+                  {/* 时间戳 */}
+                  <div className={cn(
+                    "text-xs text-slate-400 mt-1 px-1",
+                    message.type === 'user' ? "text-right" : "text-left"
+                  )}>
+                    {message.timestamp.toLocaleTimeString('zh-CN', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
                 </div>
               ))}
             </div>

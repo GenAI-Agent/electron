@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, RefreshCw, Download, Eye } from 'lucide-react';
 import { PageData } from '@/types/page-data';
-import { extractCurrentPageData, extractPageSummary, refreshInteractiveElements } from '@/utils/PageDataExtractor';
+import { extractCurrentPageData, extractPageSummary, refreshInteractiveElements, extractGmailPageDataWithOAuth, isGmailPage } from '@/utils/PageDataExtractor';
 import { cn } from '@/utils/cn';
 
 const PageDataExtractorTest: React.FC = () => {
@@ -26,7 +26,17 @@ const PageDataExtractorTest: React.FC = () => {
     
     try {
       console.log('🔍 開始提取頁面資料...');
-      const data = await extractCurrentPageData();
+      
+      // 檢查是否為 Gmail 頁面，如果是則使用 OAuth 方式
+      let data;
+      if (isGmailPage()) {
+        console.log('📧 檢測到 Gmail 頁面，使用 OAuth + API 方式');
+        data = await extractGmailPageDataWithOAuth();
+      } else {
+        console.log('📄 一般頁面，使用 DOM 解析方式');
+        data = await extractCurrentPageData();
+      }
+      
       setPageData(data);
       setLastExtracted(new Date());
       console.log('✅ 頁面資料提取完成:', data);

@@ -7,6 +7,7 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import { Check, Loader2 } from 'lucide-react';
+import { saveOAuthTokens } from '@/utils/PageDataExtractor';
 
 interface OAuthConfig {
   clientId: string;
@@ -45,7 +46,7 @@ const GoogleAuth: React.FC = () => {
   const oauthConfig: OAuthConfig = {
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || '',
-    scope: 'openid email profile'
+    scope: 'openid email profile https://www.googleapis.com/auth/gmail.readonly'  // 添加 Gmail 讀取權限
   };
 
   const handleStartAuth = useCallback(async () => {
@@ -92,7 +93,8 @@ const GoogleAuth: React.FC = () => {
         tokens: tokenResult.tokens
       });
 
-      // 這裡可以將 token 發送到後端保存
+      // 保存 token 到 localStorage
+      saveOAuthTokens(tokenResult.tokens);
       console.log('OAuth 成功，Token:', tokenResult.tokens);
 
     } catch (error) {

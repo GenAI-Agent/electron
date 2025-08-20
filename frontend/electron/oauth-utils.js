@@ -193,7 +193,7 @@ class OAuthUtils {
     const tokenUrl = 'https://oauth2.googleapis.com/token';
     const tokenData = new URLSearchParams({
       client_id: clientId,
-      client_secret: "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",
+      client_secret: clientSecret,
       code: code,
       grant_type: 'authorization_code',
       redirect_uri: this.redirectUri,

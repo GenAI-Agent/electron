@@ -33,7 +33,7 @@ const RulesPanel: React.FC<RulesPanelProps> = () => {
   const loadRules = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/rules/');
+      const response = await fetch('http://localhost:8021/api/rules/');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -50,7 +50,7 @@ const RulesPanel: React.FC<RulesPanelProps> = () => {
   const loadRuleDetail = async (ruleId: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/rules/${ruleId}`);
+      const response = await fetch(`http://localhost:8021/api/rules/${ruleId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -176,42 +176,42 @@ const RulesPanel: React.FC<RulesPanelProps> = () => {
   // 顯示規則列表
   return (
     <div className="h-full p-1 overflow-auto grid grid-cols-2 gap-1 content-start">
-        {rules.map((rule) => (
-          <div
-            key={rule.id}
-            className="h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col"
-            onClick={() => handleRuleClick(rule)}
-          >
-            <div className="p-3 flex flex-col h-full">
-              {/* 標題 */}
-              <div className="mb-1">
-                <h3 className="text-xs font-semibold leading-tight">
-                  {rule.name}
-                </h3>
-              </div>
+      {rules.map((rule) => (
+        <div
+          key={rule.id}
+          className="h-[140px] bg-white rounded-lg shadow-sm border border-slate-200 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col"
+          onClick={() => handleRuleClick(rule)}
+        >
+          <div className="p-3 flex flex-col h-full">
+            {/* 標題 */}
+            <div className="mb-1">
+              <h3 className="text-xs font-semibold leading-tight">
+                {rule.name}
+              </h3>
+            </div>
 
-              {/* 描述 - 顯示 prompt 內容 */}
-              <p className="text-[9px] text-gray-600 mb-2 line-clamp-3 leading-relaxed flex-1">
-                {rule.prompt || rule.description}
-              </p>
+            {/* 描述 - 顯示 prompt 內容 */}
+            <p className="text-[9px] text-gray-600 mb-2 line-clamp-3 leading-relaxed flex-1">
+              {rule.prompt || rule.description}
+            </p>
 
-              {/* 底部信息 - model chip 在左下角 */}
-              <div className="flex justify-start items-end">
-                <span className="inline-block px-1.5 py-0.5 text-[7px] border border-gray-300 rounded-full">
-                  {rule.model}
-                </span>
-              </div>
+            {/* 底部信息 - model chip 在左下角 */}
+            <div className="flex justify-start items-end">
+              <span className="inline-block px-1.5 py-0.5 text-[7px] border border-gray-300 rounded-full">
+                {rule.model}
+              </span>
             </div>
           </div>
-        ))}
+        </div>
+      ))}
 
-        {rules.length === 0 && (
-          <div className="col-span-full flex justify-center items-center h-[200px] text-gray-500">
-            <p className="text-[11px]">
-              沒有找到規則
-            </p>
-          </div>
-        )}
+      {rules.length === 0 && (
+        <div className="col-span-full flex justify-center items-center h-[200px] text-gray-500">
+          <p className="text-[11px]">
+            沒有找到規則
+          </p>
+        </div>
+      )}
     </div>
   );
 };

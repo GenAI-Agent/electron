@@ -5,6 +5,7 @@
 ## 開發命令
 
 ### 前端 (Electron + Next.js)
+
 ```bash
 cd frontend
 bun dev                    # 啟動 Next.js 開發服務器 + Electron 應用
@@ -17,14 +18,16 @@ bun lint                  # 運行 ESLint
 ```
 
 ### 後端 (FastAPI + LangGraph)
+
 ```bash
 cd backend
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000  # 開發服務器
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8021  # 開發服務器
 python main.py            # 運行並檢查啟動和日誌
 python -m pytest tests/   # 運行測試（如果可用）
 ```
 
 ### 向量數據庫 (Weaviate)
+
 ```bash
 cd backend/vectordb
 python start_weaviate.py setup    # 設置 .env 配置
@@ -40,19 +43,22 @@ python start_weaviate.py status   # 檢查服務狀態
 ### 核心組件
 
 **前端 (Electron + Next.js + Tailwind V4)**
+
 - `frontend/electron/main.js` - Electron 主進程，包含 webview 控制 API
 - `frontend/src/components/BrowserView.tsx` - 核心瀏覽器控制組件
 - `frontend/src/pages/browser.tsx` - 主要瀏覽器自動化界面
 - 基於 webview 的自定義瀏覽器控制，繞過 Electron 標準限制
 - 使用 Tailwind V4 + Lucide React 圖標系統
 
-**後端 (Python FastAPI + LangGraph)**  
+**後端 (Python FastAPI + LangGraph)**
+
 - `backend/main.py` - FastAPI 服務器，包含監督代理初始化
 - `backend/supervisor_agent/core/supervisor_agent.py` - 基於 LangGraph 的主要 AI 代理
 - `backend/api/routers/` - 代理和規則管理的 API 端點
 - `backend/vectordb/` - Weaviate 向量數據庫集成的記憶系統
 
 **關鍵架構模式**
+
 - **瀏覽器控制**: 使用 webview.executeJavaScript() 進行直接 DOM 操作，而非 Electron 標準 API
 - **記憶系統**: 三層記憶（工作、會話、長期）與向量搜索
 - **規則引擎**: `data/rules/` 中基於 JSON 的規則定義用於代理行為
@@ -67,6 +73,7 @@ python start_weaviate.py status   # 檢查服務狀態
 3. **上下文感知執行** 在正確的 DOM 範圍內操作
 
 瀏覽器控制的關鍵文件：
+
 - `frontend/electron/main.js:262-442` - 內部瀏覽器控制函數
 - `frontend/src/components/BrowserView.tsx` - React 組件包裝器
 - `docs/electron-browser-automation-solution.md` - 完整技術解決方案
@@ -74,8 +81,9 @@ python start_weaviate.py status   # 檢查服務狀態
 ### 記憶與上下文管理
 
 系統實現了複雜的記憶架構：
+
 - **工作記憶**: 當前任務上下文和即時狀態
-- **會話記憶**: 對話歷史和最近交互  
+- **會話記憶**: 對話歷史和最近交互
 - **長期記憶**: 用戶偏好和歷史模式
 - **向量數據庫**: 通過 Weaviate 進行語義搜索和檢索
 
@@ -84,6 +92,7 @@ python start_weaviate.py status   # 檢查服務狀態
 ### 環境設置
 
 必需的環境變量（在 backend/ 中創建 `.env`）：
+
 ```bash
 AZURE_OPENAI_ENDPOINT=your_endpoint
 AZURE_OPENAI_API_KEY=your_key

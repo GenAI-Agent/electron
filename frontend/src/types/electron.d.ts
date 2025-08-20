@@ -312,7 +312,18 @@ declare global {
           result?: any;
         }>;
 
-        getPageData: () => Promise<{
+        getPageData: (options?: {
+          accessToken?: string;
+          refreshToken?: string;
+          clientConfig?: {
+            clientId: string;
+            clientSecret: string;
+          };
+          useAPI?: boolean;
+          maxResults?: number;
+          labelIds?: string[];  // Gmail 標籤過濾選項
+          query?: string;       // Gmail 查詢條件 (如 'category:primary')
+        }) => Promise<{
           success: boolean;
           error?: string;
           pageData?: any;

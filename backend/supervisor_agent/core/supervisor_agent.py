@@ -14,7 +14,8 @@ import os
 import sys
 from typing import List, Optional, Dict, Any, Annotated, Literal
 from typing_extensions import TypedDict
-
+from dotenv import load_dotenv
+from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -30,17 +31,21 @@ import tiktoken
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
-
+load_dotenv()
 # ----------------------- State Definition ----------------------- #
+
 
 class SupervisorAgentState(TypedDict):
     """Supervisor Agent 的狀態定義"""
+
     messages: Annotated[list, add_messages]
     query: str
     rule_id: Optional[str]
     context: Optional[Dict[str, Any]]
 
+
 # ----------------------- 平行工具執行節點 ----------------------- #
+
 
 class ParallelToolNode(BaseToolNode):
     """平行執行工具的自定義 ToolNode"""
@@ -50,7 +55,9 @@ class ParallelToolNode(BaseToolNode):
         self.tools_by_name = {tool.name: tool for tool in tools}
         self.stream_callback = stream_callback  # 添加stream回調函數
 
-    async def _execute_single_tool_with_message(self, tool, tool_args, tool_call_id, tool_name):
+    async def _execute_single_tool_with_message(
+        self, tool, tool_args, tool_call_id, tool_name
+    ):
         """執行單個工具並返回 ToolMessage"""
         try:
             # 記錄工具調用參數
@@ -76,29 +83,27 @@ class ParallelToolNode(BaseToolNode):
 
             # 如果有stream回調，實時發送工具執行結果
             if self.stream_callback:
-                await self.stream_callback({
-                    'type': 'tool_result',
-                    'tool_name': tool_name,
-                    'parameters': tool_args,
-                    'result': result_str,
-                    'execution_time': execution_time,
-                    'wrapped_result': wrapped_result
-                })
+                await self.stream_callback(
+                    {
+                        "type": "tool_result",
+                        "tool_name": tool_name,
+                        "parameters": tool_args,
+                        "result": result_str,
+                        "execution_time": execution_time,
+                        "wrapped_result": wrapped_result,
+                    }
+                )
 
             # 創建 ToolMessage
             return ToolMessage(
-                content=wrapped_result,
-                tool_call_id=tool_call_id,
-                name=tool_name
+                content=wrapped_result, tool_call_id=tool_call_id, name=tool_name
             )
 
         except Exception as e:
             logger.error(f"❌ 工具 {tool_name} 執行失敗: {e}")
             error_result = f"<tool name='{tool_name}' status='error'>\n工具執行失敗: {str(e)}\n</tool>"
             return ToolMessage(
-                content=error_result,
-                tool_call_id=tool_call_id,
-                name=tool_name
+                content=error_result, tool_call_id=tool_call_id, name=tool_name
             )
 
     async def __call__(self, state: SupervisorAgentState) -> Dict[str, Any]:
@@ -108,7 +113,11 @@ class ParallelToolNode(BaseToolNode):
         # 找到最後一個 AI 消息中的工具調用
         tool_calls = []
         for message in reversed(messages):
-            if isinstance(message, AIMessage) and hasattr(message, "tool_calls") and message.tool_calls:
+            if (
+                isinstance(message, AIMessage)
+                and hasattr(message, "tool_calls")
+                and message.tool_calls
+            ):
                 tool_calls = message.tool_calls
                 break
 
@@ -158,7 +167,9 @@ class ParallelToolNode(BaseToolNode):
             logger.error(f"❌ 平行工具執行失敗: {e}")
             return {"messages": []}
 
+
 # ----------------------- Supervisor Agent ----------------------- #
+
 
 class SupervisorAgent:
     """Gmail 自動化處理監督者 Agent"""
@@ -171,7 +182,7 @@ class SupervisorAgent:
         self.rules_dir = rules_dir
         # 設置stream回調函數
         self.stream_callback = stream_callback
-
+        self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
         # 初始化 LLM
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -209,13 +220,15 @@ class SupervisorAgent:
         """計算消息列表的總token數"""
         total_tokens = 0
         for msg in messages:
-            if hasattr(msg, 'content'):
+            if hasattr(msg, "content"):
                 total_tokens += self.calculate_tokens(str(msg.content))
             else:
                 total_tokens += self.calculate_tokens(str(msg))
         return total_tokens
 
-    def manage_context_for_batch_processing(self, messages: List, context: Dict[str, Any]) -> List:
+    def manage_context_for_batch_processing(
+        self, messages: List, context: Dict[str, Any]
+    ) -> List:
         """為batch processing管理上下文，只保留進度信息"""
         is_batch_mode = context.get("is_batch_processing", False)
 
@@ -241,23 +254,30 @@ class SupervisorAgent:
 
                 # 檢查是否是進度相關的工具結果
                 content = str(msg.content)
-                if any(keyword in content.lower() for keyword in ['進度', 'progress', '完成', '任務', 'task']):
+                if any(
+                    keyword in content.lower()
+                    for keyword in ["進度", "progress", "完成", "任務", "task"]
+                ):
                     # 保留進度信息
                     important_messages.append(msg)
                 else:
                     # 簡化工具結果
-                    simplified_content = f"工具 {msg.name} 執行完成 (第{tool_call_count}次調用)"
+                    simplified_content = (
+                        f"工具 {msg.name} 執行完成 (第{tool_call_count}次調用)"
+                    )
                     simplified_msg = ToolMessage(
                         content=simplified_content,
                         tool_call_id=msg.tool_call_id,
-                        name=msg.name
+                        name=msg.name,
                     )
                     important_messages.append(simplified_msg)
 
         # 記錄token節省情況
         original_tokens = self.calculate_messages_tokens(messages)
         managed_tokens = self.calculate_messages_tokens(important_messages)
-        logger.info(f"🧠 Batch模式Token管理: {original_tokens} → {managed_tokens} (節省 {original_tokens - managed_tokens})")
+        logger.info(
+            f"🧠 Batch模式Token管理: {original_tokens} → {managed_tokens} (節省 {original_tokens - managed_tokens})"
+        )
 
         return important_messages
 
@@ -277,7 +297,7 @@ class SupervisorAgent:
             壓縮後的消息列表
         """
         # 追蹤壓縮次數
-        if not hasattr(self, '_compression_count'):
+        if not hasattr(self, "_compression_count"):
             self._compression_count = 0
         self._compression_count += 1
 
@@ -354,7 +374,7 @@ class SupervisorAgent:
             f"📊 壓縮時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"📋 原始工具消息數: {len(tool_messages)}",
             "",
-            "📝 工具執行摘要:"
+            "📝 工具執行摘要:",
         ]
 
         for i, tool_msg in enumerate(tool_messages, 1):
@@ -364,19 +384,23 @@ class SupervisorAgent:
             # 提取重要內容
             important_info = self._extract_important_content(content, tool_name)
 
-            summary_parts.extend([
-                f"",
-                f"第{i}個 tool: {tool_name}",
-                f"tool裡面的重要內容:",
-                important_info,
-                "---"
-            ])
+            summary_parts.extend(
+                [
+                    f"",
+                    f"第{i}個 tool: {tool_name}",
+                    f"tool裡面的重要內容:",
+                    important_info,
+                    "---",
+                ]
+            )
 
-        summary_parts.extend([
-            "",
-            "💡 注意: 以上為壓縮摘要，最新的工具結果保持完整。",
-            "🔄 如需詳細信息，請參考最新的工具執行結果。"
-        ])
+        summary_parts.extend(
+            [
+                "",
+                "💡 注意: 以上為壓縮摘要，最新的工具結果保持完整。",
+                "🔄 如需詳細信息，請參考最新的工具執行結果。",
+            ]
+        )
 
         return "\n".join(summary_parts)
 
@@ -395,10 +419,10 @@ class SupervisorAgent:
             import json
 
             # 嘗試解析 JSON 內容
-            if content.startswith('<tool') and content.endswith('</tool>'):
+            if content.startswith("<tool") and content.endswith("</tool>"):
                 # 提取 XML 標籤內的內容
-                start = content.find('>') + 1
-                end = content.rfind('<')
+                start = content.find(">") + 1
+                end = content.rfind("<")
                 json_content = content[start:end].strip()
             else:
                 json_content = content
@@ -418,13 +442,25 @@ class SupervisorAgent:
                     important_info.append(f"錯誤信息: {parsed['error']}")
 
                 # 文件路徑信息（完整保留）
-                file_path_keys = ["file_path", "temp_file_path", "current_file", "output_file"]
+                file_path_keys = [
+                    "file_path",
+                    "temp_file_path",
+                    "current_file",
+                    "output_file",
+                ]
                 for key in file_path_keys:
                     if key in parsed and parsed[key]:
                         important_info.append(f"{key}: {parsed[key]}")
 
                 # 數據統計信息
-                stats_keys = ["total_rows", "filtered_rows", "original_rows", "processed_items", "success_count", "error_count"]
+                stats_keys = [
+                    "total_rows",
+                    "filtered_rows",
+                    "original_rows",
+                    "processed_items",
+                    "success_count",
+                    "error_count",
+                ]
                 for key in stats_keys:
                     if key in parsed and parsed[key] is not None:
                         important_info.append(f"{key}: {parsed[key]}")
@@ -448,18 +484,26 @@ class SupervisorAgent:
                             results_summary.append(f"{k}: {v['value']}")
 
                     if results_summary:
-                        important_info.append(f"結果摘要: {', '.join(results_summary[:5])}")
+                        important_info.append(
+                            f"結果摘要: {', '.join(results_summary[:5])}"
+                        )
 
                 # 如果沒有提取到重要信息，使用消息內容
                 if not important_info and "message" in parsed:
                     msg = str(parsed["message"])
-                    important_info.append(f"消息: {msg[:200]}{'...' if len(msg) > 200 else ''}")
+                    important_info.append(
+                        f"消息: {msg[:200]}{'...' if len(msg) > 200 else ''}"
+                    )
 
-                return "\n".join(f"  • {info}" for info in important_info) if important_info else "  • 無重要信息提取"
+                return (
+                    "\n".join(f"  • {info}" for info in important_info)
+                    if important_info
+                    else "  • 無重要信息提取"
+                )
 
         except (json.JSONDecodeError, Exception):
             # 如果不是 JSON 或解析失敗，提取前200字符
-            clean_content = content.replace('\n', ' ').strip()
+            clean_content = content.replace("\n", " ").strip()
             if len(clean_content) > 200:
                 return f"  • 內容摘要: {clean_content[:200]}..."
             else:
@@ -467,7 +511,9 @@ class SupervisorAgent:
 
         return "  • 無法提取內容"
 
-    def setup_tools_for_query(self, tool_names: List[str] = None, available_tools: List = None):
+    def setup_tools_for_query(
+        self, tool_names: List[str] = None, available_tools: List = None
+    ):
         """為當前查詢動態設置工具"""
         logger.info(f"🔧 開始動態設置工具，規則工具: {tool_names}")
 
@@ -479,12 +525,13 @@ class SupervisorAgent:
             self.current_tools = available_tools
             logger.info(f"📁 使用外部提供的工具，共 {len(available_tools)} 個")
             for tool in available_tools:
-                tool_name = getattr(tool, 'name', str(tool))
+                tool_name = getattr(tool, "name", str(tool))
                 logger.info(f"🔧 添加工具: {tool_name}")
         else:
             # 否則使用默認瀏覽器工具（向後兼容）
             try:
                 from ..tools.langchain_browser_tools import get_langchain_browser_tools
+
                 browser_tools = get_langchain_browser_tools()
 
                 for tool in browser_tools:
@@ -497,7 +544,7 @@ class SupervisorAgent:
         # 根據規則添加額外工具（如果需要）
         if tool_names:
             logger.info(f"📋 規則指定的工具: {tool_names}")
-            # 這裡可以根據 tool_names 添加額外的工具
+            # TODO: 這裡可以根據 tool_names 添加額外的工具
 
         # 綁定工具到 LLM
         if self.current_tools:
@@ -525,7 +572,9 @@ class SupervisorAgent:
         # 添加節點
         workflow.add_node("supervisor", self.supervisor_node)  # 中央決策節點
         workflow.add_node("tools", tool_node)  # 工具執行節點（使用平行執行）
-        workflow.add_node("response_generator", self.response_generator_node)  # 最終回答生成節點
+        workflow.add_node(
+            "response_generator", self.response_generator_node
+        )  # 最終回答生成節點
 
         # 設定流程 - 從supervisor節點開始
         workflow.add_edge(START, "supervisor")
@@ -535,9 +584,9 @@ class SupervisorAgent:
             "supervisor",
             self.should_continue,  # 自定義條件函數
             {
-                "tools": "tools",           # 需要調用工具
+                "tools": "tools",  # 需要調用工具
                 "respond": "response_generator",  # 直接回答
-                "__end__": END,             # 結束
+                "__end__": END,  # 結束
             },
         )
 
@@ -550,7 +599,9 @@ class SupervisorAgent:
         # 編譯 graph with 短期記憶
         self.current_graph = workflow.compile(checkpointer=MemorySaver())
 
-        logger.info(f"✅ Supervisor Agent Graph 建立完成，工具數量: {len(self.current_tools)}")
+        logger.info(
+            f"✅ Supervisor Agent Graph 建立完成，工具數量: {len(self.current_tools)}"
+        )
 
     def should_continue(self, state: SupervisorAgentState) -> str:
         """決定下一步動作的條件函數"""
@@ -563,7 +614,11 @@ class SupervisorAgent:
         last_message = messages[-1]
 
         # 如果最後一個消息是AI消息且有工具調用，執行工具
-        if isinstance(last_message, AIMessage) and hasattr(last_message, "tool_calls") and last_message.tool_calls:
+        if (
+            isinstance(last_message, AIMessage)
+            and hasattr(last_message, "tool_calls")
+            and last_message.tool_calls
+        ):
             logger.info(f"🔧 supervisor決定調用工具: {len(last_message.tool_calls)} 個")
             return "tools"
 
@@ -604,21 +659,28 @@ class SupervisorAgent:
             logger.info(f"🧠 Token數量過多 ({current_tokens})，開始記憶壓縮")
             messages = self.compress_tool_messages(messages, max_tool_results=3)
             compressed_tokens = self.calculate_messages_tokens(messages)
-            logger.info(f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})")
+            logger.info(
+                f"🧠 記憶壓縮完成: {current_tokens} → {compressed_tokens} (節省 {current_tokens - compressed_tokens})"
+            )
             state["messages"] = messages
 
             # 壓縮後，將會話狀態信息注入到上下文中，確保不丟失重要信息
             try:
                 from ..core.session_data_manager import session_data_manager
-                session_summary = session_data_manager.get_session_summary(context.get("session_id", "default"))
+
+                session_summary = session_data_manager.get_session_summary(
+                    context.get("session_id", "default")
+                )
                 if session_summary.get("has_current_data"):
                     context["session_data_info"] = {
                         "current_data_file": session_summary.get("current_data_file"),
                         "operations_count": session_summary.get("operations_count"),
                         "last_operation": session_summary.get("last_operation"),
-                        "note": "記憶壓縮後保留的會話數據狀態信息"
+                        "note": "記憶壓縮後保留的會話數據狀態信息",
                     }
-                    logger.info(f"🔄 會話狀態信息已注入上下文: {session_summary.get('current_data_file')}")
+                    logger.info(
+                        f"🔄 會話狀態信息已注入上下文: {session_summary.get('current_data_file')}"
+                    )
             except Exception as e:
                 logger.warning(f"⚠️ 無法注入會話狀態信息: {e}")
 
@@ -631,7 +693,9 @@ class SupervisorAgent:
             state["messages"] = messages
 
         # 檢查是否是初始查詢
-        is_initial_query = not any(isinstance(msg, (AIMessage, ToolMessage)) for msg in messages)
+        is_initial_query = not any(
+            isinstance(msg, (AIMessage, ToolMessage)) for msg in messages
+        )
 
         if is_initial_query:
             logger.info(f"🤖 處理初始用戶查詢: {query}")
@@ -652,7 +716,9 @@ class SupervisorAgent:
             logger.info("🔄 工具執行後重新評估，決定下一步動作")
 
             # 檢查最近的工具執行結果
-            recent_tool_messages = [msg for msg in messages[-5:] if isinstance(msg, ToolMessage)]
+            recent_tool_messages = [
+                msg for msg in messages[-5:] if isinstance(msg, ToolMessage)
+            ]
 
             # 檢查是否已經執行了太多工具（防止無限循環）
             tool_count = len([msg for msg in messages if isinstance(msg, ToolMessage)])
@@ -661,22 +727,28 @@ class SupervisorAgent:
                 # 直接生成回答，不再調用工具
                 final_prompt = f"""基於已執行的工具結果，請直接回答用戶的問題：
 
-用戶請求: {query}
+                    用戶請求: {query}
 
-已執行的工具結果:
-{chr(10).join([f"- {msg.name}: {msg.content[:300]}..." for msg in recent_tool_messages])}
+                    已執行的工具結果:
+                    {chr(10).join([f"- {msg.name}: {msg.content[:300]}..." for msg in recent_tool_messages])}
 
-請基於這些信息提供完整的回答，不要再調用任何工具。"""
+                    請基於這些信息提供完整的回答，不要再調用任何工具。
+                """
 
                 llm_messages = [
-                    SystemMessage(content="你是一個智能助手。請基於提供的信息直接回答用戶問題，不要調用任何工具。"),
-                    HumanMessage(content=final_prompt)
+                    SystemMessage(
+                        content="你是一個智能助手。請基於提供的信息直接回答用戶問題，不要調用任何工具。"
+                    ),
+                    HumanMessage(content=final_prompt),
                 ]
             elif recent_tool_messages:
                 # 檢查是否獲得了有效的頁面內容
                 page_content_found = False
                 for msg in recent_tool_messages:
-                    if msg.name == "browser_get_page_data_tool" and len(msg.content) > 100:
+                    if (
+                        msg.name == "browser_get_page_data_tool"
+                        and len(msg.content) > 100
+                    ):
                         page_content_found = True
                         break
 
@@ -685,37 +757,40 @@ class SupervisorAgent:
                     # 有了頁面內容，應該可以回答了
                     evaluation_prompt = f"""你已經成功獲取了頁面內容。請基於以下信息直接回答用戶的問題：
 
-用戶請求: {query}
+                        用戶請求: {query}
 
-頁面內容:
-{chr(10).join([f"- {msg.name}: {msg.content[:500]}..." for msg in recent_tool_messages if msg.name == "browser_get_page_data_tool"])}
+                        頁面內容:
+                        {chr(10).join([f"- {msg.name}: {msg.content[:500]}..." for msg in recent_tool_messages if msg.name == "browser_get_page_data_tool"])}
 
-請提供完整的回答，不需要再調用其他工具。"""
+                        請提供完整的回答，不需要再調用其他工具。
+                    """
                 else:
                     # 沒有獲得有效內容，可能需要重試
                     evaluation_prompt = f"""基於以下工具執行結果，請分析是否需要調用更多工具來完成用戶的請求：
+                        用戶原始請求: {query}
 
-用戶原始請求: {query}
+                        最近的工具執行結果:
+                        {chr(10).join([f"- {msg.name}: {msg.content[:200]}..." for msg in recent_tool_messages])}
 
-最近的工具執行結果:
-{chr(10).join([f"- {msg.name}: {msg.content[:200]}..." for msg in recent_tool_messages])}
+                        請決定：
+                        1. 如果需要更多工具來完成任務，請調用相應的工具
+                        2. 如果已經有足夠的信息，請直接回答用戶
 
-請決定：
-1. 如果需要更多工具來完成任務，請調用相應的工具
-2. 如果已經有足夠的信息，請直接回答用戶
-
-注意：避免重複調用相同的工具，除非有新的參數或需求。"""
+                        注意：避免重複調用相同的工具，除非有新的參數或需求。
+                    """
 
                 llm_messages = [
                     SystemMessage(content=self._get_system_prompt(rule_id, context)),
-                    HumanMessage(content=evaluation_prompt)
+                    HumanMessage(content=evaluation_prompt),
                 ]
 
                 # 添加對話歷史（最近的消息）
                 llm_messages.extend(messages[-10:])  # 只保留最近10條消息避免token過多
             else:
                 # 沒有工具消息，直接使用現有消息
-                llm_messages = [SystemMessage(content=self._get_system_prompt(rule_id, context))]
+                llm_messages = [
+                    SystemMessage(content=self._get_system_prompt(rule_id, context))
+                ]
                 llm_messages.extend(messages)
 
         # 調用 LLM 進行決策
@@ -730,15 +805,17 @@ class SupervisorAgent:
 
         return {"messages": [response]}
 
-    def _get_system_prompt(self, rule_id: Optional[str], context: Dict[str, Any]) -> str:
+    def _get_system_prompt(
+        self, rule_id: Optional[str], context: Dict[str, Any]
+    ) -> str:
         """獲取系統提示"""
 
         # 獲取當前台灣時間
         from datetime import datetime
         import pytz
-        taiwan_tz = pytz.timezone('Asia/Taipei')
-        current_time = datetime.now(taiwan_tz).strftime('%Y-%m-%d %H:%M:%S (台灣時間)')
 
+        taiwan_tz = pytz.timezone("Asia/Taipei")
+        current_time = datetime.now(taiwan_tz).strftime("%Y-%m-%d %H:%M:%S (台灣時間)")
         if rule_id:
             # 載入規則提示
             rule_data = self.find_rule_by_name(rule_id)
@@ -750,58 +827,75 @@ class SupervisorAgent:
                 # 從 context 中獲取 file_path
                 file_path = "未提供"
                 if context and isinstance(context, dict):
-                    context_data = context.get('context_data', {})
+                    context_data = context.get("context_data", {})
                     if isinstance(context_data, dict):
-                        file_path = context_data.get('file_path', '未提供')
+                        file_path = context_data.get("file_path", "未提供")
 
                 # 替換占位符
-                rule_prompt = rule_prompt.replace('{file_path}', str(file_path))
-                rule_prompt = rule_prompt.replace('{current_time}', current_time)
+                rule_prompt = rule_prompt.replace("{file_path}", str(file_path))
+                rule_prompt = rule_prompt.replace("{current_time}", current_time)
 
                 return rule_prompt
 
         # 預設提示
         return f"你是一個智能助手。當前時間: {current_time}\n請根據用戶需求智能地選擇和使用工具來完成任務。"
 
-    def _build_context_query(self, query: str, context: Dict[str, Any], has_rule: bool = False) -> str:
+    def _build_context_query(
+        self, query: str, context: Dict[str, Any], has_rule: bool = False
+    ) -> str:
         """構建包含 context 信息的用戶查詢"""
 
         # 提取關鍵信息
-        context_data = context.get('context_data', {})
-        file_path = context_data.get('file_path', '未知文件')
-        data_info = context_data.get('data_info', {})
+        context_data = context.get("context_data", {})
+        # TODO: 看起來目前這裡只有針對file去寫
+        file_path = context_data.get("file_path", "未知文件")
+        data_info = context_data.get("data_info", {})
+        mails = context_data.get("mails", [])
 
         # 構建簡潔的數據摘要
         data_summary = ""
         if data_info:
-            total_rows = data_info.get('total_rows', 0)
-            columns = data_info.get('columns', [])
-            numeric_columns = data_info.get('numeric_columns', [])
-            categorical_columns = data_info.get('categorical_columns', [])
+            total_rows = data_info.get("total_rows", 0)
+            columns = data_info.get("columns", [])
+            numeric_columns = data_info.get("numeric_columns", [])
+            categorical_columns = data_info.get("categorical_columns", [])
 
             data_summary = f"""
-📊 數據文件已載入並準備分析:
-- 文件路徑: {file_path}
-- 數據行數: {total_rows} 行
-- 總欄位數: {len(columns)} 個
-- 數值欄位: {', '.join(numeric_columns[:10])}{'...' if len(numeric_columns) > 10 else ''}
-- 分類欄位: {', '.join(categorical_columns[:10])}{'...' if len(categorical_columns) > 10 else ''}
-"""
+                📊 數據文件已載入並準備分析:
+                - 文件路徑: {file_path}
+                - 數據行數: {total_rows} 行
+                - 總欄位數: {len(columns)} 個
+                - 數值欄位: {', '.join(numeric_columns[:10])}{'...' if len(numeric_columns) > 10 else ''}
+                - 分類欄位: {', '.join(categorical_columns[:10])}{'...' if len(categorical_columns) > 10 else ''}
+            """
 
         if has_rule:
-            instruction = f"""{data_summary}
+            instruction = f"""
+                {data_summary}
+                ✅ 數據已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
 
-✅ 數據已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
+                用戶需求: "{query}"
 
-用戶需求: "{query}"
+                請立即開始分析，不需要再詢問用戶需求。
+            """
 
-請立即開始分析，不需要再詢問用戶需求。"""
+        elif mails:
+            instruction = f"""
+                郵件已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
+                請你詳細分析郵件的內容。
+
+                郵件: {mails}
+
+                用戶需求: "{query}"
+            """
+
         else:
             instruction = f"""{data_summary}
 
-請參考上面的數據架構，使用專業工具進行分析。
+                請參考上面的數據架構，使用專業工具進行分析。
 
-用戶需求: "{query}" """
+                用戶需求: "{query}" 
+            """
 
         return instruction
 
@@ -816,7 +910,7 @@ class SupervisorAgent:
             # 遍歷所有 JSON 文件
             for rule_file in rules_dir.glob("*.json"):
                 try:
-                    with open(rule_file, 'r', encoding='utf-8') as f:
+                    with open(rule_file, "r", encoding="utf-8") as f:
                         rule_data = json.load(f)
                         # 直接比對 name 字段
                         if rule_data.get("name") == rule_name:
@@ -830,7 +924,9 @@ class SupervisorAgent:
             logger.error(f"❌ 查找規則失敗 {rule_name}: {e}")
             return None
 
-    async def response_generator_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
+    async def response_generator_node(
+        self, state: SupervisorAgentState
+    ) -> Dict[str, Any]:
         """回答生成節點"""
         messages = state.get("messages", [])
         query = state.get("query", "")
@@ -844,19 +940,20 @@ class SupervisorAgent:
             # 有工具調用結果，生成基於結果的回答
             system_prompt = """你是一個專業的助手，請根據工具執行結果為用戶生成簡潔明瞭的回答。
 
-要求：
-1. 回答要具體且有用
-2. 如果有數據，請提供具體數字
-3. 如果有錯誤，請說明原因並提供解決建議
-4. 保持專業且友好的語調
-5. 用繁體中文回答"""
+                要求：
+                1. 回答要具體且有用
+                2. 如果有數據，請提供具體數字
+                3. 如果有錯誤，請說明原因並提供解決建議
+                4. 保持專業且友好的語調
+                5. 用繁體中文回答
+            """
 
             response_messages = [SystemMessage(content=system_prompt)]
             response_messages.extend(messages)
 
-            final_instruction = f"""用戶問題：{query}
-
-請根據上述工具執行結果生成最終回答。"""
+            final_instruction = (
+                f"""用戶問題：{query} 請根據上述工具執行結果生成最終回答。"""
+            )
 
             response_messages.append(HumanMessage(content=final_instruction))
             final_response = await self.llm.ainvoke(response_messages)
@@ -876,12 +973,17 @@ class SupervisorAgent:
 
         logger.info(f"✅ 最終回答生成完成: {response_content[:100]}...")
 
-        return {
-            "messages": [AIMessage(content=response_content)]
-        }
+        return {"messages": [AIMessage(content=response_content)]}
 
-    async def run(self, query: str, rule_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None, available_tools: List = None) -> Dict[str, Any]:
+    async def run(
+        self,
+        query: str,
+        rule_id: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+        available_tools: List = None,
+    ) -> Dict[str, Any]:
         """執行查詢並返回回應"""
+
         logger.info(f"🚀 開始處理查詢: {query}")
         logger.info(f"🔍 詳細參數:")
         logger.info(f"  - query: {query}")
@@ -900,7 +1002,9 @@ class SupervisorAgent:
             tool_names = rule_data.get("tools", [])
             logger.info(f"🔧 規則中的工具: {tool_names}")
             self.setup_tools_for_query(tool_names, available_tools)
-            logger.info(f"📋 使用規則: {rule_data.get('name', rule_id)}，規則工具: {tool_names}")
+            logger.info(
+                f"📋 使用規則: {rule_data.get('name', rule_id)}，規則工具: {tool_names}"
+            )
         else:
             # 沒有規則，使用外部提供的工具或默認工具
             self.setup_tools_for_query([], available_tools)
@@ -921,11 +1025,13 @@ class SupervisorAgent:
 
         config = {
             "configurable": {"thread_id": str(uuid.uuid4())},
-            "recursion_limit": 50  # 增加遞歸限制到 50
+            "recursion_limit": 50,  # 增加遞歸限制到 50
+            "callbacks": [self.tracer],
         }
 
         # 執行 graph
         start_time = time.time()
+        # TODO: 這是為什麼 流式回覆接不到ToolMessage
         result = await self.current_graph.ainvoke(initial_state, config=config)
         execution_time = time.time() - start_time
 
@@ -950,11 +1056,13 @@ class SupervisorAgent:
             "rule_id": rule_id,
             "tools_used": tools_used,
             "execution_time": execution_time,
-            "context": context or {}
+            "context": context or {},
         }
 
     # 具體的業務方法
-    async def gmail_summary(self, days: int = 7, keywords: List[str] = None) -> Dict[str, Any]:
+    async def gmail_summary(
+        self, days: int = 7, keywords: List[str] = None
+    ) -> Dict[str, Any]:
         """Gmail 郵件摘要"""
         query = f"幫我總結最近 {days} 天的未讀郵件"
         if keywords:
@@ -987,5 +1095,5 @@ class SupervisorAgent:
         return {
             "status": "running",
             "tools_count": len(self.tools),
-            "uptime": time.time()
+            "uptime": time.time(),
         }

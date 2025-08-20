@@ -28,11 +28,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Browser Control APIs (簡化版，只保留必要的API)
   browserControl: {
-    getPageData: () => ipcRenderer.invoke('browser-get-page-data'),
-    testScroll: (direction, amount) => ipcRenderer.invoke('browser-test-scroll', direction, amount),
-    testNavigate: (url) => ipcRenderer.invoke('browser-test-navigate', url),
-    testClick: (selector) => ipcRenderer.invoke('browser-test-click', selector),
-    testType: (selector, text) => ipcRenderer.invoke('browser-test-type', selector, text)
+    click: (selector, options) => ipcRenderer.invoke('browser-click', selector, options),
+    type: (selector, text, options) => ipcRenderer.invoke('browser-type', selector, text, options),
+    scroll: (direction, amount) => ipcRenderer.invoke('browser-scroll', direction, amount),
+    navigate: (url, options) => ipcRenderer.invoke('browser-navigate', url, options),
+    waitElement: (selector, timeout) => ipcRenderer.invoke('browser-wait-element', selector, timeout),
+    waitNavigation: (timeout) => ipcRenderer.invoke('browser-wait-navigation', timeout),
+    screenshot: (options) => ipcRenderer.invoke('browser-screenshot', options),
+    executeScript: (script) => ipcRenderer.invoke('browser-execute-script', script),
+    getPageData: (options) => ipcRenderer.invoke('browser-get-page-data', options),
   },
 
   // OAuth APIs
@@ -41,12 +45,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exchangeToken: (config) => ipcRenderer.invoke('oauth-exchange-token', config),
     refreshToken: (config) => ipcRenderer.invoke('oauth-refresh-token', config),
     stopFlow: () => ipcRenderer.invoke('oauth-stop-flow'),
-    syncGoogleCookies: (tokens) => ipcRenderer.invoke('sync-google-cookies', tokens),
-    injectGoogleAuth: (authData) => ipcRenderer.invoke('inject-google-auth', authData),
-    injectWebviewToken: (tokenData) => ipcRenderer.invoke('inject-webview-token', tokenData),
-    startWebviewGoogleLogin: () => ipcRenderer.invoke('start-webview-google-login'),
-    checkWebviewLoginStatus: () => ipcRenderer.invoke('check-webview-login-status'),
-    debugWebviewCookies: () => ipcRenderer.invoke('debug-webview-cookies')
   },
 
   // Debug APIs (deprecated - moved to oauth)
