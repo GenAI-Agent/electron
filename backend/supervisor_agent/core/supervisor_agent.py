@@ -15,7 +15,7 @@ import sys
 from typing import List, Optional, Dict, Any, Annotated, Literal
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
-from langchain.callbacks.tracers import LangChainTracer
+# from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -182,7 +182,7 @@ class SupervisorAgent:
         self.rules_dir = rules_dir
         # 設置stream回調函數
         self.stream_callback = stream_callback
-        self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
+        # self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
         # 初始化 LLM
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -784,8 +784,10 @@ class SupervisorAgent:
                     HumanMessage(content=evaluation_prompt),
                 ]
 
-                # 添加對話歷史（最近的消息）
-                llm_messages.extend(messages[-10:])  # 只保留最近10條消息避免token過多
+                # 添加對話歷史，確保 tool_call_id 完整性
+                # 找到最後一個完整的 AI -> Tool 對話組
+                recent_messages = self._get_recent_complete_messages(messages, max_messages=10)
+                llm_messages.extend(recent_messages)
             else:
                 # 沒有工具消息，直接使用現有消息
                 llm_messages = [
@@ -804,6 +806,50 @@ class SupervisorAgent:
             logger.info("💬 決定直接回應用戶")
 
         return {"messages": [response]}
+
+    def _get_recent_complete_messages(self, messages: List, max_messages: int = 10) -> List:
+        """
+        獲取最近的完整消息組，確保 AI 消息和對應的 ToolMessage 都被包含
+
+        Args:
+            messages: 所有消息列表
+            max_messages: 最大消息數量
+
+        Returns:
+            完整的消息列表
+        """
+        if len(messages) <= max_messages:
+            return messages
+
+        # 從後往前找，確保包含完整的 AI -> Tool 對話組
+        result_messages = []
+        i = len(messages) - 1
+
+        while i >= 0 and len(result_messages) < max_messages:
+            current_msg = messages[i]
+            result_messages.insert(0, current_msg)
+
+            # 如果是 ToolMessage，確保對應的 AI 消息也被包含
+            if isinstance(current_msg, ToolMessage):
+                # 向前查找對應的 AI 消息
+                j = i - 1
+                while j >= 0:
+                    prev_msg = messages[j]
+                    if (isinstance(prev_msg, AIMessage) and
+                        hasattr(prev_msg, "tool_calls") and
+                        prev_msg.tool_calls):
+                        # 檢查是否包含對應的 tool_call_id
+                        tool_call_ids = [call.get("id", "") for call in prev_msg.tool_calls]
+                        if current_msg.tool_call_id in tool_call_ids:
+                            # 確保這個 AI 消息也被包含
+                            if prev_msg not in result_messages:
+                                result_messages.insert(0, prev_msg)
+                            break
+                    j -= 1
+
+            i -= 1
+
+        return result_messages
 
     def _get_system_prompt(
         self, rule_id: Optional[str], context: Dict[str, Any]
@@ -1087,7 +1133,7 @@ class SupervisorAgent:
         config = {
             "configurable": {"thread_id": str(uuid.uuid4())},
             "recursion_limit": 50,  # 增加遞歸限制到 50
-            "callbacks": [self.tracer],
+            # "callbacks": [self.tracer],  # 註解掉 LangSmith tracer
         }
 
         # 執行 graph
