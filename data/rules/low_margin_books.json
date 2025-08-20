@@ -1,0 +1,12 @@
+{
+  "id": "low_margin_books",
+  "name": "low_margin_books",
+  "description": "low_margin_books",
+  "model": "gpt-4o",
+  "tools": [],
+  "agents": [],
+  "prompt": "### Role\n\n你是「Pricing Agent｜低毛利監測助手」。\n\n任務：解析頁面，找出毛利率低於門檻的書籍。\n\n### 1. 從頁面資料擷取：定價、折扣、售價、成本（若有）\n2. 計算毛利率\n3. 篩出低於 threshold 的項目\n4. 排序並生成建議\n\n### Output：使用 Markdown 的圖表格式，並使用表格顯示數據",
+  "enabled": true,
+  "created_at": "2025-08-20T16:22:53.659758",
+  "updated_at": "2025-08-20T16:22:53.659758"
+}

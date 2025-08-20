@@ -49,6 +49,12 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   const [fileContext, setFileContext] = useState<FileContext | null>(null);
   const [isComposing, setIsComposing] = useState(false); // 中文输入法组合状态
 
+  // Rule autocomplete 相關狀態
+  const [showRuleAutocomplete, setShowRuleAutocomplete] = useState(false);
+  const [ruleMatches, setRuleMatches] = useState<string[]>([]);
+  const [availableRules, setAvailableRules] = useState<string[]>([]);
+  const [selectedRuleIndex, setSelectedRuleIndex] = useState(0);
+
   // 刷新 session 功能
   const handleRefreshSession = () => {
     // 強制刷新 session ID（保留文件上下文）
@@ -100,6 +106,26 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       router.events?.off('routeChangeComplete', updateContext);
     };
   }, [router.query, router.events]);
+
+  // 載入可用的規則列表
+  const loadAvailableRules = async () => {
+    try {
+      const response = await fetch('http://localhost:8021/api/rules/');
+      if (response.ok) {
+        const rules = await response.json();
+        const ruleNames = rules.map((rule: any) => rule.name);
+        setAvailableRules(ruleNames);
+        console.log('🔧 載入規則列表:', ruleNames);
+      }
+    } catch (error) {
+      console.warn('⚠️ 載入規則列表失敗:', error);
+    }
+  };
+
+  // 組件載入時獲取規則列表
+  useEffect(() => {
+    loadAvailableRules();
+  }, []);
 
   // 移除瀏覽器輪詢邏輯，現在直接使用 Electron HTTP API
 
@@ -422,11 +448,84 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     };
     setMessages(prev => [...prev, assistantMessage]);
 
+    // 如果目前在 rules 模式，自動切換回 result 模式
+    if (panelMode === 'rules') {
+      setPanelMode('result');
+    }
+
+    // 隱藏自動完成
+    setShowRuleAutocomplete(false);
+    setRuleMatches([]);
+
     // 清空輸入框並開始流式響應
     const currentInput = input.trim();
     setInput('');
     setStreamResponse('');
     handleStreamResponse(currentInput, assistantMessage.id);
+  };
+
+  // 處理輸入變化，檢測 "/" 並顯示規則自動完成
+  const handleInputChange = (value: string) => {
+    setInput(value);
+
+    // 檢測是否以 "/" 開頭
+    if (value.startsWith('/')) {
+      const query = value.slice(1).toLowerCase(); // 移除 "/" 並轉為小寫
+
+      if (query === '') {
+        // 只有 "/" 時顯示所有規則
+        setRuleMatches(availableRules);
+      } else {
+        // 模糊匹配規則名稱
+        const matches = availableRules.filter(rule =>
+          rule.toLowerCase().includes(query)
+        );
+        setRuleMatches(matches);
+      }
+
+      setShowRuleAutocomplete(true);
+      setSelectedRuleIndex(0);
+    } else {
+      setShowRuleAutocomplete(false);
+      setRuleMatches([]);
+    }
+  };
+
+  // 處理鍵盤事件（上下箭頭選擇，Tab/Enter 選中）
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showRuleAutocomplete || ruleMatches.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedRuleIndex(prev =>
+          prev <= 0 ? ruleMatches.length - 1 : prev - 1
+        );
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedRuleIndex(prev =>
+          prev >= ruleMatches.length - 1 ? 0 : prev + 1
+        );
+        break;
+      case 'Tab':
+      case 'Enter':
+        e.preventDefault();
+        selectRule(ruleMatches[selectedRuleIndex]);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowRuleAutocomplete(false);
+        setRuleMatches([]);
+        break;
+    }
+  };
+
+  // 選擇規則
+  const selectRule = (ruleName: string) => {
+    setInput(`/${ruleName} `);
+    setShowRuleAutocomplete(false);
+    setRuleMatches([]);
   };
 
   return (
@@ -488,6 +587,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           usedTools={usedTools}
           isLoading={isLoading}
           messages={messages}
+          onRulesUpdate={loadAvailableRules}
         />
       </div>
 
@@ -520,9 +620,12 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
               className="w-full bg-white rounded-lg border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 pt-3 pl-4 pr-12 pb-3 text-sm leading-relaxed text-gray-800 cursor-text resize-none placeholder:text-gray-400 shadow-sm min-h-[60px] max-h-[120px]"
               placeholder="輸入文字開始對話..."
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
+                // 處理自動完成的鍵盤事件
+                handleKeyDown(e);
+
+                if (e.key === 'Enter' && !e.shiftKey && !isComposing && !showRuleAutocomplete) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
@@ -556,6 +659,32 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
                 <Send className="w-4 h-4" />
               )}
             </button>
+
+            {/* Rule Autocomplete 下拉列表 */}
+            {showRuleAutocomplete && ruleMatches.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] max-h-48 overflow-y-auto">
+                {ruleMatches.map((rule, index) => (
+                  <div
+                    key={rule}
+                    className={cn(
+                      "px-3 py-2 text-sm cursor-pointer border-b border-slate-100 last:border-b-0",
+                      index === selectedRuleIndex
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700 hover:bg-gray-50"
+                    )}
+                    onClick={() => selectRule(rule)}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-blue-500 mr-2">/</span>
+                      <span className="font-medium">{rule}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-t border-slate-100">
+                  使用 ↑↓ 選擇，Tab 或 Enter 確認，Esc 取消
+                </div>
+              </div>
+            )}
           </div>
         </form>
 
@@ -571,9 +700,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             <button className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 w-7 h-7 flex items-center justify-center rounded transition-colors">
               <Headphones className="w-[16px] h-[16px]" />
             </button>
-          </div>
-          <div className="text-xs text-slate-400">
-            Enter 發送，Shift+Enter 換行
           </div>
         </div>
       </div>

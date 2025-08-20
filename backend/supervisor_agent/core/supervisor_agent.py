@@ -15,6 +15,7 @@ import sys
 from typing import List, Optional, Dict, Any, Annotated, Literal
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
+
 # from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -137,7 +138,9 @@ class ParallelToolNode(BaseToolNode):
             tool_call_id = tool_call.get("id", "")
 
             # 調試日誌：檢查 tool_call_id
-            logger.info(f"🔍 工具調用詳情: name={tool_name}, id={tool_call_id}, args={tool_args}")
+            logger.info(
+                f"🔍 工具調用詳情: name={tool_name}, id={tool_call_id}, args={tool_args}"
+            )
 
             if tool_name in self.tools_by_name:
                 tool = self.tools_by_name[tool_name]
@@ -791,7 +794,9 @@ class SupervisorAgent:
 
                 # 添加對話歷史，確保 tool_call_id 完整性
                 # 找到最後一個完整的 AI -> Tool 對話組
-                recent_messages = self._get_recent_complete_messages(messages, max_messages=10)
+                recent_messages = self._get_recent_complete_messages(
+                    messages, max_messages=10
+                )
                 llm_messages.extend(recent_messages)
             else:
                 # 沒有工具消息，直接使用現有消息
@@ -812,7 +817,9 @@ class SupervisorAgent:
 
         return {"messages": [response]}
 
-    def _get_recent_complete_messages(self, messages: List, max_messages: int = 10) -> List:
+    def _get_recent_complete_messages(
+        self, messages: List, max_messages: int = 10
+    ) -> List:
         """
         獲取最近的完整消息組，確保 AI 消息和對應的 ToolMessage 都被包含
 
@@ -840,11 +847,15 @@ class SupervisorAgent:
                 j = i - 1
                 while j >= 0:
                     prev_msg = messages[j]
-                    if (isinstance(prev_msg, AIMessage) and
-                        hasattr(prev_msg, "tool_calls") and
-                        prev_msg.tool_calls):
+                    if (
+                        isinstance(prev_msg, AIMessage)
+                        and hasattr(prev_msg, "tool_calls")
+                        and prev_msg.tool_calls
+                    ):
                         # 檢查是否包含對應的 tool_call_id
-                        tool_call_ids = [call.get("id", "") for call in prev_msg.tool_calls]
+                        tool_call_ids = [
+                            call.get("id", "") for call in prev_msg.tool_calls
+                        ]
                         if current_msg.tool_call_id in tool_call_ids:
                             # 確保這個 AI 消息也被包含
                             if prev_msg not in result_messages:
@@ -924,6 +935,7 @@ class SupervisorAgent:
         file_path = context_data.get("file_path", "未知文件")
         data_info = context_data.get("data_info", {})
         file_summary = context_data.get("file_summary", {})
+        page_data = context_data.get("page", {})
         mails = context_data.get("mails", [])
 
         # 檢查是否為 Gmail 數據
@@ -964,7 +976,9 @@ class SupervisorAgent:
             """
         # 一般數據文件摘要（優先使用 file_summary）
         elif file_summary:
-            total_rows = file_summary.get("total_emails", file_summary.get("total_rows", 0))
+            total_rows = file_summary.get(
+                "total_emails", file_summary.get("total_rows", 0)
+            )
             columns = file_summary.get("columns", [])
             summary_text = file_summary.get("summary", "")
 
@@ -994,11 +1008,9 @@ class SupervisorAgent:
         if has_rule:
             instruction = f"""
                 {data_summary}
-                ✅ 數據已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
-
-                用戶需求: "{query}"
-
-                請立即開始分析，不需要再詢問用戶需求。
+                此為我的頁面資料 {context_data}
+                請根據我的需求，以及你的規則（System Prompt），幫助我解決問題
+                我的需求: "{query}"，如果是空字串，請根據你的規則（System Prompt），幫助我解決問題
             """
 
         elif mails:
