@@ -50,10 +50,130 @@ async function validateAndRefreshToken(accessToken, refreshToken, clientConfig) 
   }
 }
 
+// Helper function to extract email body from payload
+function extractEmailBody(payload) {
+  let textBody = '';
+  let htmlBody = '';
+
+  function extractFromPart(part) {
+    if (part.mimeType === 'text/plain' && part.body?.data) {
+      try {
+        textBody = Buffer.from(part.body.data, 'base64').toString('utf-8');
+      } catch (e) {
+        console.warn('Failed to decode text body:', e);
+      }
+    } else if (part.mimeType === 'text/html' && part.body?.data) {
+      try {
+        htmlBody = Buffer.from(part.body.data, 'base64').toString('utf-8');
+      } catch (e) {
+        console.warn('Failed to decode HTML body:', e);
+      }
+    }
+
+    // Recursively check parts
+    if (part.parts) {
+      part.parts.forEach(extractFromPart);
+    }
+  }
+
+  extractFromPart(payload);
+
+  // Prefer text body, fall back to HTML if needed
+  return {
+    text: textBody,
+    html: htmlBody,
+    body: textBody || htmlBody
+  };
+}
+
+// Helper function to extract attachments
+function extractAttachments(payload) {
+  const attachments = [];
+
+  function extractFromPart(part) {
+    if (part.filename && part.body?.attachmentId) {
+      attachments.push({
+        filename: part.filename,
+        mimeType: part.mimeType,
+        size: part.body.size || 0,
+        attachmentId: part.body.attachmentId
+      });
+    }
+
+    // Recursively check parts
+    if (part.parts) {
+      part.parts.forEach(extractFromPart);
+    }
+  }
+
+  extractFromPart(payload);
+  return attachments;
+}
+
+// Helper function to parse email headers into structured format
+function parseEmailHeaders(headers) {
+  const headerDict = {};
+  headers.forEach(h => {
+    headerDict[h.name] = h.value;
+  });
+
+  // Parse recipients
+  const parseRecipients = (headerValue) => {
+    if (!headerValue) return [];
+    return headerValue.split(',').map(r => r.trim()).filter(r => r);
+  };
+
+  return {
+    subject: headerDict['Subject'] || '',
+    from: headerDict['From'] || '',
+    to: parseRecipients(headerDict['To']),
+    cc: parseRecipients(headerDict['Cc']),
+    bcc: parseRecipients(headerDict['Bcc']),
+    date: headerDict['Date'] || '',
+    messageId: headerDict['Message-ID'] || '',
+    inReplyTo: headerDict['In-Reply-To'] || '',
+    references: headerDict['References'] || '',
+    raw: headerDict
+  };
+}
+
 // Gmail API 功能
 async function fetchGmailMessagesViaAPI(accessToken, maxResults = 100, options = {}) {
   try {
     console.log('📧 使用 Gmail API 獲取郵件列表...');
+
+    // 驗證和刷新 access token
+    let validToken = accessToken;
+    if (options.refreshToken && options.clientConfig) {
+      console.log('🔄 驗證 access token...');
+      const tokenValidation = await validateAndRefreshToken(
+        accessToken,
+        options.refreshToken,
+        options.clientConfig
+      );
+
+      if (tokenValidation.success) {
+        validToken = tokenValidation.accessToken;
+        if (tokenValidation.refreshed) {
+          console.log('✅ 使用刷新後的 token');
+          // 可以通過回調通知調用者新的 token
+          if (options.onTokenRefresh) {
+            options.onTokenRefresh({
+              accessToken: tokenValidation.accessToken,
+              refreshToken: tokenValidation.newRefreshToken
+            });
+          }
+        }
+      } else {
+        console.error('❌ Token 驗證失敗:', tokenValidation.error);
+        return {
+          success: false,
+          error: `Token 驗證失敗: ${tokenValidation.error}`,
+          tokenError: true,
+          source: 'api'
+        };
+      }
+    }
 
     // 構建查詢參數
     const queryParams = new URLSearchParams({
@@ -72,21 +192,38 @@ async function fetchGmailMessagesViaAPI(accessToken, maxResults = 100, options =
       console.log(`📧 查詢條件: ${options.query}`);
     }
 
-    // 如果沒有指定任何過濾條件，預設獲取主要區域
-    // if (!options.labelIds && !options.query) {
-    //   queryParams.append('q', 'category:primary');
-    //   console.log('📧 預設查詢: category:primary');
-    // }
+    // 處理日期範圍
+    if (options.days) {
+      const afterDate = new Date();
+      afterDate.setDate(afterDate.getDate() - options.days);
+      const dateQuery = `after:${afterDate.getFullYear()}/${afterDate.getMonth() + 1}/${afterDate.getDate()}`;
+
+      if (options.query) {
+        queryParams.set('q', `${options.query} ${dateQuery}`);
+      } else {
+        queryParams.set('q', dateQuery);
+      }
+      console.log(`📧 日期範圍: 最近 ${options.days} 天`);
+    }
 
     // 獲取郵件 ID 列表
     const listResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?${queryParams}`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${validToken}`,
         'Content-Type': 'application/json'
       }
     });
 
     if (!listResponse.ok) {
+      if (listResponse.status === 401) {
+        console.error('❌ Gmail API 授權失敗 - Token 可能已過期');
+        return {
+          success: false,
+          error: 'Gmail API 授權失敗 - Token 已過期，請重新授權',
+          tokenError: true,
+          source: 'api'
+        };
+      }
       throw new Error(`Gmail API 列表請求失敗: ${listResponse.status} ${listResponse.statusText}`);
     }
 
@@ -97,15 +234,16 @@ async function fetchGmailMessagesViaAPI(accessToken, maxResults = 100, options =
 
     // 批量獲取郵件詳細資訊
     const emails = [];
-    const batchSize = 10; // 避免同時請求太多
+    const batchSize = 5; // 減少批量大小以獲取更詳細的資料
 
     for (let i = 0; i < Math.min(messageIds.length, maxResults); i += batchSize) {
       const batch = messageIds.slice(i, i + batchSize);
       const batchPromises = batch.map(async (msg) => {
         try {
-          const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`, {
+          // 使用 format=full 獲取完整郵件資料
+          const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`, {
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
+              'Authorization': `Bearer ${validToken}`,
               'Content-Type': 'application/json'
             }
           });
@@ -116,36 +254,62 @@ async function fetchGmailMessagesViaAPI(accessToken, maxResults = 100, options =
           }
 
           const emailData = await response.json();
-          console.log('🔍 郵件資料:', emailData);
-          /*郵件資料: {
-            [1]   id: '198c458b9abf649e',
-            [1]   threadId: '198c3461367755e2',
-            [1]   labelIds: [ 'UNREAD', 'IMPORTANT', 'CATEGORY_PERSONAL', 'Label_23' ],
-            [1]   snippet: '2025/08/20 ZAKKA 圖檔上傳結果 (SYS) 此信件為系統發出信件，請勿直接回覆，感謝您的配合。謝謝！ 總品項數： 0 圖檔上傳總數： 0 圖檔上傳成功數： 0 上傳失敗圖檔： =&gt;查無店內碼資料',
-            [1]   payload: { mimeType: 'text/html', headers: [ [Object], [Object], [Object] ] },
-            [1]   sizeEstimate: 4098,
-            [1]   historyId: '106954210',
-            [1]   internalDate: '1755640801000'
-            [1] }
-            */
-          // 解析郵件標頭
+
+          // 解析郵件資料
           const headers = emailData.payload?.headers || [];
-          const subject = headers.find(h => h.name === 'Subject')?.value || '無主旨';
-          const from = headers.find(h => h.name === 'From')?.value || '未知寄件者';
-          const date = headers.find(h => h.name === 'Date')?.value || '未知時間';
+          const parsedHeaders = parseEmailHeaders(headers);
+
+          // 提取郵件內容
+          const bodyData = extractEmailBody(emailData.payload || {});
+
+          // 提取附件
+          const attachments = extractAttachments(emailData.payload || {});
+
+          // 解析日期為 ISO 格式
+          let dateISO;
+          try {
+            dateISO = new Date(parsedHeaders.date).toISOString();
+          } catch (e) {
+            dateISO = new Date().toISOString();
+          }
 
           return {
-            id: emailData.id,                    // API ID (用於API調用)
-            threadId: emailData.threadId,        // Thread ID (可能與某些URL格式相關)
-            subject: subject.substring(0, 200),
-            sender: from,
-            time: date,
+            // Gmail 特定資料
+            gmailId: emailData.id,
+            threadId: emailData.threadId,
+
+            // 郵件基本資訊
+            subject: parsedHeaders.subject,
+            from: parsedHeaders.from,
+            to: parsedHeaders.to,
+            cc: parsedHeaders.cc,
+            bcc: parsedHeaders.bcc,
+            date: dateISO,
+
+            // 郵件內容
+            body: bodyData.body,
+            // bodyText: bodyData.text,
+            // bodyHtml: bodyData.html,
             snippet: emailData.snippet,
-            isRead: emailData.labelIds ? !emailData.labelIds.includes('UNREAD') : true,
+
+            // 附件資訊
+            hasAttachments: attachments.length > 0,
+            attachmentCount: attachments.length,
+            attachments: attachments,
+
+            // 狀態資訊
+            isUnread: emailData.labelIds?.includes('UNREAD') || false,
+            isImportant: emailData.labelIds?.includes('IMPORTANT') || false,
+            labelIds: emailData.labelIds || [],
+
+            // 其他資訊
+            sizeEstimate: emailData.sizeEstimate || 0,
             url: `https://mail.google.com/mail/u/0/#all/${emailData.id}`,
             source: 'api',
-            apiId: emailData.id,                 // 明確標記API ID
-            labelIds: emailData.labelIds || [],   // 包含標籤信息
+            // 額外的 header 資訊
+            messageId: parsedHeaders.messageId,
+            inReplyTo: parsedHeaders.inReplyTo,
+            references: parsedHeaders.references
           };
         } catch (error) {
           console.warn(`❌ 處理郵件 ${msg.id} 失敗:`, error.message);
@@ -158,11 +322,11 @@ async function fetchGmailMessagesViaAPI(accessToken, maxResults = 100, options =
 
       // 小延遲避免 API 限制
       if (i + batchSize < messageIds.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200)); // 稍微增加延遲
       }
     }
 
-    console.log(`✅ Gmail API 成功獲取 ${emails.length} 封郵件`);
+    console.log(`✅ Gmail API 成功獲取 ${emails.length} 封郵件（含詳細內容）`);
 
     return {
       success: true,
@@ -185,7 +349,7 @@ let mainWindow = null;
 
 // Gmail 專用郵件提取函數 - 支援 API 和 DOM 兩種方式
 async function extractGmailEmails(webContents, options = {}) {
-  const { accessToken, useAPI = true, maxResults = 50 } = options;
+  const { accessToken, useAPI = true, maxResults = 10 } = options;
   try {
     console.log('📧 開始從 Gmail 提取郵件列表...');
 
@@ -218,7 +382,11 @@ async function extractGmailEmails(webContents, options = {}) {
       // 配置 Gmail API 選項 - 預設只獲取主要區域
       const gmailOptions = {
         query: options.query,
-        labelIds: options.labelIds
+        labelIds: options.labelIds,
+        days: options.days,
+        refreshToken: options.refreshToken,
+        clientConfig: options.clientConfig,
+        onTokenRefresh: options.onTokenRefresh
       };
       apiResult = await fetchGmailMessagesViaAPI(validToken, maxResults, gmailOptions);
 
@@ -243,420 +411,424 @@ async function extractGmailEmails(webContents, options = {}) {
       console.error('❌ webview 元素不存在');
       return { error: 'webview not found' };
     }
-
+    return apiResult;
     // 透過 webview 提取 Gmail 郵件
-    try {
-      const emailData = await webContents.executeJavaScript(`
-        (async function() {
-          const webview = document.querySelector('webview');
-          if (!webview) {
-            return { error: 'webview not found' };
-          }
+    // try {
+    //   const emailData = await webContents.executeJavaScript(`
+    //     (async function() {
+    //       const webview = document.querySelector('webview');
+    //       if (!webview) {
+    //         return { error: 'webview not found' };
+    //       }
 
-          try {
-            const result = await webview.executeJavaScript(\`
-              (function() {
-                try {
-                  const title = document.title || 'Gmail';
-                  const mails = [];
-                  const debugLogs = [];
+    //       try {
+    //         const result = await webview.executeJavaScript(\`
+    //           (function() {
+    //             try {
+    //               const title = document.title || 'Gmail';
+    //               const mails = [];
+    //               const debugLogs = [];
 
-                  function debugLog(...args) {
-                    const message = args.map(arg => 
-                      typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                    ).join(' ');
-                    debugLogs.push(message);
-                    console.log(...args);
-                  }
+    //               function debugLog(...args) {
+    //                 const message = args.map(arg => 
+    //                   typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+    //                 ).join(' ');
+    //                 debugLogs.push(message);
+    //                 console.log(...args);
+    //               }
 
-                  debugLog('=== Gmail 調試開始 ===');
-                  debugLog('頁面標題:', title);
-                  debugLog('完整 URL:', window.location.href);
-                  
-                  // 檢查頁面基本結構
-                  debugLog('Body 是否存在:', !!document.body);
-                  debugLog('Body 子元素數量:', document.body ? document.body.children.length : 0);
-                  
-                  // 尋找郵件列表的容器 - 從多個可能位置開始
-                  let emailContainer = null;
-                  let emailRows = [];
-                  
-                  // 先嘗試 tbody
-                  const tbody = document.querySelector('tbody');
-                  debugLog('找到 tbody 元素:', !!tbody);
-                  
-                  if (tbody) {
-                    const tbodyRows = tbody.querySelectorAll('tr');
-                    debugLog('tbody 中的行數:', tbodyRows.length);
-                    
-                    // 檢查 tbody 中的行是否看起來像郵件
-                    let validEmailRows = 0;
-                    for (const row of tbodyRows) {
-                      const text = row.textContent?.trim();
-                      if (text && text.length > 20 && !text.includes('Tab 鍵')) {
-                        validEmailRows++;
-                      }
-                    }
-                    debugLog('tbody 中可能的郵件行數:', validEmailRows);
-                    
-                    if (validEmailRows > 0) {
-                      emailContainer = tbody;
-                      emailRows = tbodyRows;
-                      debugLog('使用 tbody 作為郵件容器');
-                    }
-                  }
-                  
-                  // 如果 tbody 沒有有效郵件，嘗試其他容器
-                  if (!emailContainer || emailRows.length === 0) {
-                    debugLog('尋找其他郵件容器...');
-                    
-                    // 直接搜尋有 Gmail 郵件特徵的 tr 元素
-                    const allTrs = document.querySelectorAll('tr');
-                    debugLog('頁面總 tr 元素數:', allTrs.length);
-                    
-                    // 尋找有郵件特徵的 tr
-                    const mailTrs = [];
-                    for (let i = 0; i < allTrs.length; i++) {
-                      const tr = allTrs[i];
-                      const classes = tr.className || '';
-                      const role = tr.getAttribute('role');
-                      const text = tr.textContent?.trim() || '';
-                      
-                      debugLog('TR', i, '類別:', classes);
-                      debugLog('TR', i, 'role:', role);
-                      debugLog('TR', i, '內容預覽:', text.substring(0, 100));
-                      
-                      // Gmail 郵件行通常有這些特徵
-                      const isMailRow = (
-                        (classes.includes('zA') || classes.includes('yW')) && // Gmail 郵件行的典型類別
-                        role === 'row' && // 有 role="row" 屬性
-                        text.length > 20 && // 有足夠的內容
-                        !text.includes('Tab 鍵') && // 不是界面元素
-                        !text.includes('載入中') // 不是載入狀態
-                      );
-                      
-                      if (isMailRow) {
-                        debugLog('找到郵件行:', i, '內容:', text.substring(0, 50));
-                        mailTrs.push(tr);
-                      }
-                    }
-                    
-                    if (mailTrs.length > 0) {
-                      debugLog('找到', mailTrs.length, '個郵件行');
-                      emailContainer = document.body; // 使用 body 作為容器
-                      emailRows = mailTrs;
-                    } else {
-                      debugLog('沒有找到任何郵件行');
-                      return { title, mails: [], debugLogs, debug: '未找到郵件行' };
-                    }
-                  }
-                  
-                  debugLog('最終使用的郵件行數:', emailRows.length);
+    //               debugLog('=== Gmail 調試開始 ===');
+    //               debugLog('頁面標題:', title);
+    //               debugLog('完整 URL:', window.location.href);
 
-                  emailRows.forEach((row, index) => {
-                    try {
-                      debugLog('=== 檢查第', index, '行 ===');
-                      debugLog('行類別:', row.className);
-                      debugLog('行 role 屬性:', row.getAttribute('role'));
-                      debugLog('行內容預覽:', row.textContent?.substring(0, 150));
-                      debugLog('是否有 zA 類別:', row.classList.contains('zA'));
-                      debugLog('是否有 role=row 屬性:', row.getAttribute('role') === 'row');
-                      
-                      // 檢查是否為郵件行
-                      const rowText = row.textContent?.trim();
-                      const hasMailClass = row.classList.contains('zA') || row.classList.contains('yW');
-                      const hasRowRole = row.getAttribute('role') === 'row';
-                      
-                      debugLog('行是否有郵件類別:', hasMailClass);
-                      debugLog('行是否有 row role:', hasRowRole);
-                      debugLog('行文字長度:', rowText ? rowText.length : 0);
-                      
-                      if (rowText && rowText.length > 20 && (hasMailClass || hasRowRole)) {
-                        debugLog('嘗試提取郵件資訊...');
-                        const mail = extractMailFromRow(row);
-                        debugLog('提取結果:', mail);
-                        if (mail) {
-                          mails.push(mail);
-                        }
-                      } else {
-                        debugLog('跳過：不符合郵件行條件');
-                      }
-                    } catch (e) {
-                      debugLog('提取第', index, '行郵件失敗:', e.message);
-                    }
-                  });
+    //               // 檢查頁面基本結構
+    //               debugLog('Body 是否存在:', !!document.body);
+    //               debugLog('Body 子元素數量:', document.body ? document.body.children.length : 0);
 
-                  // 提取單筆郵件資訊
-                  function extractMailFromRow(row) {
-                    debugLog('    --- 開始提取郵件詳細資訊 ---');
-                    let subject = '';
-                    let time = '';
-                    let sender = '';
-                    let isRead = true;
+    //               // 尋找郵件列表的容器 - 從多個可能位置開始
+    //               let emailContainer = null;
+    //               let emailRows = [];
 
-                    // 提取主旨 - Gmail 中主旨通常在 span 中
-                    debugLog('    尋找主旨元素...');
-                    
-                    // 嘗試多種方式找主旨
-                    const subjectSelectors = [
-                      'span[id]:not([id=""])', // 有 ID 的 span
-                      'a[href*="#"]', // 郵件連結
-                      'span[jsaction]', // 有 jsaction 的 span
-                      '.bog', // Gmail 主旨類別
-                      '.yW span', // 未讀郵件主旨
-                      '.zA span' // 已讀郵件主旨
-                    ];
-                    
-                    for (const selector of subjectSelectors) {
-                      const elements = row.querySelectorAll(selector);
-                      debugLog('    選擇器', selector, '找到元素數:', elements.length);
-                      
-                      for (const el of elements) {
-                        const text = el.textContent?.trim();
-                        debugLog('    檢查元素文字:', text);
-                        
-                        // 主旨的特徵：長度適中，不是純數字，不是 email，不是時間
-                        if (text && text.length > 5 && text.length < 200 && 
-                            !text.match(/^\\d+$/) && 
-                            !text.includes('@') &&
-                            !text.match(/^\\d{1,2}:\\d{2}/) &&
-                            !text.match(/^\\d+月\\d+日/)) {
-                          subject = text;
-                          debugLog('    找到主旨:', subject);
-                          break;
-                        }
-                      }
-                      if (subject) break;
-                    }
+    //               // 先嘗試 tbody
+    //               const tbody = document.querySelector('tbody');
+    //               debugLog('找到 tbody 元素:', !!tbody);
 
-                    // 如果沒找到主旨，嘗試從整行文字中提取
-                    if (!subject) {
-                      debugLog('    主旨為空，嘗試從整行提取...');
-                      const rowText = row.textContent?.trim();
-                      debugLog('    整行文字:', rowText);
-                      
-                      if (rowText) {
-                        // 嘗試用空白分割，找出最可能是主旨的部分
-                        const parts = rowText.split(/\\s+/);
-                        debugLog('    分割為', parts.length, '個部分');
-                        
-                        // 尋找最長且不是時間/email/日期的連續文字
-                        let bestCandidate = '';
-                        let currentPhrase = '';
-                        
-                        for (let i = 0; i < parts.length; i++) {
-                          const part = parts[i];
-                          debugLog('    檢查部分', i, ':', part);
-                          
-                          // 如果這部分像是主旨的一部分
-                          if (part && !part.match(/^\\d+$/) && !part.includes('@') && 
-                              !part.match(/\\d{1,2}:\\d{2}/) && !part.match(/^\\d+月/) &&
-                              !part.match(/^(今天|昨天|前天|\\w+天前)$/)) {
-                            
-                            currentPhrase = currentPhrase ? currentPhrase + ' ' + part : part;
-                            
-                            // 如果這個片語比目前的候選者更好
-                            if (currentPhrase.length > bestCandidate.length && currentPhrase.length < 200) {
-                              bestCandidate = currentPhrase;
-                            }
-                          } else {
-                            // 遇到不是主旨的部分，重置當前片語
-                            currentPhrase = '';
-                          }
-                        }
-                        
-                        if (bestCandidate && bestCandidate.length > 5) {
-                          subject = bestCandidate;
-                          debugLog('    從整行提取到主旨:', subject);
-                        }
-                      }
-                    }
-                    
-                    debugLog('    最終主旨:', subject);
+    //               if (tbody) {
+    //                 const tbodyRows = tbody.querySelectorAll('tr');
+    //                 debugLog('tbody 中的行數:', tbodyRows.length);
 
-                    // 提取時間 - Gmail 時間通常在特定的 span 中
-                    debugLog('    尋找時間元素...');
-                    
-                    // Gmail 時間的多種可能位置
-                    const timeSelectors = [
-                      '.bq3', // Gmail 時間的典型類別
-                      'span[title*="2024"]', // 有完整日期的 span
-                      'span[title*="2025"]',
-                      'span[title*="週"]', // 中文週幾
-                      'span[title*="下午"]', // 中文時間
-                      'span[title*="上午"]',
-                      'td[role="gridcell"] span' // 表格中的時間 span
-                    ];
-                    
-                    for (const selector of timeSelectors) {
-                      const elements = row.querySelectorAll(selector);
-                      debugLog('    時間選擇器', selector, '找到元素數:', elements.length);
-                      
-                      for (const el of elements) {
-                        const text = el.textContent?.trim();
-                        const title = el.getAttribute('title');
-                        const className = el.className;
-                        
-                        debugLog('    時間元素 class:', className);
-                        debugLog('    時間元素文字:', text);
-                        debugLog('    時間元素 title:', title);
-                        
-                        // 優先使用 title 中的完整時間
-                        if (title && (title.includes('2024') || title.includes('2025') || 
-                                     title.includes('週') || title.includes('下午') || title.includes('上午'))) {
-                          time = title;
-                          debugLog('    從 title 找到時間:', time);
-                          break;
-                        }
-                        
-                        // 其次使用文字中的時間格式
-                        if (text && (text.match(/\\d{1,2}:\\d{2}/) || 
-                                    text.match(/\\d+月\\d+日/) || 
-                                    text.match(/\\d{4}/) ||
-                                    text.match(/(上午|下午)\\d{1,2}:\\d{2}/) ||
-                                    text.match(/(今天|昨天|前天)/))) {
-                          time = text;
-                          debugLog('    從文字找到時間:', time);
-                          break;
-                        }
-                      }
-                      if (time) break;
-                    }
-                    
-                    // 如果還沒找到，嘗試更廣泛的搜尋
-                    if (!time) {
-                      debugLog('    擴大搜尋時間元素...');
-                      const allSpans = row.querySelectorAll('span');
-                      for (let i = 0; i < Math.min(allSpans.length, 15); i++) {
-                        const el = allSpans[i];
-                        const text = el.textContent?.trim();
-                        const title = el.getAttribute('title');
-                        
-                        debugLog('    檢查 span', i, 'class:', el.className);
-                        debugLog('    檢查 span', i, '文字:', text);
-                        debugLog('    檢查 span', i, 'title:', title);
-                        
-                        // 檢查是否包含時間信息
-                        if (title && title.length > 10 && (title.includes('年') || title.includes('月') || title.includes('：'))) {
-                          time = title;
-                          debugLog('    從 title 找到時間:', time);
-                          break;
-                        }
-                        
-                        if (text && text.length > 2 && text.length < 20 && 
-                            (text.match(/\\d{1,2}:\\d{2}/) || text.includes('今天') || text.includes('昨天'))) {
-                          time = text;
-                          debugLog('    從文字找到時間:', time);
-                          break;
-                        }
-                      }
-                    }
-                    
-                    debugLog('    最終時間:', time);
+    //                 // 檢查 tbody 中的行是否看起來像郵件
+    //                 let validEmailRows = 0;
+    //                 for (const row of tbodyRows) {
+    //                   const text = row.textContent?.trim();
+    //                   if (text && text.length > 20 && !text.includes('Tab 鍵')) {
+    //                     validEmailRows++;
+    //                   }
+    //                 }
+    //                 debugLog('tbody 中可能的郵件行數:', validEmailRows);
 
-                    // 提取寄件者
-                    debugLog('    尋找寄件者元素...');
-                    const senderElements = row.querySelectorAll('span[email], span[title*="@"]');
-                    debugLog('    找到可能的寄件者元素數:', senderElements.length);
-                    
-                    for (const el of senderElements) {
-                      const email = el.getAttribute('email');
-                      const title = el.getAttribute('title');
-                      const text = el.textContent?.trim();
-                      
-                      debugLog('    寄件者元素 email 屬性:', email);
-                      debugLog('    寄件者元素 title 屬性:', title);
-                      debugLog('    寄件者元素文字:', text);
-                      
-                      if (email) {
-                        sender = email;
-                        debugLog('    從 email 屬性找到寄件者:', sender);
-                        break;
-                      } else if (title && title.includes('@')) {
-                        sender = title;
-                        debugLog('    從 title 屬性找到寄件者:', sender);
-                        break;
-                      } else if (text && text.includes('@')) {
-                        sender = text;
-                        debugLog('    從文字找到寄件者:', sender);
-                        break;
-                      }
-                    }
+    //                 if (validEmailRows > 0) {
+    //                   emailContainer = tbody;
+    //                   emailRows = tbodyRows;
+    //                   debugLog('使用 tbody 作為郵件容器');
+    //                 }
+    //               }
 
-                    // 如果沒有明確的寄件者，嘗試從行首提取
-                    if (!sender) {
-                      debugLog('    寄件者為空，嘗試從行首提取...');
-                      const rowText = row.textContent?.trim();
-                      if (rowText) {
-                        const firstPart = rowText.split(/\\s+/)[0];
-                        debugLog('    行首部分:', firstPart);
-                        if (firstPart && (firstPart.includes('@') || firstPart.length > 2)) {
-                          sender = firstPart;
-                          debugLog('    從行首提取到寄件者:', sender);
-                        }
-                      }
-                    }
-                    
-                    debugLog('    最終寄件者:', sender);
+    //               // 如果 tbody 沒有有效郵件，嘗試其他容器
+    //               if (!emailContainer || emailRows.length === 0) {
+    //                 debugLog('尋找其他郵件容器...');
 
-                    // 檢查是否已讀（通常未讀郵件有特殊樣式）
-                    isRead = !row.classList.contains('zE') && !row.querySelector('.yW');
-                    debugLog('    是否已讀:', isRead);
+    //                 // 直接搜尋有 Gmail 郵件特徵的 tr 元素
+    //                 const allTrs = document.querySelectorAll('tr');
+    //                 debugLog('頁面總 tr 元素數:', allTrs.length);
 
-                    // 只返回有主旨的郵件
-                    debugLog('    檢查是否返回郵件 - 主旨長度:', subject ? subject.length : 0);
-                    if (subject && subject.length > 0) {
-                      const result = {
-                        subject: subject.substring(0, 200), // 限制主旨長度
-                        time: time || '未知時間',
-                        sender: sender || '未知寄件者',
-                        isRead: isRead
-                      };
-                      debugLog('    返回郵件:', result);
-                      return result;
-                    }
+    //                 // 尋找有郵件特徵的 tr
+    //                 const mailTrs = [];
+    //                 for (let i = 0; i < allTrs.length; i++) {
+    //                   const tr = allTrs[i];
+    //                   const classes = tr.className || '';
+    //                   const role = tr.getAttribute('role');
+    //                   const text = tr.textContent?.trim() || '';
 
-                    debugLog('    沒有主旨，不返回郵件');
-                    return null;
-                  }
+    //                   debugLog('TR', i, '類別:', classes);
+    //                   debugLog('TR', i, 'role:', role);
+    //                   debugLog('TR', i, '內容預覽:', text.substring(0, 100));
 
-                  debugLog('成功提取', mails.length, '封郵件');
-                  return { title, mails, debugLogs };
+    //                   // Gmail 郵件行通常有這些特徵
+    //                   const isMailRow = (
+    //                     (classes.includes('zA') || classes.includes('yW')) && // Gmail 郵件行的典型類別
+    //                     role === 'row' && // 有 role="row" 屬性
+    //                     text.length > 20 && // 有足夠的內容
+    //                     !text.includes('Tab 鍵') && // 不是界面元素
+    //                     !text.includes('載入中') // 不是載入狀態
+    //                   );
 
-                } catch (e) {
-                  return { error: 'failed to extract Gmail emails: ' + e.message, debugLogs: debugLogs || [] };
-                }
-              })();
-            \`);
+    //                   if (isMailRow) {
+    //                     debugLog('找到郵件行:', i, '內容:', text.substring(0, 50));
+    //                     mailTrs.push(tr);
+    //                   }
+    //                 }
 
-            return result;
-          } catch (e) {
-            return { error: 'failed to execute script in webview: ' + e.message };
-          }
-        })();
-      `);
+    //                 if (mailTrs.length > 0) {
+    //                   debugLog('找到', mailTrs.length, '個郵件行');
+    //                   emailContainer = document.body; // 使用 body 作為容器
+    //                   emailRows = mailTrs;
+    //                 } else {
+    //                   debugLog('沒有找到任何郵件行');
+    //                   return { title, mails: [], debugLogs, debug: '未找到郵件行' };
+    //                 }
+    //               }
 
-      if (emailData.error) {
-        console.error('❌ Gmail DOM 解析失敗:', emailData.error);
-        domResult = { success: false, error: emailData.error, source: 'dom' };
-      } else {
-        console.log('✅ Gmail DOM 解析成功，共', emailData.mails?.length || 0, '封');
-        domResult = {
-          success: true,
-          mails: emailData.mails?.map(mail => ({ ...mail, source: 'dom' })) || [],
-          title: emailData.title,
-          debugLogs: emailData.debugLogs,
-          source: 'dom'
-        };
-      }
+    //               debugLog('最終使用的郵件行數:', emailRows.length);
 
-      // 3. 整合兩種數據源的結果
-      return integrateGmailResults(apiResult, domResult);
+    //               emailRows.forEach((row, index) => {
+    //                 try {
+    //                   debugLog('=== 檢查第', index, '行 ===');
+    //                   debugLog('行類別:', row.className);
+    //                   debugLog('行 role 屬性:', row.getAttribute('role'));
+    //                   debugLog('行內容預覽:', row.textContent?.substring(0, 150));
+    //                   debugLog('是否有 zA 類別:', row.classList.contains('zA'));
+    //                   debugLog('是否有 role=row 屬性:', row.getAttribute('role') === 'row');
 
-    } catch (error) {
-      console.error('❌ Gmail webview executeJavaScript 失敗:', error);
-      return { error: 'Gmail webview execution failed: ' + error.message };
-    }
+    //                   // 檢查是否為郵件行
+    //                   const rowText = row.textContent?.trim();
+    //                   const hasMailClass = row.classList.contains('zA') || row.classList.contains('yW');
+    //                   const hasRowRole = row.getAttribute('role') === 'row';
+
+    //                   debugLog('行是否有郵件類別:', hasMailClass);
+    //                   debugLog('行是否有 row role:', hasRowRole);
+    //                   debugLog('行文字長度:', rowText ? rowText.length : 0);
+
+    //                   if (rowText && rowText.length > 20 && (hasMailClass || hasRowRole)) {
+    //                     debugLog('嘗試提取郵件資訊...');
+    //                     const mail = extractMailFromRow(row);
+    //                     debugLog('提取結果:', mail);
+    //                     if (mail) {
+    //                       mails.push(mail);
+    //                     }
+    //                   } else {
+    //                     debugLog('跳過：不符合郵件行條件');
+    //                   }
+    //                 } catch (e) {
+    //                   debugLog('提取第', index, '行郵件失敗:', e.message);
+    //                 }
+    //               });
+
+    //               // 提取單筆郵件資訊
+    //               function extractMailFromRow(row) {
+    //                 debugLog('    --- 開始提取郵件詳細資訊 ---');
+    //                 let subject = '';
+    //                 let time = '';
+    //                 let sender = '';
+    //                 let isRead = true;
+
+    //                 // 提取主旨 - Gmail 中主旨通常在 span 中
+    //                 debugLog('    尋找主旨元素...');
+
+    //                 // 嘗試多種方式找主旨
+    //                 const subjectSelectors = [
+    //                   'span[id]:not([id=""])', // 有 ID 的 span
+    //                   'a[href*="#"]', // 郵件連結
+    //                   'span[jsaction]', // 有 jsaction 的 span
+    //                   '.bog', // Gmail 主旨類別
+    //                   '.yW span', // 未讀郵件主旨
+    //                   '.zA span' // 已讀郵件主旨
+    //                 ];
+
+    //                 for (const selector of subjectSelectors) {
+    //                   const elements = row.querySelectorAll(selector);
+    //                   debugLog('    選擇器', selector, '找到元素數:', elements.length);
+
+    //                   for (const el of elements) {
+    //                     const text = el.textContent?.trim();
+    //                     debugLog('    檢查元素文字:', text);
+
+    //                     // 主旨的特徵：長度適中，不是純數字，不是 email，不是時間
+    //                     if (text && text.length > 5 && text.length < 200 && 
+    //                         !text.match(/^\\d+$/) && 
+    //                         !text.includes('@') &&
+    //                         !text.match(/^\\d{1,2}:\\d{2}/) &&
+    //                         !text.match(/^\\d+月\\d+日/)) {
+    //                       subject = text;
+    //                       debugLog('    找到主旨:', subject);
+    //                       break;
+    //                     }
+    //                   }
+    //                   if (subject) break;
+    //                 }
+
+    //                 // 如果沒找到主旨，嘗試從整行文字中提取
+    //                 if (!subject) {
+    //                   debugLog('    主旨為空，嘗試從整行提取...');
+    //                   const rowText = row.textContent?.trim();
+    //                   debugLog('    整行文字:', rowText);
+
+    //                   if (rowText) {
+    //                     // 嘗試用空白分割，找出最可能是主旨的部分
+    //                     const parts = rowText.split(/\\s+/);
+    //                     debugLog('    分割為', parts.length, '個部分');
+
+    //                     // 尋找最長且不是時間/email/日期的連續文字
+    //                     let bestCandidate = '';
+    //                     let currentPhrase = '';
+
+    //                     for (let i = 0; i < parts.length; i++) {
+    //                       const part = parts[i];
+    //                       debugLog('    檢查部分', i, ':', part);
+
+    //                       // 如果這部分像是主旨的一部分
+    //                       if (part && !part.match(/^\\d+$/) && !part.includes('@') && 
+    //                           !part.match(/\\d{1,2}:\\d{2}/) && !part.match(/^\\d+月/) &&
+    //                           !part.match(/^(今天|昨天|前天|\\w+天前)$/)) {
+
+    //                         currentPhrase = currentPhrase ? currentPhrase + ' ' + part : part;
+
+    //                         // 如果這個片語比目前的候選者更好
+    //                         if (currentPhrase.length > bestCandidate.length && currentPhrase.length < 200) {
+    //                           bestCandidate = currentPhrase;
+    //                         }
+    //                       } else {
+    //                         // 遇到不是主旨的部分，重置當前片語
+    //                         currentPhrase = '';
+    //                       }
+    //                     }
+
+    //                     if (bestCandidate && bestCandidate.length > 5) {
+    //                       subject = bestCandidate;
+    //                       debugLog('    從整行提取到主旨:', subject);
+    //                     }
+    //                   }
+    //                 }
+
+    //                 debugLog('    最終主旨:', subject);
+
+    //                 // 提取時間 - Gmail 時間通常在特定的 span 中
+    //                 debugLog('    尋找時間元素...');
+
+    //                 // Gmail 時間的多種可能位置
+    //                 const timeSelectors = [
+    //                   '.bq3', // Gmail 時間的典型類別
+    //                   'span[title*="2024"]', // 有完整日期的 span
+    //                   'span[title*="2025"]',
+    //                   'span[title*="週"]', // 中文週幾
+    //                   'span[title*="下午"]', // 中文時間
+    //                   'span[title*="上午"]',
+    //                   'td[role="gridcell"] span' // 表格中的時間 span
+    //                 ];
+
+    //                 for (const selector of timeSelectors) {
+    //                   const elements = row.querySelectorAll(selector);
+    //                   debugLog('    時間選擇器', selector, '找到元素數:', elements.length);
+
+    //                   for (const el of elements) {
+    //                     const text = el.textContent?.trim();
+    //                     const title = el.getAttribute('title');
+    //                     const className = el.className;
+
+    //                     debugLog('    時間元素 class:', className);
+    //                     debugLog('    時間元素文字:', text);
+    //                     debugLog('    時間元素 title:', title);
+
+    //                     // 優先使用 title 中的完整時間
+    //                     if (title && (title.includes('2024') || title.includes('2025') || 
+    //                                  title.includes('週') || title.includes('下午') || title.includes('上午'))) {
+    //                       time = title;
+    //                       debugLog('    從 title 找到時間:', time);
+    //                       break;
+    //                     }
+
+    //                     // 其次使用文字中的時間格式
+    //                     if (text && (text.match(/\\d{1,2}:\\d{2}/) || 
+    //                                 text.match(/\\d+月\\d+日/) || 
+    //                                 text.match(/\\d{4}/) ||
+    //                                 text.match(/(上午|下午)\\d{1,2}:\\d{2}/) ||
+    //                                 text.match(/(今天|昨天|前天)/))) {
+    //                       time = text;
+    //                       debugLog('    從文字找到時間:', time);
+    //                       break;
+    //                     }
+    //                   }
+    //                   if (time) break;
+    //                 }
+
+    //                 // 如果還沒找到，嘗試更廣泛的搜尋
+    //                 if (!time) {
+    //                   debugLog('    擴大搜尋時間元素...');
+    //                   const allSpans = row.querySelectorAll('span');
+    //                   for (let i = 0; i < Math.min(allSpans.length, 15); i++) {
+    //                     const el = allSpans[i];
+    //                     const text = el.textContent?.trim();
+    //                     const title = el.getAttribute('title');
+
+    //                     debugLog('    檢查 span', i, 'class:', el.className);
+    //                     debugLog('    檢查 span', i, '文字:', text);
+    //                     debugLog('    檢查 span', i, 'title:', title);
+
+    //                     // 檢查是否包含時間信息
+    //                     if (title && title.length > 10 && (title.includes('年') || title.includes('月') || title.includes('：'))) {
+    //                       time = title;
+    //                       debugLog('    從 title 找到時間:', time);
+    //                       break;
+    //                     }
+
+    //                     if (text && text.length > 2 && text.length < 20 && 
+    //                         (text.match(/\\d{1,2}:\\d{2}/) || text.includes('今天') || text.includes('昨天'))) {
+    //                       time = text;
+    //                       debugLog('    從文字找到時間:', time);
+    //                       break;
+    //                     }
+    //                   }
+    //                 }
+
+    //                 debugLog('    最終時間:', time);
+
+    //                 // 提取寄件者
+    //                 debugLog('    尋找寄件者元素...');
+    //                 const senderElements = row.querySelectorAll('span[email], span[title*="@"]');
+    //                 debugLog('    找到可能的寄件者元素數:', senderElements.length);
+
+    //                 for (const el of senderElements) {
+    //                   const email = el.getAttribute('email');
+    //                   const title = el.getAttribute('title');
+    //                   const text = el.textContent?.trim();
+
+    //                   debugLog('    寄件者元素 email 屬性:', email);
+    //                   debugLog('    寄件者元素 title 屬性:', title);
+    //                   debugLog('    寄件者元素文字:', text);
+
+    //                   if (email) {
+    //                     sender = email;
+    //                     debugLog('    從 email 屬性找到寄件者:', sender);
+    //                     break;
+    //                   } else if (title && title.includes('@')) {
+    //                     sender = title;
+    //                     debugLog('    從 title 屬性找到寄件者:', sender);
+    //                     break;
+    //                   } else if (text && text.includes('@')) {
+    //                     sender = text;
+    //                     debugLog('    從文字找到寄件者:', sender);
+    //                     break;
+    //                   }
+    //                 }
+
+    //                 // 如果沒有明確的寄件者，嘗試從行首提取
+    //                 if (!sender) {
+    //                   debugLog('    寄件者為空，嘗試從行首提取...');
+    //                   const rowText = row.textContent?.trim();
+    //                   if (rowText) {
+    //                     const firstPart = rowText.split(/\\s+/)[0];
+    //                     debugLog('    行首部分:', firstPart);
+    //                     if (firstPart && (firstPart.includes('@') || firstPart.length > 2)) {
+    //                       sender = firstPart;
+    //                       debugLog('    從行首提取到寄件者:', sender);
+    //                     }
+    //                   }
+    //                 }
+
+    //                 debugLog('    最終寄件者:', sender);
+
+    //                 // 檢查是否已讀（通常未讀郵件有特殊樣式）
+    //                 isRead = !row.classList.contains('zE') && !row.querySelector('.yW');
+    //                 debugLog('    是否已讀:', isRead);
+
+    //                 // 只返回有主旨的郵件
+    //                 debugLog('    檢查是否返回郵件 - 主旨長度:', subject ? subject.length : 0);
+    //                 if (subject && subject.length > 0) {
+    //                   const result = {
+    //                     subject: subject.substring(0, 200), // 限制主旨長度
+    //                     time: time || '未知時間',
+    //                     sender: sender || '未知寄件者',
+    //                     isRead: isRead
+    //                   };
+    //                   debugLog('    返回郵件:', result);
+    //                   return result;
+    //                 }
+
+    //                 debugLog('    沒有主旨，不返回郵件');
+    //                 return null;
+    //               }
+
+    //               debugLog('成功提取', mails.length, '封郵件');
+    //               return { title, mails, debugLogs };
+
+    //             } catch (e) {
+    //               return { error: 'failed to extract Gmail emails: ' + e.message, debugLogs: debugLogs || [] };
+    //             }
+    //           })();
+    //         \`);
+
+    //         return result;
+    //       } catch (e) {
+    //         return { error: 'failed to execute script in webview: ' + e.message };
+    //       }
+    //     })();
+    //   `);
+
+    //   if (emailData.error) {
+    //     console.error('❌ Gmail DOM 解析失敗:', emailData.error);
+    //     domResult = { success: false, error: emailData.error, source: 'dom' };
+    //   } else {
+    //     console.log('✅ Gmail DOM 解析成功，共', emailData.mails?.length || 0, '封');
+    //     domResult = {
+    //       success: true,
+    //       mails: emailData.mails?.map(mail => ({ ...mail, source: 'dom' })) || [],
+    //       title: emailData.title,
+    //       debugLogs: emailData.debugLogs,
+    //       source: 'dom'
+    //     };
+    //   }
+
+    //   // 3. 整合兩種數據源的結果
+    //   // return integrateGmailResults(apiResult, domResult);
+    //   return {
+    //     url: 'https://mail.google.com/mail/u/0/#inbox',
+    //     apiResult: apiResult
+    //   };
+
+    // } catch (error) {
+    //   console.error('❌ Gmail webview executeJavaScript 失敗:', error);
+    //   return { error: 'Gmail webview execution failed: ' + error.message };
+    // }
 
   } catch (error) {
     console.error('❌ Gmail 郵件提取異常:', error);
@@ -1248,7 +1420,7 @@ function register(window) {
         const gmailOptions = {
           accessToken: options.accessToken,
           useAPI: options.useAPI !== false, // 預設使用 API
-          maxResults: options.maxResults || 100
+          maxResults: 10
         };
         console.log('🔄 開始從 Gmail 提取郵件列表...', gmailOptions);
         const webviewContent = await extractGmailEmails(webContents, gmailOptions);
@@ -1257,7 +1429,7 @@ function register(window) {
           throw new Error(`Gmail 內容提取失敗: ${webviewContent?.error || '未知錯誤'}`);
         }
 
-        pageTitle = webviewContent.title || pageTitle;
+        // pageTitle = webviewContent.title || pageTitle;
 
         const webviewData = {
           url: targetUrl,
