@@ -382,9 +382,9 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
                     onClick={createRule}
                     disabled={!createForm.name.trim() || !createForm.description.trim() || loading}
                     className={cn(
-                      "flex items-center gap-1 px-4 py-2 text-base rounded-md transition-colors",
+                      "flex items-center gap-1 px-4 py-2 text-base rounded-md transition-all duration-200",
                       createForm.name.trim() && createForm.description.trim() && !loading
-                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        ? "blue-button-white-text"
                         : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     )}
                   >
@@ -445,7 +445,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
                 <h3 className="text-sm font-medium text-gray-700 mb-1">
                   描述
                 </h3>
-                <p className="text-base mb-4">
+                <p className="text-base mb-4 text-foreground">
                   {selectedRule.description}
                 </p>
 
@@ -499,7 +499,7 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
           </h6>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+            className="flex items-center gap-1 px-3 py-2 text-sm blue-button-white-text rounded-lg transition-all duration-200 shadow-sm"
           >
             <Plus className="w-3 h-3" />
             新增

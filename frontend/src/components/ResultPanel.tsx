@@ -45,7 +45,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                   {message.type === 'user' ? (
                     /* 用户消息 - 右对齐气泡样式 */
                     <div className="flex justify-end">
-                      <div className="bg-blue-500 text-white px-3 py-2 rounded-lg max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm">
+                      <div className="blue-button-white-text px-3 py-2 rounded-lg max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm">
                         {message.content}
                       </div>
                     </div>
@@ -110,7 +110,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 
       {mode === 'skills' && (
         <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-          技能管理功能開發中...
+          新增以使用技能管理功能
         </div>
       )}
 

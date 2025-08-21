@@ -654,7 +654,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
               className={cn(
                 "absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200",
                 input.trim() && !isLoading && !isComposing
-                  ? "text-primary-foreground bg-primary hover:bg-primary/90 shadow-sm"
+                  ? "blue-button-white-text shadow-sm"
                   : "text-muted-foreground bg-muted",
                 "disabled:text-muted-foreground disabled:bg-muted"
               )}

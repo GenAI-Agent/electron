@@ -123,7 +123,7 @@ const HomePage: React.FC = () => {
                           e.stopPropagation();
                           router.push('/browser?url=https://mail.google.com');
                         }}
-                        className="flex items-center px-2 py-1 gap-2 text-sm bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg"
+                        className="flex items-center px-2 py-1 gap-2 text-sm blue-button-white-text rounded-lg transition-all duration-200"
                       >
                         <Mail className="w-3 h-3" />
                         Gmail
@@ -133,7 +133,7 @@ const HomePage: React.FC = () => {
                           e.stopPropagation();
                           router.push('/browser?url=https://www.ask-lens.ai');
                         }}
-                        className="flex items-center px-2 py-1 gap-2 text-sm bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg"
+                        className="flex items-center px-2 py-1 gap-2 text-sm blue-button-white-text rounded-lg transition-all duration-200"
                       >
                         <ExternalLink className="w-3 h-3" />
                         Lens
@@ -159,8 +159,8 @@ const HomePage: React.FC = () => {
             placeholder="向 Supervisor Agent 提問或下達指令..."
             className="flex-1"
           />
-          <Button type="submit" size="icon">
-            <Send className="w-4 h-4" />
+          <Button type="submit" size="icon" className="blue-button-white-text">
+            <Send className="w-4 h-4 text-white" />
           </Button>
         </form>
       </div>

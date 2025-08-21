@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 import { cn } from "@/utils/cn";
 
@@ -14,6 +15,7 @@ export function ReactMarkdownCustom({
   return (
     <ReactMarkdown
       className={cn(className)}
+      remarkPlugins={[remarkGfm]}
       components={{
         h1: ({ ...props }) => (
           <h1 {...props} className="my-4 pb-2 text-2xl font-bold" />
@@ -79,8 +81,7 @@ export function ReactMarkdownCustom({
           />
         ),
         code: (props) => {
-          const { className, children, ...rest } = props;
-          const match = /language-(\w+)/.exec(className || "");
+          const { children, ...rest } = props;
           return (
             <code
               className="rounded bg-zinc-700 px-1 py-0.5 font-mono text-sm text-zinc-200"
@@ -100,22 +101,22 @@ export function ReactMarkdownCustom({
         ),
         hr: () => <hr className="my-6 border-border" />,
         table: ({ ...props }) => (
-          <div className="my-4 overflow-x-auto">
-            <table {...props} className="min-w-full divide-y divide-border" />
+          <div className="my-4 overflow-x-auto rounded-lg border border-border shadow-sm">
+            <table {...props} className="min-w-full divide-y divide-border bg-card" />
           </div>
         ),
-        thead: ({ ...props }) => <thead {...props} className="bg-background" />,
+        thead: ({ ...props }) => <thead {...props} className="bg-muted/50" />,
         tbody: ({ ...props }) => (
-          <tbody {...props} className="divide-y divide-border" />
+          <tbody {...props} className="divide-y divide-border bg-card" />
         ),
-        tr: ({ ...props }) => <tr {...props} className="" />,
+        tr: ({ ...props }) => <tr {...props} className="hover:bg-muted/30 transition-colors" />,
         th: ({ ...props }) => (
           <th
             {...props}
-            className="px-3 py-2 text-left text-sm font-semibold text-foreground"
+            className="px-4 py-3 text-left text-sm font-semibold text-foreground bg-muted/50 first:rounded-tl-lg last:rounded-tr-lg"
           />
         ),
-        td: ({ ...props }) => <td {...props} className="px-3 py-2 text-sm" />,
+        td: ({ ...props }) => <td {...props} className="px-4 py-3 text-sm text-foreground whitespace-nowrap" />,
       }}
     >
       {children}

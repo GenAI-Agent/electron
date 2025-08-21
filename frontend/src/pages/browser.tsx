@@ -68,8 +68,8 @@ const BrowserPage: React.FC = () => {
         showUserInfo={true}
         onUrlChange={handleUrlChange}
         userInfo={{
-          name: 'User Name',
-          email: 'user@example.com'
+          // name: 'User Name',
+          // email: 'user@example.com'
         }}
       />
 

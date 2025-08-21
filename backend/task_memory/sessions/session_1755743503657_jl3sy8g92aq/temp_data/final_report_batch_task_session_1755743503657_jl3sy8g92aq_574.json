@@ -1,0 +1,44 @@
+{
+  "data_id": "final_report_batch_task_session_1755743503657_jl3sy8g92aq_574",
+  "session_id": "session_1755743503657_jl3sy8g92aq",
+  "created_at": "2025-08-21T10:35:10.180987",
+  "data": {
+    "task_description": "預算控制分析",
+    "total_items": 1,
+    "total_batches": 1,
+    "batch_size": 50,
+    "success_count": 1,
+    "error_count": 0,
+    "success_rate": 100.0,
+    "batch_summaries": [
+      {
+        "batch_number": 1,
+        "items_count": 1,
+        "success_count": 1,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "執行預算控制效果評估",
+        "task_description": "預算控制分析"
+      }
+    ],
+    "accumulated_results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "column": "實際報銷金額"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "default_processing",
+          "result": "已處理: {'column': '實際報銷金額'}",
+          "method": "batch_processing",
+          "timestamp": "2025-08-21T10:35:10.174005"
+        },
+        "status": "success",
+        "processing_time": 1755743710.174005
+      }
+    ],
+    "results_location": "accumulated_results_batch_task_session_1755743503657_jl3sy8g92aq_574",
+    "completion_status": "completed"
+  }
+}

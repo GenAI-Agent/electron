@@ -348,6 +348,17 @@ th span {
   color: #1f2937 !important;
 }
 
+/* 藍色按鈕專用樣式 - 確保文字為白色 */
+.blue-button-white-text {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.blue-button-white-text:hover {
+  background-color: color-mix(in srgb, var(--primary) 80%, transparent) !important;
+  color: #ffffff !important;
+}
+
 /* Fix file icon colors - make them darker and more visible */
 .text-blue-500 {
   color: #1d4ed8 !important;
