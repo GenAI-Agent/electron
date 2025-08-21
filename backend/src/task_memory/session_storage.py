@@ -32,23 +32,23 @@ class SessionStorage:
     def create_session(self, session_id: str) -> Dict[str, Any]:
         """
         創建新會話
-        
+
         Args:
             session_id: 會話ID
-            
+
         Returns:
             會話信息
         """
         try:
             session_dir = self.sessions_dir / session_id
-            session_dir.mkdir(exist_ok=True)
-            
+            session_dir.mkdir(parents=True, exist_ok=True)
+
             # 創建子目錄
-            (session_dir / "temp_data").mkdir(exist_ok=True)
-            (session_dir / "file_summaries").mkdir(exist_ok=True)
-            (session_dir / "task_states").mkdir(exist_ok=True)
-            (session_dir / "batch_processing").mkdir(exist_ok=True)
-            
+            (session_dir / "temp_data").mkdir(parents=True, exist_ok=True)
+            (session_dir / "file_summaries").mkdir(parents=True, exist_ok=True)
+            (session_dir / "task_states").mkdir(parents=True, exist_ok=True)
+            (session_dir / "batch_processing").mkdir(parents=True, exist_ok=True)
+
             # 創建會話元數據
             session_info = {
                 "session_id": session_id,
@@ -62,12 +62,12 @@ class SessionStorage:
                     "batch_processing": str(session_dir / "batch_processing")
                 }
             }
-            
+
             # 保存會話信息
             with open(session_dir / "session_info.json", 'w', encoding='utf-8') as f:
                 json.dump(session_info, f, ensure_ascii=False, indent=2)
-            
-            logger.info(f"創建會話: {session_id}")
+
+            logger.info(f"創建會話成功: {session_id} -> {session_dir}")
             return session_info
             
         except Exception as e:
@@ -100,23 +100,27 @@ class SessionStorage:
     def save_temp_data(self, session_id: str, data_id: str, data: Dict[str, Any]) -> bool:
         """
         保存暫存數據
-        
+
         Args:
             session_id: 會話ID
             data_id: 數據ID
             data: 要保存的數據
-            
+
         Returns:
             是否成功
         """
         try:
             session_dir = self.sessions_dir / session_id
             if not session_dir.exists():
+                logger.info(f"會話目錄不存在，創建新會話: {session_id}")
                 self.create_session(session_id)
-            
+
             temp_dir = session_dir / "temp_data"
+            # 確保 temp_data 目錄存在
+            temp_dir.mkdir(exist_ok=True)
+
             data_file = temp_dir / f"{data_id}.json"
-            
+
             # 添加元數據
             data_with_meta = {
                 "data_id": data_id,
@@ -124,15 +128,19 @@ class SessionStorage:
                 "created_at": datetime.now().isoformat(),
                 "data": data
             }
-            
+
+            # 確保父目錄存在
+            data_file.parent.mkdir(parents=True, exist_ok=True)
+
             with open(data_file, 'w', encoding='utf-8') as f:
                 json.dump(data_with_meta, f, ensure_ascii=False, indent=2)
-            
-            logger.debug(f"保存暫存數據: {session_id}/{data_id}")
+
+            logger.debug(f"保存暫存數據成功: {session_id}/{data_id} -> {data_file}")
             return True
-            
+
         except Exception as e:
             logger.error(f"保存暫存數據失敗 {session_id}/{data_id}: {e}")
+            logger.error(f"錯誤詳情: {type(e).__name__}: {str(e)}")
             return False
     
     def load_temp_data(self, session_id: str, data_id: str) -> Optional[Dict[str, Any]]:

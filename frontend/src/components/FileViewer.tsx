@@ -122,7 +122,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
     if (loading) {
       return (
         <div className="flex justify-center items-center h-1/2">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       );
     }
@@ -283,14 +283,14 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
             <h3 className="text-lg font-semibold mb-2">
               PowerPoint 簡報
             </h3>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-muted-foreground mb-1">
               文件大小: {(fileContent.size! / 1024 / 1024).toFixed(2)} MB
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               格式: {fileContent.extension?.toUpperCase()}
             </p>
             <button
-              className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
               onClick={handleOpenWithSystem}
             >
               <ExternalLink className="w-4 h-4" />
@@ -299,13 +299,13 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
           </div>
           <div className="flex-1 p-4 flex items-center justify-center">
             <div className="text-center">
-              <h3 className="text-lg text-gray-600 mb-2">
+              <h3 className="text-lg text-muted-foreground mb-2">
                 📊 PowerPoint 簡報
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 此文件需要用 Microsoft PowerPoint 或相容程式開啟
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 點擊上方按鈕用系統預設程式開啟
               </p>
             </div>
@@ -367,11 +367,11 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
             <h3 className="text-lg font-semibold mb-2">
               {fileTypeNames[ext as keyof typeof fileTypeNames]}
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               文件大小: {fileContent.size ? (fileContent.size / 1024 / 1024).toFixed(2) + ' MB' : '未知'}
             </p>
             <button
-              className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
               onClick={handleOpenWithSystem}
             >
               <ExternalLink className="w-4 h-4" />
@@ -380,13 +380,13 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
           </div>
           <div className="flex-1 p-4 flex items-center justify-center">
             <div className="text-center">
-              <h3 className="text-lg text-gray-600 mb-2">
+              <h3 className="text-lg text-muted-foreground mb-2">
                 📄 {fileTypeNames[ext as keyof typeof fileTypeNames]}
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 此文件需要用 Microsoft Office 或相容程式開啟
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 點擊上方按鈕用系統預設程式開啟
               </p>
             </div>
@@ -401,10 +401,10 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
         <h3 className="text-lg font-semibold mb-2">
           無法預覽此文件類型
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           文件：{fileName}
         </p>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           請使用外部程式打開此文件
         </p>
       </div>
@@ -428,7 +428,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
         {/* PDF文件信息和操作按鈕 */}
         {fileContent?.type === 'pdf' && (
           <>
-            <span className="text-xs text-gray-600 mx-1">
+            <span className="text-xs text-muted-foreground mx-1">
               📄 ({(fileContent.size! / 1024 / 1024).toFixed(2)} MB)
             </span>
             <button

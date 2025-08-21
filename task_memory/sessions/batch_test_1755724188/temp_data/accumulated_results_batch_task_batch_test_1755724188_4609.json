@@ -1,0 +1,103 @@
+{
+  "data_id": "accumulated_results_batch_task_batch_test_1755724188_4609",
+  "session_id": "batch_test_1755724188",
+  "created_at": "2025-08-21T05:09:48.877176",
+  "data": {
+    "total_processed": 5,
+    "total_items": 5,
+    "completion_percentage": 100.0,
+    "accumulated_results": [
+      {
+        "item_index": 0,
+        "original_item": "測試項目_0",
+        "processed_result": {
+          "success": false,
+          "action": "file_write",
+          "error": "Invalid file path",
+          "file_path": ""
+        },
+        "status": "success",
+        "processing_time": 1755724188.8444629
+      },
+      {
+        "item_index": 1,
+        "original_item": "測試項目_1",
+        "processed_result": {
+          "success": false,
+          "action": "file_write",
+          "error": "Invalid file path",
+          "file_path": ""
+        },
+        "status": "success",
+        "processing_time": 1755724188.8444629
+      },
+      {
+        "item_index": 0,
+        "original_item": "測試項目_2",
+        "processed_result": {
+          "success": false,
+          "action": "file_write",
+          "error": "Invalid file path",
+          "file_path": ""
+        },
+        "status": "success",
+        "processing_time": 1755724188.8598201
+      },
+      {
+        "item_index": 1,
+        "original_item": "測試項目_3",
+        "processed_result": {
+          "success": false,
+          "action": "file_write",
+          "error": "Invalid file path",
+          "file_path": ""
+        },
+        "status": "success",
+        "processing_time": 1755724188.8598201
+      },
+      {
+        "item_index": 0,
+        "original_item": "測試項目_4",
+        "processed_result": {
+          "success": false,
+          "action": "file_write",
+          "error": "Invalid file path",
+          "file_path": ""
+        },
+        "status": "success",
+        "processing_time": 1755724188.8672016
+      }
+    ],
+    "batch_summaries": [
+      {
+        "batch_number": 1,
+        "items_count": 2,
+        "success_count": 2,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "為每個項目添加處理時間戳",
+        "task_description": "測試批次處理功能"
+      },
+      {
+        "batch_number": 2,
+        "items_count": 2,
+        "success_count": 2,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "為每個項目添加處理時間戳",
+        "task_description": "測試批次處理功能"
+      },
+      {
+        "batch_number": 3,
+        "items_count": 1,
+        "success_count": 1,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "為每個項目添加處理時間戳",
+        "task_description": "測試批次處理功能"
+      }
+    ],
+    "success_count": 5,
+    "error_count": 0
+  }
+}

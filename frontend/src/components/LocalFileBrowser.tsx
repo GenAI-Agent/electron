@@ -85,7 +85,7 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
       case '7z':
         return <Archive className="w-5 h-5 text-purple-500" />;
       default:
-        return <File className="w-5 h-5 text-gray-500" />;
+        return <File className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -186,8 +186,8 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full flex-col gap-2">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
-        <span className="text-sm text-gray-500">載入中...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">載入中...</span>
       </div>
     );
   }
@@ -207,13 +207,13 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
     <div className="h-full flex flex-col">
       {/* Breadcrumbs */}
       <div className="p-2 border-b border-slate-200">
-        <nav className="flex items-center space-x-1 text-sm text-gray-500">
+        <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
           {getPathSegments(currentPath).map((segment, index) => (
             <React.Fragment key={index}>
-              {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+              {index > 0 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
               <button
                 onClick={() => handleBreadcrumbClick(segment.path)}
-                className="text-slate-600 hover:text-blue-500 transition-colors"
+                className="text-foreground hover:text-primary transition-colors"
               >
                 {segment.name}
               </button>
@@ -235,10 +235,10 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
                 {getFileIcon(item.name, item.isDirectory)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
+                <div className="text-sm font-medium text-foreground truncate">
                   {item.name}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {item.isDirectory ? '資料夾' : '文件'}
                 </div>
               </div>

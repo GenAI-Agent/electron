@@ -1,0 +1,44 @@
+{
+  "data_id": "accumulated_results_batch_task_default_7095",
+  "session_id": "default",
+  "created_at": "2025-08-21T07:31:57.104705",
+  "data": {
+    "total_processed": 1,
+    "total_items": 1,
+    "completion_percentage": 100.0,
+    "accumulated_results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "file_path": "C:\\Users\\user01\\Desktop\\BI\\expense_system_data.csv"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "analysis",
+          "analysis_result": "已分析項目: {'file_path': 'C:\\\\Users\\\\user01\\\\Desktop\\\\BI\\\\expense_system_data.csv'}",
+          "key_insights": [
+            "數據模式識別",
+            "趨勢分析"
+          ],
+          "confidence": 0.85,
+          "timestamp": "2025-08-21T07:31:57.104705"
+        },
+        "status": "success",
+        "processing_time": 1755732717.1047056
+      }
+    ],
+    "batch_summaries": [
+      {
+        "batch_number": 1,
+        "items_count": 1,
+        "success_count": 1,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "分析申請金額與報銷金額的差異，並生成支出異常提醒",
+        "task_description": "預算控制效果分析"
+      }
+    ],
+    "success_count": 1,
+    "error_count": 0
+  }
+}

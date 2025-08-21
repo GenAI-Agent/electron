@@ -106,7 +106,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="全局搜索..."
@@ -129,7 +129,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">每頁顯示:</span>
+            <span className="text-sm text-muted-foreground">每頁顯示:</span>
             <select
               value={pageSize}
               onChange={(e) => {
@@ -171,7 +171,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
             <thead className="bg-gray-50 sticky top-0">
               <tr>
                 {headers.map((header, index) => (
-                  <th key={index} className="border border-gray-300 px-4 py-3 text-left font-semibold relative group">
+                  <th key={index} className="border border-gray-300 px-4 py-3 text-left font-semibold relative group text-gray-900">
                     <div className="flex items-center justify-between">
                       <span>{header}</span>
                       <div className="flex items-center space-x-1">
@@ -185,7 +185,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
                           }}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
                         >
-                          <Filter className="w-4 h-4 text-gray-600" />
+                          <Filter className="w-4 h-4 text-muted-foreground" />
                         </button>
                       </div>
                     </div>
@@ -274,7 +274,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
       {/* 分頁控制 */}
       <div className="p-4 border-t border-gray-200 bg-white">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             顯示 {startIndex + 1} - {Math.min(endIndex, filteredRows.length)} 項，共 {filteredRows.length} 項
             {filteredRows.length !== rows.length && (
               <span className="text-blue-600"> (已過濾，原始數據 {rows.length} 項)</span>
@@ -310,7 +310,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows, className = '' }) 
                     className={`px-3 py-1 text-sm border rounded ${
                       currentPage === pageNum
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-white text-foreground border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     {pageNum}

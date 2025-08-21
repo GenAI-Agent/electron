@@ -160,7 +160,7 @@ async def smart_batch_processor_tool(
                 # 保存中間結果到 tmp 空間
                 try:
                     if hasattr(task_memory_manager, 'storage') and task_memory_manager.storage:
-                        await task_memory_manager.storage.save_temp_data(
+                        task_memory_manager.storage.save_temp_data(
                             session_id,
                             f"batch_{batch_num}_results",
                             {
@@ -173,11 +173,11 @@ async def smart_batch_processor_tool(
                         )
                 except Exception as e:
                     logger.warning(f"⚠️ 保存中間結果失敗: {e}")
-                
+
                 # 保存累積結果
                 try:
                     if hasattr(task_memory_manager, 'storage') and task_memory_manager.storage:
-                        await task_memory_manager.storage.save_temp_data(
+                        task_memory_manager.storage.save_temp_data(
                             session_id,
                             f"accumulated_results_{task_id}",
                             {
@@ -202,7 +202,7 @@ async def smart_batch_processor_tool(
                 # 保存錯誤信息
                 try:
                     if hasattr(task_memory_manager, 'storage') and task_memory_manager.storage:
-                        await task_memory_manager.storage.save_temp_data(
+                        task_memory_manager.storage.save_temp_data(
                             session_id,
                             f"batch_{batch_num}_error",
                             {
@@ -232,7 +232,7 @@ async def smart_batch_processor_tool(
         # 保存最終報告
         try:
             if hasattr(task_memory_manager, 'storage') and task_memory_manager.storage:
-                await task_memory_manager.storage.save_temp_data(
+                task_memory_manager.storage.save_temp_data(
                     session_id,
                     f"final_report_{task_id}",
                     final_report

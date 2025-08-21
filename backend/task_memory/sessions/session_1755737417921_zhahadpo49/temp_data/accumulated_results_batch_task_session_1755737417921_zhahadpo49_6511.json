@@ -1,0 +1,63 @@
+{
+  "data_id": "accumulated_results_batch_task_session_1755737417921_zhahadpo49_6511",
+  "session_id": "session_1755737417921_zhahadpo49",
+  "created_at": "2025-08-21T08:50:38.257340",
+  "data": {
+    "total_processed": 1,
+    "total_items": 1,
+    "completion_percentage": 100.0,
+    "accumulated_results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "申請編號": "EXP001",
+          "申請人": "張三",
+          "申請部門": "資訊部",
+          "申請日期": "2024-01-15",
+          "預先申請金額": 5000,
+          "實際報銷金額": 4850,
+          "購買項目": "辦公設備",
+          "品名詳細": "Dell OptiPlex 3090 桌上型電腦 i5-11500 8GB 256GB SSD",
+          "發票號碼": "INV-2024-001",
+          "購買日期": "2024-01-16",
+          "供應商": "戴爾科技股份有限公司",
+          "申請狀態": "已完成",
+          "簽核人": "李經理",
+          "簽核日期": "2024-01-17",
+          "簽核狀態": "已核准",
+          "備註": "符合預算範圍內採購",
+          "項目類別": "硬體設備",
+          "緊急程度": "一般",
+          "預算科目": "資訊設備",
+          "成本中心": "IT001"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "analysis",
+          "analysis_result": "已分析項目: {'申請編號': 'EXP001', '申請人': '張三', '申請部門': '資訊部', '申請日期': '2024-01-15', '預先申請金額': 5000, '實際報銷金額': 4850, '購買項目': '辦公設備', '品名詳細': 'Dell OptiPlex 3090 桌上型電腦 i5-11500 8GB 256GB SSD', '發票號碼': 'INV-2024-001', '購買日期': '2024-01-16', '供應商': '戴爾科技股份有限公司', '申請狀態': '已完成', '簽核人': '李經理', '簽核日期': '2024-01-17', '簽核狀態': '已核准', '備註': '符合預算範圍內採購', '項目類別': '硬體設備', '緊急程度': '一般', '預算科目': '資訊設備', '成本中心': 'IT001'}",
+          "key_insights": [
+            "數據模式識別",
+            "趨勢分析"
+          ],
+          "confidence": 0.85,
+          "timestamp": "2025-08-21T08:50:38.257340"
+        },
+        "status": "success",
+        "processing_time": 1755737438.257341
+      }
+    ],
+    "batch_summaries": [
+      {
+        "batch_number": 1,
+        "items_count": 1,
+        "success_count": 1,
+        "error_count": 0,
+        "success_rate": 100.0,
+        "processing_instruction": "分析預算執行效果，並生成報告",
+        "task_description": "預算控制分析"
+      }
+    ],
+    "success_count": 1,
+    "error_count": 0
+  }
+}

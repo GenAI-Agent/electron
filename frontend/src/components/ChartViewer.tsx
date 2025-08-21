@@ -155,7 +155,7 @@ const ChartViewer: React.FC<ChartViewerProps> = ({
   if (charts.length === 0) {
     return (
       <div className="p-2 text-center">
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           尚未創建任何圖表
         </p>
         <button

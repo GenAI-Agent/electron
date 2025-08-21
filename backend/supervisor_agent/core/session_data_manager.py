@@ -176,6 +176,23 @@ class SessionDataManager:
         """獲取有活躍數據狀態的會話列表"""
         return list(self._session_states.keys())
 
+    def get_temp_file_path(self, session_id: str, filename: str) -> str:
+        """
+        獲取會話臨時文件路徑
+
+        Args:
+            session_id: 會話ID
+            filename: 文件名
+
+        Returns:
+            臨時文件的完整路徑
+        """
+        # 創建臨時目錄結構
+        temp_dir = Path(tempfile.gettempdir()) / "supervisor_agent" / "sessions" / session_id
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        return str(temp_dir / filename)
+
 
 # 全局實例
 session_data_manager = SessionDataManager()

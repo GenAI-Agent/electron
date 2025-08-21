@@ -1,0 +1,12 @@
+{
+  "session_id": "test_session_1755724096",
+  "created_at": "2025-08-21T05:08:16.400421",
+  "last_accessed": "2025-08-21T05:08:16.400421",
+  "status": "active",
+  "directories": {
+    "temp_data": "task_memory\\sessions\\test_session_1755724096\\temp_data",
+    "file_summaries": "task_memory\\sessions\\test_session_1755724096\\file_summaries",
+    "task_states": "task_memory\\sessions\\test_session_1755724096\\task_states",
+    "batch_processing": "task_memory\\sessions\\test_session_1755724096\\batch_processing"
+  }
+}

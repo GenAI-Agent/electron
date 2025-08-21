@@ -142,38 +142,38 @@ class GmailBatchFetcher:
                 "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"
             }
-            
+
             params = {
                 "maxResults": min(max_results, 500),  # Gmail API 單次最多 500
                 "q": "category:primary"  # 只獲取主要區域
             }
-            
+
             message_ids = []
             next_page_token = None
-            
+
             while len(message_ids) < max_results:
                 if next_page_token:
                     params["pageToken"] = next_page_token
-                
+
                 async with self.session.get(url, headers=headers, params=params) as response:
                     if response.status != 200:
                         logger.error(f"❌ 獲取郵件列表失敗: {response.status}")
                         break
-                    
+
                     data = await response.json()
                     messages = data.get("messages", [])
-                    
+
                     for msg in messages:
                         if len(message_ids) >= max_results:
                             break
                         message_ids.append(msg["id"])
-                    
+
                     next_page_token = data.get("nextPageToken")
                     if not next_page_token:
                         break
-            
+
             return message_ids
-            
+
         except Exception as e:
             logger.error(f"❌ 獲取郵件 ID 列表失敗: {e}")
             return []

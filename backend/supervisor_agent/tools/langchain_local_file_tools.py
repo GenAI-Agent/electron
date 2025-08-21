@@ -26,7 +26,20 @@ from pathlib import Path
 
 core_dir = Path(__file__).parent.parent / "core"
 sys.path.insert(0, str(core_dir))
-from supervisor_agent.core.session_data_manager import session_data_manager
+try:
+    from supervisor_agent.core.session_data_manager import session_data_manager
+except ImportError:
+    try:
+        from session_data_manager import session_data_manager
+    except ImportError:
+        # 創建一個簡單的替代品
+        class SimpleSessionManager:
+            def get_temp_file_path(self, session_id: str, filename: str) -> str:
+                from pathlib import Path
+                temp_dir = Path("temp") / session_id
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                return str(temp_dir / filename)
+        session_data_manager = SimpleSessionManager()
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +48,26 @@ logger = logging.getLogger(__name__)
 get_langchain_task_memory_tools = lambda: []
 get_langchain_plotting_tools = lambda: []
 get_batch_processor_tools = lambda: []
+
+# 導入指紋搜尋工具
+try:
+    from .fingerprint_search_tool import fingerprint_search_csv
+    FINGERPRINT_SEARCH_AVAILABLE = True
+    logger.info("✅ 指紋搜尋工具導入成功")
+except Exception as e:
+    logger.warning(f"⚠️ 指紋搜尋工具導入失敗: {e}")
+    FINGERPRINT_SEARCH_AVAILABLE = False
+
+# 導入 CSV 格式轉換工具
+try:
+    src_dir = Path(__file__).parent.parent.parent / "src" / "tools"
+    sys.path.insert(0, str(src_dir))
+    from csv_format_converter import convert_gmail_csv_format, preview_gmail_csv_conversion
+    CSV_CONVERTER_AVAILABLE = True
+    logger.info("✅ CSV 格式轉換工具導入成功")
+except Exception as e:
+    logger.warning(f"⚠️ CSV 格式轉換工具導入失敗: {e}")
+    CSV_CONVERTER_AVAILABLE = False
 
 EXTENDED_TOOLS_AVAILABLE = False
 
@@ -1327,6 +1360,142 @@ async def delete_file_tool(file_path: str, session_id: str = "default") -> str:
         return f'{{"success": false, "error": "{str(e)}"}}'
 
 
+@tool
+async def fingerprint_search_tool(
+    file_path: str,
+    search_query: str,
+    session_id: str = "default",
+    similarity_threshold: float = 0.7,
+    max_results: int = None,
+    save_results: bool = True
+) -> str:
+    """
+    使用指紋搜尋技術在 CSV 文件中進行智能文字搜尋
+
+    基於 Google 指紋搜尋概念，結合語義搜尋和關鍵字匹配，
+    能夠找到與查詢語義相關的內容，而不僅僅是精確匹配。
+
+    Args:
+        file_path: CSV 檔案路徑
+        search_query: 搜尋查詢詞（支援自然語言描述）
+        session_id: 會話ID
+        similarity_threshold: 相似度閾值 (0.0-6.2)，越高越嚴格，預設 0.7
+        max_results: 最大返回結果數 (None 表示不限制，根據閾值自然過濾)
+        save_results: 是否將結果保存為新的 CSV 檔案
+
+    Returns:
+        搜尋結果的JSON字符串，包含匹配數量、結果檔案路徑和樣本數據
+
+    Examples:
+        - search_query: "財務相關的郵件" - 會找到包含金額、發票、付款等內容
+        - search_query: "客戶投訴" - 會找到包含問題、抱怨、退貨等內容
+        - search_query: "產品詢問" - 會找到包含產品名稱、規格、價格等內容
+    """
+    try:
+        if not FINGERPRINT_SEARCH_AVAILABLE:
+            return json.dumps({
+                "success": False,
+                "error": "指紋搜尋功能不可用，請檢查相關依賴"
+            }, ensure_ascii=False)
+
+        logger.info(f"🔍 執行指紋搜尋: '{search_query}' in {file_path}")
+
+        result = await fingerprint_search_csv(
+            file_path=file_path,
+            search_query=search_query,
+            session_id=session_id,
+            similarity_threshold=similarity_threshold,
+            max_results=max_results,
+            save_results=save_results
+        )
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 指紋搜尋失敗: {e}")
+        return json.dumps({
+            "success": False,
+            "error": f"指紋搜尋失敗: {str(e)}"
+        }, ensure_ascii=False)
+
+
+@tool
+async def convert_gmail_csv_format_tool(
+    input_file: str,
+    output_file: str = None,
+    preview_only: bool = False,
+    session_id: str = "default"
+) -> str:
+    """
+    轉換 Gmail CSV 格式為標準化格式
+
+    修改內容：
+    1. 移除 id 欄位
+    2. 簡化 sender 格式（只保留名稱和郵箱，移除多餘引號）
+    3. 標準化日期格式為數字顯示（YYYY-MM-DD HH:MM:SS）
+
+    Args:
+        input_file: 輸入 CSV 文件路徑
+        output_file: 輸出 CSV 文件路徑（可選，預設為原文件名_formatted.csv）
+        preview_only: 是否只預覽轉換結果而不實際轉換
+        session_id: 會話ID
+
+    Returns:
+        轉換結果的JSON字符串
+
+    Examples:
+        原始格式: "舒培培" <peipeishu93@gmail.com>, Wed, 20 Aug 2025 15:12:34 +0800
+        轉換後: 舒培培 <peipeishu93@gmail.com>, 2025-08-20 15:12:34
+    """
+    try:
+        if not CSV_CONVERTER_AVAILABLE:
+            return json.dumps({
+                "success": False,
+                "error": "CSV 格式轉換功能不可用，請檢查相關依賴"
+            }, ensure_ascii=False)
+
+        logger.info(f"🔄 {'預覽' if preview_only else '轉換'} Gmail CSV 格式: {input_file}")
+
+        # 檢查文件是否存在
+        import os
+        if not os.path.exists(input_file):
+            return json.dumps({
+                "success": False,
+                "error": f"文件不存在: {input_file}"
+            }, ensure_ascii=False)
+
+        if preview_only:
+            # 只預覽轉換結果
+            preview_result = preview_gmail_csv_conversion(input_file, num_rows=3)
+            return json.dumps({
+                "success": True,
+                "preview": True,
+                "original_columns": preview_result["original"]["columns"],
+                "converted_columns": preview_result["converted"]["columns"],
+                "sample_original": preview_result["original"]["sample_data"],
+                "sample_converted": preview_result["converted"]["sample_data"],
+                "changes": preview_result["changes"],
+                "message": "預覽轉換結果，未實際修改文件"
+            }, ensure_ascii=False)
+        else:
+            # 實際轉換文件
+            result_file = convert_gmail_csv_format(input_file, output_file)
+            return json.dumps({
+                "success": True,
+                "preview": False,
+                "input_file": input_file,
+                "output_file": result_file,
+                "message": f"CSV 格式轉換完成，結果保存到: {result_file}"
+            }, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ CSV 格式轉換失敗: {e}")
+        return json.dumps({
+            "success": False,
+            "error": f"CSV 格式轉換失敗: {str(e)}"
+        }, ensure_ascii=False)
+
+
 # 獲取所有本地文件工具
 def get_langchain_local_file_tools() -> List:
     """獲取所有 LangChain 兼容的本地文件工具"""
@@ -1358,6 +1527,16 @@ def get_langchain_local_file_tools() -> List:
         update_data_rows_tool,
         delete_data_rows_tool,
     ]
+
+    # 添加指紋搜尋工具（如果可用）
+    if FINGERPRINT_SEARCH_AVAILABLE:
+        tools.append(fingerprint_search_tool)
+        logger.info("✅ 指紋搜尋工具已添加到工具列表")
+
+    # 添加 CSV 格式轉換工具（如果可用）
+    if CSV_CONVERTER_AVAILABLE:
+        tools.append(convert_gmail_csv_format_tool)
+        logger.info("✅ CSV 格式轉換工具已添加到工具列表")
 
     # 添加擴展工具（如果可用）
     if EXTENDED_TOOLS_AVAILABLE:
