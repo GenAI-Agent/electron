@@ -1,0 +1,36 @@
+{
+  "data_id": "batch_1_results",
+  "session_id": "session_1755760313944_s3r4qrqe8ol",
+  "created_at": "2025-08-21T15:54:01.663176",
+  "data": {
+    "batch_number": 1,
+    "items_processed": 1,
+    "results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "file_path": "C:\\Users\\user01\\Desktop\\BI\\expense_system_data.csv"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "default_processing",
+          "result": "已處理: {'file_path': 'C:\\\\Users\\\\user01\\\\Desktop\\\\BI\\\\expense_system_data.csv'}",
+          "method": "batch_processing",
+          "timestamp": "2025-08-21T15:54:01.663176"
+        },
+        "status": "success",
+        "processing_time": 1755762841.663177
+      }
+    ],
+    "summary": {
+      "batch_number": 1,
+      "items_count": 1,
+      "success_count": 1,
+      "error_count": 0,
+      "success_rate": 100.0,
+      "processing_instruction": "計算部門預算執行率並檢測超支項目",
+      "task_description": "預算控制分析"
+    },
+    "timestamp": "2025-08-21T15:54:01.663176"
+  }
+}

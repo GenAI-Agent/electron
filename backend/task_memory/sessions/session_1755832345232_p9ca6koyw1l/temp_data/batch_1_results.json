@@ -1,0 +1,59 @@
+{
+  "data_id": "batch_1_results",
+  "session_id": "session_1755832345232_p9ca6koyw1l",
+  "created_at": "2025-08-22T11:12:53.257855",
+  "data": {
+    "batch_number": 1,
+    "items_processed": 2,
+    "results": [
+      {
+        "item_index": 0,
+        "original_item": {
+          "column": "預先申請金額"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "analysis",
+          "analysis_result": "已分析項目: {'column': '預先申請金額'}",
+          "key_insights": [
+            "數據模式識別",
+            "趨勢分析"
+          ],
+          "confidence": 0.85,
+          "timestamp": "2025-08-22T11:12:53.245191"
+        },
+        "status": "success",
+        "processing_time": 1755832373.2451913
+      },
+      {
+        "item_index": 1,
+        "original_item": {
+          "column": "實際報銷金額"
+        },
+        "processed_result": {
+          "success": true,
+          "action": "analysis",
+          "analysis_result": "已分析項目: {'column': '實際報銷金額'}",
+          "key_insights": [
+            "數據模式識別",
+            "趨勢分析"
+          ],
+          "confidence": 0.85,
+          "timestamp": "2025-08-22T11:12:53.255813"
+        },
+        "status": "success",
+        "processing_time": 1755832373.2558136
+      }
+    ],
+    "summary": {
+      "batch_number": 1,
+      "items_count": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "success_rate": 100.0,
+      "processing_instruction": "分析申請與報銷金額差異並篩選異常情況",
+      "task_description": "分析預算控制"
+    },
+    "timestamp": "2025-08-22T11:12:53.255813"
+  }
+}

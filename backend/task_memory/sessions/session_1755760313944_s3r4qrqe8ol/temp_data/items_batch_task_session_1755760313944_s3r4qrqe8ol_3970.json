@@ -1,0 +1,13 @@
+{
+  "data_id": "items_batch_task_session_1755760313944_s3r4qrqe8ol_3970",
+  "session_id": "session_1755760313944_s3r4qrqe8ol",
+  "created_at": "2025-08-21T15:54:01.663176",
+  "data": {
+    "items": [
+      {
+        "file_path": "C:\\Users\\user01\\Desktop\\BI\\expense_system_data.csv"
+      }
+    ],
+    "batch_size": 50
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "data_id": "items_batch_task_session_1755832345232_p9ca6koyw1l_844",
+  "session_id": "session_1755832345232_p9ca6koyw1l",
+  "created_at": "2025-08-22T11:12:53.235671",
+  "data": {
+    "items": [
+      {
+        "column": "預先申請金額"
+      },
+      {
+        "column": "實際報銷金額"
+      }
+    ],
+    "batch_size": 50
+  }
+}
