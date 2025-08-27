@@ -58,7 +58,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
   return (
     <div
-      className="title-bar h-10 bg-secondary flex items-center px-3 relative z-[1000] border-b border-border"
+      className="title-bar h-8 bg-secondary flex items-center px-3 relative z-[1000] border-b border-border"
       style={{ WebkitAppRegion: 'drag' }}
     >
       {/* Traffic Lights */}

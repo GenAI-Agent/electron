@@ -11,8 +11,8 @@
     width: 100%;
     overflow: hidden;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #1a1a1a;
-    color: #e5e7eb;
+    background-color: #F9FAFB;
+    color: #1F2937;
     /* Remove global drag region - will be applied selectively */
   }
 

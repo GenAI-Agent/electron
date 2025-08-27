@@ -29,6 +29,17 @@ interface AgentPanelProps {
   topHeight?: number;                         // 初始百分比（0-100）
   onTopHeightChange?: (heightPct: number) => void;
   onDragStateChange?: (dragging: boolean, cursor?: 'col-resize' | 'row-resize') => void; // 告知父層是否正在拖曳（用於禁用 webview）
+  sandboxContext?: {
+    selectedDatasets: Array<{
+      id: string;
+      source: string;
+      filename: string;
+      date: string;
+      time: string;
+      data: any[];
+    }>;
+    filePaths: string[];
+  };
 }
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -37,6 +48,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   topHeight = 30,
   onTopHeightChange,
   onDragStateChange,
+  sandboxContext,
 }) => {
   const router = useRouter();
   const [input, setInput] = useState('');
@@ -71,8 +83,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   // 內部百分比狀態（可被 props 初始化）
-  const [heightPct, setHeightPct] = useState(85);  // 預設上面 85%，下面輸入框 15%
-  useEffect(() => { setHeightPct(clamp(topHeight || 85, 80, 90)); }, [topHeight]);
+  const [heightPct, setHeightPct] = useState(75);  // 預設上面 75%，下面輸入框 25%
+  useEffect(() => { setHeightPct(clamp(topHeight || 75, 70, 85)); }, [topHeight]);
 
   // 檢測當前模式和文件上下文
   useEffect(() => {
@@ -142,7 +154,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
     const move = (y: number) => {
       const raw = ((y - rect.top) / rect.height) * 100;
-      const next = clamp(raw, 80, 90);        // 限制：上面 80%-90%（底部 10%-20%）
+      const next = clamp(raw, 50, 75);        // 限制：上面 40%-85%（底部 15%-60%）
       // 用 rAF 避免大量 reflow
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -214,15 +226,104 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       let contextData = null;
       const currentContext = sessionManager.getCurrentContext();
 
-      if (currentContext.mode === 'local' && currentContext.current_file) {
-        // Local file 模式：使用文件上下文
+      console.log('🔍 完整的 currentContext:', currentContext);
+      console.log('🔍 當前頁面路徑:', window.location.pathname);
+
+      // 在 sandbox 頁面強制走 local file 模式
+      const isSandboxPage = window.location.pathname.includes('/sandbox');
+
+      // 🎯 只在 sandbox 頁面且有 sandboxContext 時使用
+      if (isSandboxPage && sandboxContext && sandboxContext.selectedDatasets.length > 0) {
+        console.log('✅ Sandbox 頁面：使用 sandboxContext 直接傳遞的資料集');
+        console.log('📁 選中的資料集:', sandboxContext.selectedDatasets);
+        console.log('📁 檔案路徑:', sandboxContext.filePaths);
+
         contextData = {
-          type: 'file',
-          file_path: currentContext.current_file,
-          file_summary: currentContext.file_summary
+          type: 'local_file',
+          file_paths: sandboxContext.filePaths,
+          files: sandboxContext.selectedDatasets.map(dataset => ({
+            source: dataset.source,
+            filename: dataset.filename,
+            date: dataset.date,
+            time: dataset.time,
+            file_path: `../data/sandbox/${dataset.filename}`
+          })),
+          total_files: sandboxContext.selectedDatasets.length
         };
-        console.log('📁 使用文件上下文:', contextData);
+
+        console.log('📤 構建的 contextData:', contextData);
+      } else if (isSandboxPage && (!sandboxContext || sandboxContext.selectedDatasets.length === 0)) {
+        // Sandbox 頁面但沒有選擇資料集
+        console.log('⚠️ Sandbox 頁面但沒有選擇資料集');
+        contextData = {
+          type: 'local_file',
+          message: '請先選擇要分析的資料集'
+        };
+      } else if (currentContext.mode === 'local' && currentContext.current_file) {
+        // Local file 模式：使用文件上下文
+        console.log('✅ 進入 Local file 模式');
+
+        // 檢查是否為多檔案情況
+        console.log('🔍 檢查檔案上下文:', {
+          current_file: currentContext.current_file,
+          has_file_summary: !!currentContext.file_summary,
+          has_data_schema: !!currentContext.file_summary?.data_schema,
+          has_sample_data: !!currentContext.file_summary?.data_schema?.sample_data,
+          sample_data_length: currentContext.file_summary?.data_schema?.sample_data?.length,
+          first_sample: currentContext.file_summary?.data_schema?.sample_data?.[0]
+        });
+
+        // 檢查是否為多檔案情況（currentFile 為 'multi_file_context' 或 sample_data 有 source 欄位）
+        if (currentContext.current_file === 'multi_file_context' ||
+            (currentContext.file_summary?.data_schema?.sample_data &&
+             Array.isArray(currentContext.file_summary.data_schema.sample_data) &&
+             currentContext.file_summary.data_schema.sample_data[0]?.source)) {
+          // 多檔案情況：傳送檔案路徑列表給後端的新多檔案工具
+          const datasets = currentContext.file_summary.data_schema.sample_data;
+          const filePaths = datasets.map(dataset => `../data/sandbox/${dataset.filename}`);
+
+          contextData = {
+            type: 'local_file',  // 使用 local_file 類型，讓後端使用新的多檔案工具
+            file_paths: filePaths,  // 檔案路徑列表，供多檔案工具使用
+            files: datasets.map(dataset => ({
+              source: dataset.source,
+              filename: dataset.filename,
+              date: dataset.date,
+              time: dataset.time,
+              file_path: `../data/sandbox/${dataset.filename}`
+            })),
+            total_files: datasets.length
+          };
+          console.log('📁 使用多檔案上下文:', {
+            type: contextData.type,
+            total_files: contextData.total_files,
+            files: contextData.files.map(f => ({
+              source: f.source,
+              filename: f.filename,
+              data_length: f.data?.length
+            }))
+          });
+        } else if (currentContext.current_file) {
+          // 單一檔案情況
+          contextData = {
+            type: 'file',
+            file_path: currentContext.current_file,
+            file_summary: currentContext.file_summary
+          };
+          console.log('📁 使用單一檔案上下文:', contextData);
+        } else {
+          // sandbox 頁面但沒有選擇檔案的情況
+          console.log('⚠️ sandbox 頁面但沒有選擇檔案');
+          contextData = {
+            type: 'local_file',
+            message: '請先選擇要分析的資料集'
+          };
+        }
       } else {
+        console.log('❌ 不符合 Local file 模式條件:', {
+          mode: currentContext.mode,
+          current_file: currentContext.current_file
+        });
         // Browser 模式：獲取頁面資料
         try {
           if (typeof window !== 'undefined' && window.electronAPI?.browserControl?.getPageData) {
@@ -542,46 +643,46 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         <div className="flex justify-between items-center p-4">
           <button
             onClick={handleRefreshSession}
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 bg-background/80 hover:bg-background border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-foreground"
             title="新建 Session"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-3.5 h-3.5" />
           </button>
 
           {/* Toggle - 右上角 */}
-          <div className="flex gap-1 z-10 bg-background/80 backdrop-blur-sm rounded-lg p-1 border border-border shadow-sm">
+          <div className="flex gap-1 z-10">
             <button
               onClick={() => setPanelMode('result')}
               className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
                 panelMode === 'result'
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setPanelMode('rules')}
               className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
                 panelMode === 'rules'
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
-              <Puzzle className="w-4 h-4" />
+              <Puzzle className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setPanelMode('skills')}
               className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200",
+                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
                 panelMode === 'skills'
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
-              <Brain className="w-4 h-4" />
+              <Brain className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -616,55 +717,78 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       ></div>
 
       {/* Bottom Panel (Input) - 更紧凑的输入区域 */}
-      <div className="flex flex-col min-h-0 p-4 relative z-[2] bg-card border-t border-border">
+      <div className="flex flex-col min-h-[180px] p-4 pb-2 relative z-[2] bg-card border-t border-border">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col relative"
+          className="flex flex-col relative flex-1 mb-2"
         >
-          <div className="relative">
-            <textarea
-              className="w-full bg-background rounded-lg border border-border hover:border-ring/50 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 pt-3 pl-4 pr-12 pb-3 text-sm leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground transition-all duration-200 min-h-[60px] max-h-[120px]"
-              placeholder="輸入文字開始對話..."
-              value={input}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={(e) => {
-                // 處理自動完成的鍵盤事件
-                handleKeyDown(e);
+          <div className="relative flex-1 flex flex-col">
+            {/* 外层输入框容器 - 包含文字区域和图标，看起来像一个完整的输入框 */}
+            <div className="flex-1 relative border border-border bg-background flex flex-col">
+              {/* 文字输入区域容器 - 限制文字显示区域，为底部图标预留空间 */}
+              <div className="flex-1 relative overflow-hidden mb-12">
+                <textarea
+                  className="w-full h-full bg-transparent focus:outline-none pt-3 pl-4 pr-4 pb-12 text-base leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground"
+                  placeholder="輸入文字開始對話..."
+                  value={input}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    // 處理自動完成的鍵盤事件
+                    handleKeyDown(e);
 
-                if (e.key === 'Enter' && !e.shiftKey && !isComposing && !showRuleAutocomplete) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
-              autoFocus
-              onClick={(e) => {
-                e.currentTarget.focus();
-              }}
-              style={{
-                fontSize: '14px',
-                cursor: 'text'
-              }}
-            />
+                    if (e.key === 'Enter' && !e.shiftKey && !isComposing && !showRuleAutocomplete) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  autoFocus
+                  onClick={(e) => {
+                    e.currentTarget.focus();
+                  }}
+                  style={{
+                    fontSize: '14px',
+                    cursor: 'text'
+                  }}
+                />
+              </div>
+            </div>
             {/* 發送按鈕 - 调整位置 */}
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading || isComposing}
-              className={cn(
-                "absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200",
-                input.trim() && !isLoading && !isComposing
-                  ? "blue-button-white-text shadow-sm"
-                  : "text-muted-foreground bg-muted",
-                "disabled:text-muted-foreground disabled:bg-muted"
-              )}
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
+            {/* Bottom action buttons row */}
+            <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+              {/* Left side icons */}
+              <div className="flex gap-1">
+                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
+                  <Paperclip className="w-4 h-4" />
+                </button>
+                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
+                  <Image className="w-4 h-4" />
+                </button>
+                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
+                  <Headphones className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Right side send button */}
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading || isComposing}
+                className={cn(
+                  "w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200",
+                  input.trim() && !isLoading && !isComposing
+                    ? "text-foreground hover:bg-accent"
+                    : "text-muted-foreground",
+                  "disabled:text-muted-foreground"
+                )}
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
             {/* Rule Autocomplete 下拉列表 */}
             {showRuleAutocomplete && ruleMatches.length > 0 && (
@@ -694,20 +818,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           </div>
         </form>
 
-        {/* Bottom Icons - 更紧凑的工具栏 */}
-        <div className="flex justify-between items-center pt-2 flex-shrink-0">
-          <div className="flex gap-1">
-            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
-              <Paperclip className="w-4 h-4" />
-            </button>
-            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
-              <Image className="w-4 h-4" />
-            </button>
-            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200">
-              <Headphones className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

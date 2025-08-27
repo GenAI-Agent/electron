@@ -787,6 +787,117 @@ class DataAnalysisTools:
                 "error": str(e)
             }
 
+    async def group_by_analysis_multi_file(self, multi_file_data: Dict[str, Any],
+                                         group_column: str, value_column: str,
+                                         operation: str = "sum", session_id: str = "default") -> Dict[str, Any]:
+        """
+        對多檔案資料進行分組分析
+
+        Args:
+            multi_file_data: 多檔案資料
+            group_column: 分組列名
+            value_column: 數值列名
+            operation: 操作類型
+            session_id: 會話ID
+
+        Returns:
+            分組分析結果
+        """
+        try:
+            logger.info(f"🔄 開始多檔案分組分析: {group_column} by {value_column} ({operation})")
+
+            datasets = multi_file_data.get("datasets", [])
+            all_data = []
+
+            # 合併所有資料集的資料
+            for dataset in datasets:
+                data = dataset.get("data", [])
+                for row in data:
+                    # 添加資料來源標識
+                    row_with_source = row.copy()
+                    row_with_source["_source"] = dataset.get("source", "unknown")
+                    row_with_source["_dataset_date"] = dataset.get("date", "")
+                    all_data.append(row_with_source)
+
+            if not all_data:
+                return {
+                    "success": False,
+                    "error": "沒有可分析的資料"
+                }
+
+            # 轉換為 DataFrame
+            df = pd.DataFrame(all_data)
+
+            # 檢查欄位是否存在
+            if group_column not in df.columns:
+                return {
+                    "success": False,
+                    "error": f"分組欄位 '{group_column}' 不存在。可用欄位: {list(df.columns)}"
+                }
+
+            if value_column not in df.columns:
+                return {
+                    "success": False,
+                    "error": f"數值欄位 '{value_column}' 不存在。可用欄位: {list(df.columns)}"
+                }
+
+            # 執行分組分析
+            if operation == "count":
+                grouped = df.groupby(group_column).size().reset_index(name='count')
+                result_data = grouped.to_dict('records')
+            else:
+                # 嘗試轉換數值欄位
+                try:
+                    df[value_column] = pd.to_numeric(df[value_column], errors='coerce')
+                except:
+                    pass
+
+                if operation == "sum":
+                    grouped = df.groupby(group_column)[value_column].sum().reset_index()
+                elif operation == "mean":
+                    grouped = df.groupby(group_column)[value_column].mean().reset_index()
+                elif operation == "max":
+                    grouped = df.groupby(group_column)[value_column].max().reset_index()
+                elif operation == "min":
+                    grouped = df.groupby(group_column)[value_column].min().reset_index()
+                else:
+                    return {
+                        "success": False,
+                        "error": f"不支援的操作: {operation}"
+                    }
+
+                result_data = grouped.to_dict('records')
+
+            # 按來源分組的統計
+            source_stats = df.groupby(['_source', group_column]).size().reset_index(name='count')
+            source_breakdown = {}
+            for _, row in source_stats.iterrows():
+                source = row['_source']
+                if source not in source_breakdown:
+                    source_breakdown[source] = {}
+                source_breakdown[source][row[group_column]] = row['count']
+
+            return {
+                "success": True,
+                "session_id": session_id,
+                "analysis_type": f"multi_file_group_by_{operation}",
+                "group_column": group_column,
+                "value_column": value_column,
+                "operation": operation,
+                "total_records": len(all_data),
+                "total_groups": len(result_data),
+                "results": result_data,
+                "source_breakdown": source_breakdown,
+                "datasets_analyzed": len(datasets)
+            }
+
+        except Exception as e:
+            logger.error(f"多檔案分組分析失敗: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
 
 # 全局工具實例
 data_analysis_tools = DataAnalysisTools()

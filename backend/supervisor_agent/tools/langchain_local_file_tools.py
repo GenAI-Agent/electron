@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, List
 from langchain_core.tools import tool
+from pydantic import Field
 import json
 
 # 添加 src 目錄到路徑以導入工具
@@ -49,14 +50,37 @@ get_langchain_task_memory_tools = lambda: []
 get_langchain_plotting_tools = lambda: []
 get_batch_processor_tools = lambda: []
 
-# 導入指紋搜尋工具
+# 導入 Gmail 專用指紋搜尋工具
 try:
     from .fingerprint_search_tool import fingerprint_search_csv
     FINGERPRINT_SEARCH_AVAILABLE = True
-    logger.info("✅ 指紋搜尋工具導入成功")
+    logger.info("✅ Gmail 指紋搜尋工具導入成功")
 except Exception as e:
-    logger.warning(f"⚠️ 指紋搜尋工具導入失敗: {e}")
+    logger.warning(f"⚠️ Gmail 指紋搜尋工具導入失敗: {e}")
     FINGERPRINT_SEARCH_AVAILABLE = False
+
+# 導入通用指紋搜尋工具
+try:
+    from .flexible_fingerprint_search_tool import flexible_fingerprint_search_csv
+    FLEXIBLE_FINGERPRINT_SEARCH_AVAILABLE = True
+    logger.info("✅ 通用指紋搜尋工具導入成功")
+except Exception as e:
+    logger.warning(f"⚠️ 通用指紋搜尋工具導入失敗: {e}")
+    FLEXIBLE_FINGERPRINT_SEARCH_AVAILABLE = False
+
+# 導入多檔案分析工具
+try:
+    from .multi_file_analysis_tools import (
+        multi_file_reader_tool,
+        multi_file_filter_tool,
+        multi_file_analyzer_tool,
+        multi_file_data_analyzer_tool
+    )
+    MULTI_FILE_TOOLS_AVAILABLE = True
+    logger.info("✅ 多檔案分析工具導入成功")
+except Exception as e:
+    logger.warning(f"⚠️ 多檔案分析工具導入失敗: {e}")
+    MULTI_FILE_TOOLS_AVAILABLE = False
 
 # 導入 CSV 格式轉換工具
 try:
@@ -164,7 +188,7 @@ async def edit_file_by_lines_tool(
         result = await local_file_tools.edit_file_by_lines(
             file_path, start_line, end_line, new_content, session_id
         )
-        return str(result)
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 編輯文件失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
@@ -185,13 +209,19 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> str
     # 記錄輸入
     logger.info(f"🔧 [get_data_info_tool] 開始執行")
     logger.info(f"📥 輸入參數: file_path='{file_path}', session_id='{session_id}'")
+    print(f"DEBUG: get_data_info_tool called with file_path='{file_path}', session_id='{session_id}'")
 
     try:
-        # 步驟1: 檢查文件存在性
+        # 步驟1: 檢查是否為合併資料集的虛擬路徑
         import os
         from pathlib import Path
 
-        logger.info(f"📋 步驟1: 檢查文件是否存在")
+        logger.info(f"📋 步驟1: 檢查文件類型")
+
+        # 移除舊的虛擬路徑處理邏輯，現在直接處理實際檔案
+
+        # 檢查實際文件存在性
+        logger.info(f"📋 步驟2: 檢查實際文件是否存在")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"文件不存在: {file_path}")
 
@@ -199,8 +229,8 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> str
         file_ext = Path(file_path).suffix.lower()
         logger.info(f"✓ 文件存在，大小: {file_size} bytes，副檔名: {file_ext}")
 
-        # 步驟2: 判斷文件類型
-        logger.info(f"📋 步驟2: 判斷文件類型")
+        # 步驟3: 判斷文件類型
+        logger.info(f"📋 步驟3: 判斷文件類型")
         data_file_extensions = [".csv", ".json", ".xlsx", ".xls", ".parquet"]
         text_file_extensions = [
             ".txt",
@@ -267,7 +297,7 @@ async def get_data_info_tool(file_path: str, session_id: str = "default") -> str
 
         # 步驟3: 處理結果
         logger.info(f"📋 步驟3: 處理分析結果")
-        result_str = str(result)
+        result_str = json.dumps(result, ensure_ascii=False)
 
         # 記錄輸出
         logger.info(f"📤 輸出結果長度: {len(result_str)} 字符")
@@ -339,17 +369,18 @@ async def group_by_analysis_tool(
             resolved_file_path = file_path
             logger.info(f"🔄 使用指定文件: {resolved_file_path}")
 
-        # 檢查文件是否存在
+        # 檢查文件是否存在或是否為多檔案虛擬路徑
         from pathlib import Path
 
         if not Path(resolved_file_path).exists():
             error_msg = f"文件不存在: {resolved_file_path}"
             logger.error(f"❌ {error_msg}")
             return f'{{"success": false, "error": "{error_msg}"}}'
-
-        result = await data_analysis_tools.group_by_analysis(
-            resolved_file_path, group_column, value_column, operation, session_id
-        )
+        else:
+            # 單一檔案情況
+            result = await data_analysis_tools.group_by_analysis(
+                resolved_file_path, group_column, value_column, operation, session_id
+            )
         logger.info(f"✅ group_by_analysis_tool 執行完成")
         import json
 
@@ -360,6 +391,287 @@ async def group_by_analysis_tool(
 
         logger.error(f"❌ 詳細錯誤: {traceback.format_exc()}")
         return f'{{"success": false, "error": "{str(e)}"}}'
+
+
+@tool
+async def compare_datasets_tool(
+    file_paths: str,
+    analysis_focus: str = "general",
+    session_id: str = "default"
+) -> str:
+    """
+    比較多個資料集的工具
+
+    Args:
+        file_paths: 檔案路徑列表，用逗號分隔，例如: "path1.csv,path2.csv"
+        analysis_focus: 分析重點，例如: "topic_distribution", "sentiment", "keywords", "general"
+        session_id: 會話ID
+
+    Returns:
+        比較分析結果的JSON字符串
+    """
+    try:
+        logger.info(f"🔄 compare_datasets_tool 開始執行:")
+        logger.info(f"  - file_paths: {file_paths}")
+        logger.info(f"  - analysis_focus: {analysis_focus}")
+
+        # 解析檔案路徑
+        paths = [path.strip() for path in file_paths.split(",")]
+
+        if len(paths) < 2:
+            return f'{{"success": false, "error": "需要至少2個檔案進行比較"}}'
+
+        # 讀取所有檔案
+        import pandas as pd
+        datasets = []
+
+        for path in paths:
+            try:
+                if not os.path.exists(path):
+                    logger.warning(f"⚠️ 檔案不存在: {path}")
+                    continue
+
+                df = pd.read_csv(path, encoding='utf-8-sig')
+                filename = os.path.basename(path)
+                source = filename.split('_')[0] if '_' in filename else filename
+
+                datasets.append({
+                    "source": source,
+                    "filename": filename,
+                    "path": path,
+                    "data": df,
+                    "row_count": len(df),
+                    "columns": list(df.columns)
+                })
+
+                logger.info(f"✅ 讀取檔案: {filename} ({len(df)} 行)")
+
+            except Exception as e:
+                logger.error(f"❌ 讀取檔案失敗 {path}: {e}")
+                continue
+
+        if len(datasets) < 2:
+            return f'{{"success": false, "error": "成功讀取的檔案少於2個"}}'
+
+        # 執行比較分析
+        comparison_result = await _perform_dataset_comparison(datasets, analysis_focus, session_id)
+
+        logger.info(f"✅ compare_datasets_tool 執行完成")
+        return json.dumps(comparison_result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 資料集比較失敗: {e}")
+        return f'{{"success": false, "error": "{str(e)}"}}'
+
+
+async def _perform_dataset_comparison(datasets, analysis_focus, session_id):
+    """執行資料集比較分析"""
+    try:
+        import pandas as pd
+
+        # 基本統計比較
+        basic_stats = {}
+        common_columns = None
+
+        for dataset in datasets:
+            source = dataset["source"]
+            df = dataset["data"]
+
+            # 計算基本統計
+            stats = {
+                "row_count": len(df),
+                "column_count": len(df.columns),
+                "columns": list(df.columns)
+            }
+
+            # 找出共同欄位
+            if common_columns is None:
+                common_columns = set(df.columns)
+            else:
+                common_columns = common_columns.intersection(set(df.columns))
+
+            basic_stats[source] = stats
+
+        common_columns = list(common_columns)
+
+        # 根據分析重點進行不同的比較
+        detailed_analysis = {}
+
+        if analysis_focus == "topic_distribution" or analysis_focus == "general":
+            # 主題分佈比較
+            detailed_analysis["topic_analysis"] = await _compare_topic_distribution(datasets, common_columns)
+
+        if analysis_focus == "keywords" or analysis_focus == "general":
+            # 關鍵字比較
+            detailed_analysis["keyword_analysis"] = await _compare_keywords(datasets, common_columns)
+
+        if analysis_focus == "general":
+            # 數值欄位比較
+            detailed_analysis["numeric_analysis"] = await _compare_numeric_fields(datasets, common_columns)
+
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analysis_focus": analysis_focus,
+            "datasets_compared": len(datasets),
+            "common_columns": common_columns,
+            "basic_statistics": basic_stats,
+            "detailed_analysis": detailed_analysis,
+            "summary": _generate_comparison_summary(basic_stats, detailed_analysis)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 比較分析執行失敗: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+async def _compare_topic_distribution(datasets, common_columns):
+    """比較主題分佈"""
+    try:
+        # 尋找可能的主題欄位
+        topic_columns = []
+        for col in common_columns:
+            if any(keyword in col.lower() for keyword in ['topic', 'subject', 'title', 'content', '主題', '標題', '內容']):
+                topic_columns.append(col)
+
+        if not topic_columns:
+            return {"message": "未找到主題相關欄位"}
+
+        topic_analysis = {}
+        for dataset in datasets:
+            source = dataset["source"]
+            df = dataset["data"]
+
+            source_topics = {}
+            for col in topic_columns:
+                if col in df.columns:
+                    # 統計該欄位的值分佈
+                    value_counts = df[col].value_counts().head(10).to_dict()
+                    source_topics[col] = value_counts
+
+            topic_analysis[source] = source_topics
+
+        return topic_analysis
+
+    except Exception as e:
+        logger.error(f"❌ 主題分佈比較失敗: {e}")
+        return {"error": str(e)}
+
+
+async def _compare_keywords(datasets, common_columns):
+    """比較關鍵字"""
+    try:
+        # 尋找文本欄位
+        text_columns = []
+        for col in common_columns:
+            if any(keyword in col.lower() for keyword in ['content', 'text', 'message', 'title', '內容', '標題', '訊息']):
+                text_columns.append(col)
+
+        if not text_columns:
+            return {"message": "未找到文本欄位"}
+
+        keyword_analysis = {}
+        for dataset in datasets:
+            source = dataset["source"]
+            df = dataset["data"]
+
+            # 簡單的關鍵字統計（這裡可以用更複雜的 NLP 方法）
+            all_text = ""
+            for col in text_columns:
+                if col in df.columns:
+                    all_text += " ".join(df[col].astype(str).tolist())
+
+            # 簡單的詞頻統計
+            words = all_text.split()
+            word_freq = {}
+            for word in words:
+                if len(word) > 2:  # 過濾短詞
+                    word_freq[word] = word_freq.get(word, 0) + 1
+
+            # 取前10個高頻詞
+            top_words = dict(sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10])
+            keyword_analysis[source] = top_words
+
+        return keyword_analysis
+
+    except Exception as e:
+        logger.error(f"❌ 關鍵字比較失敗: {e}")
+        return {"error": str(e)}
+
+
+async def _compare_numeric_fields(datasets, common_columns):
+    """比較數值欄位"""
+    try:
+        import pandas as pd
+
+        # 找出數值欄位
+        numeric_columns = []
+        for dataset in datasets:
+            df = dataset["data"]
+            for col in common_columns:
+                if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
+                    if col not in numeric_columns:
+                        numeric_columns.append(col)
+
+        if not numeric_columns:
+            return {"message": "未找到共同的數值欄位"}
+
+        numeric_analysis = {}
+        for dataset in datasets:
+            source = dataset["source"]
+            df = dataset["data"]
+
+            source_stats = {}
+            for col in numeric_columns:
+                if col in df.columns:
+                    stats = {
+                        "mean": float(df[col].mean()),
+                        "median": float(df[col].median()),
+                        "std": float(df[col].std()),
+                        "min": float(df[col].min()),
+                        "max": float(df[col].max())
+                    }
+                    source_stats[col] = stats
+
+            numeric_analysis[source] = source_stats
+
+        return numeric_analysis
+
+    except Exception as e:
+        logger.error(f"❌ 數值欄位比較失敗: {e}")
+        return {"error": str(e)}
+
+
+def _generate_comparison_summary(basic_stats, detailed_analysis):
+    """生成比較摘要"""
+    try:
+        summary = []
+
+        # 基本統計摘要
+        sources = list(basic_stats.keys())
+        summary.append(f"比較了 {len(sources)} 個資料集: {', '.join(sources)}")
+
+        for source, stats in basic_stats.items():
+            summary.append(f"{source}: {stats['row_count']} 行資料，{stats['column_count']} 個欄位")
+
+        # 詳細分析摘要
+        if "topic_analysis" in detailed_analysis:
+            summary.append("已進行主題分佈比較")
+
+        if "keyword_analysis" in detailed_analysis:
+            summary.append("已進行關鍵字比較")
+
+        if "numeric_analysis" in detailed_analysis:
+            summary.append("已進行數值欄位比較")
+
+        return summary
+
+    except Exception as e:
+        logger.error(f"❌ 生成摘要失敗: {e}")
+        return ["摘要生成失敗"]
 
 
 @tool
@@ -414,8 +726,8 @@ async def read_data_file_tool(file_path: str, session_id: str = "default") -> st
         數據內容的JSON字符串
     """
     try:
-        result = await data_file_tools.read_data_file(file_path, session_id)
-        return str(result)
+        result = await data_file_tools.read_data_file(file_path, session_id=session_id)
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 讀取數據文件失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
@@ -1177,7 +1489,7 @@ async def save_file_tool(
         result = await local_file_tools.save_file(
             file_path, content, encoding, session_id
         )
-        return str(result)
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 保存文件失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
@@ -1206,7 +1518,7 @@ async def create_file_tool(
         result = await local_file_tools.create_file(
             file_path, content, encoding, session_id
         )
-        return str(result)
+        return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         logger.error(f"❌ 創建文件失敗: {e}")
         return f'{{"success": false, "error": "{str(e)}"}}'
@@ -1321,7 +1633,7 @@ async def edit_data_file_tool(
 
         # 步驟4: 處理結果
         logger.info(f"📋 步驟4: 處理編輯結果")
-        result_str = str(result)
+        result_str = json.dumps(result, ensure_ascii=False)
 
         # 記錄輸出
         logger.info(f"📤 輸出結果長度: {len(result_str)} 字符")
@@ -1361,7 +1673,7 @@ async def delete_file_tool(file_path: str, session_id: str = "default") -> str:
 
 
 @tool
-async def fingerprint_search_tool(
+async def gmail_fingerprint_search_tool(
     file_path: str,
     search_query: str,
     session_id: str = "default",
@@ -1370,10 +1682,12 @@ async def fingerprint_search_tool(
     save_results: bool = True
 ) -> str:
     """
-    使用指紋搜尋技術在 CSV 文件中進行智能文字搜尋
+    使用指紋搜尋技術在 Gmail CSV 文件中進行智能文字搜尋
 
     基於 Google 指紋搜尋概念，結合語義搜尋和關鍵字匹配，
     能夠找到與查詢語義相關的內容，而不僅僅是精確匹配。
+
+    專門針對 Gmail CSV 格式優化，搜尋 'subject' 和 'content' 欄位。
 
     Args:
         file_path: CSV 檔案路徑
@@ -1417,6 +1731,283 @@ async def fingerprint_search_tool(
             "success": False,
             "error": f"指紋搜尋失敗: {str(e)}"
         }, ensure_ascii=False)
+
+
+@tool
+async def fingerprint_search_tool(
+    file_path: str,
+    search_query: str,
+    search_columns: str,
+    session_id: str = "default",
+    similarity_threshold: float = 0.7,
+    max_results: int = None,
+    save_results: bool = True
+) -> str:
+    """
+    使用指紋搜尋技術在 CSV 文件中進行智能文字搜尋（可指定搜尋欄位）
+
+    通用版本的指紋搜尋工具，允許用戶指定要搜尋的欄位名稱，
+    適用於各種 CSV 格式，不限於 Gmail 數據。
+
+    基於 Google 指紋搜尋概念，結合語義搜尋和關鍵字匹配，
+    能夠找到與查詢語義相關的內容，而不僅僅是精確匹配。
+
+    Args:
+        file_path: CSV 檔案路徑
+        search_query: 搜尋查詢詞（支援自然語言描述）
+        search_columns: 要搜尋的欄位名稱，用逗號分隔（例如："title,description" 或 "content,body,summary"）
+        session_id: 會話ID
+        similarity_threshold: 相似度閾值 (0.0-6.2)，越高越嚴格，預設 0.7
+        max_results: 最大返回結果數 (None 表示不限制，根據閾值自然過濾)
+        save_results: 是否將結果保存為新的 CSV 檔案
+
+    Returns:
+        搜尋結果的JSON字符串，包含匹配數量、結果檔案路徑和樣本數據
+
+    Examples:
+        - search_columns: "subject,content" - 搜尋主題和內容欄位
+        - search_columns: "title,description,body" - 搜尋標題、描述和正文欄位
+        - search_columns: "name,address,phone" - 搜尋姓名、地址和電話欄位
+        - search_query: "財務相關的郵件" - 會找到包含金額、發票、付款等內容
+        - search_query: "客戶投訴" - 會找到包含問題、抱怨、退貨等內容
+    """
+    try:
+        if not FLEXIBLE_FINGERPRINT_SEARCH_AVAILABLE:
+            return json.dumps({
+                "success": False,
+                "error": "靈活指紋搜尋功能不可用，請檢查相關依賴"
+            }, ensure_ascii=False)
+
+        # 解析搜尋欄位
+        search_columns_list = [col.strip() for col in search_columns.split(',') if col.strip()]
+
+        if not search_columns_list:
+            return json.dumps({
+                "success": False,
+                "error": "請提供有效的搜尋欄位名稱"
+            }, ensure_ascii=False)
+
+        logger.info(f"🔍 執行靈活指紋搜尋: '{search_query}' in columns {search_columns_list} from {file_path}")
+
+        # 檢查是否為合併資料集
+        if file_path.endswith('combined_datasets'):
+            logger.info(f"🔄 處理合併資料集搜尋: {file_path}")
+            result = await _handle_combined_dataset_search(
+                file_path=file_path,
+                search_query=search_query,
+                search_columns=search_columns_list,
+                session_id=session_id,
+                similarity_threshold=similarity_threshold,
+                max_results=max_results,
+                save_results=save_results
+            )
+        else:
+            result = await flexible_fingerprint_search_csv(
+                file_path=file_path,
+                search_query=search_query,
+                search_columns=search_columns_list,
+                session_id=session_id,
+                similarity_threshold=similarity_threshold,
+                max_results=max_results,
+                save_results=save_results
+            )
+
+        return json.dumps(result, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"❌ 靈活指紋搜尋失敗: {e}")
+        return json.dumps({
+            "success": False,
+            "error": f"靈活指紋搜尋失敗: {str(e)}"
+        }, ensure_ascii=False)
+
+
+async def _handle_combined_dataset_search(
+    file_path: str,
+    search_query: str,
+    search_columns: List[str],
+    session_id: str = "default",
+    similarity_threshold: float = 0.7,
+    max_results: int = None,
+    save_results: bool = True
+) -> Dict[str, Any]:
+    """
+    處理合併資料集的搜尋
+
+    Args:
+        file_path: 合併資料集的虛擬路徑
+        search_query: 搜尋查詢詞
+        search_columns: 要搜尋的欄位名稱列表
+        session_id: 會話ID
+        similarity_threshold: 相似度閾值
+        max_results: 最大返回結果數
+        save_results: 是否保存結果
+
+    Returns:
+        搜尋結果的字典
+    """
+    try:
+        logger.info(f"🔄 開始處理合併資料集搜尋: {file_path}")
+
+        # 從Agent的上下文獲取合併資料集的內容
+        # 這需要通過Agent的context參數傳遞
+        from backend.api.routers.agent import get_agent
+        agent = get_agent(session_id)
+
+        # 嘗試從Agent的上下文中獲取合併資料集
+        combined_data = None
+        if hasattr(agent, 'current_context') and agent.current_context:
+            context_data = agent.current_context.get('context_data', {})
+            if 'file_summary' in context_data:
+                file_summary = context_data['file_summary']
+                # 檢查是否為合併資料集格式
+                if isinstance(file_summary, dict) and 'segments' in file_summary:
+                    segments = file_summary['segments']
+                    # 重構合併資料集格式
+                    combined_data = []
+                    for segment in segments:
+                        if 'content_type' in segment:
+                            combined_data.append({
+                                'source': segment.get('content_type', 'unknown'),
+                                'date': '2025-01-26',  # 從segment summary中提取
+                                'time': '12:00:00',
+                                'data': []  # 實際資料需要從其他地方獲取
+                            })
+
+        if not combined_data:
+            return {
+                "success": False,
+                "error": "無法獲取合併資料集的上下文資料，請確保資料集已正確載入"
+            }
+        if not combined_data:
+            return {
+                "success": False,
+                "error": "合併資料集為空"
+            }
+
+        logger.info(f"📊 合併資料集包含 {len(combined_data)} 個資料源")
+
+        # 對每個資料源進行搜尋
+        all_results = []
+        total_matches = 0
+        total_processed = 0
+
+        for dataset in combined_data:
+            source = dataset.get('source', 'unknown')
+            data = dataset.get('data', [])
+
+            if not data:
+                continue
+
+            logger.info(f"🔍 搜尋 {source} 資料源 ({len(data)} 筆資料)")
+
+            # 將資料轉換為DataFrame進行搜尋
+            import pandas as pd
+            df = pd.DataFrame(data)
+
+            # 檢查搜尋欄位是否存在
+            available_columns = df.columns.tolist()
+            valid_columns = [col for col in search_columns if col in available_columns]
+            invalid_columns = [col for col in search_columns if col not in available_columns]
+
+            if invalid_columns:
+                logger.warning(f"⚠️ {source} 資料源中以下欄位不存在: {invalid_columns}")
+
+            if not valid_columns:
+                logger.warning(f"⚠️ {source} 資料源中沒有有效的搜尋欄位")
+                continue
+
+            # 使用靈活指紋搜尋引擎進行搜尋
+            from .flexible_fingerprint_search_tool import flexible_search_engine
+
+            # 創建臨時CSV檔案進行搜尋
+            import tempfile
+            import os
+
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8-sig') as temp_file:
+                df.to_csv(temp_file.name, index=False)
+                temp_path = temp_file.name
+
+            try:
+                # 執行搜尋
+                result_df, search_info = await flexible_search_engine.search_csv_flexible(
+                    temp_path, search_query, valid_columns, similarity_threshold, max_results
+                )
+
+                # 為結果添加資料源標識
+                if not result_df.empty:
+                    result_df['_data_source'] = source
+                    result_df['_dataset_date'] = dataset.get('date', '')
+                    result_df['_dataset_time'] = dataset.get('time', '')
+
+                    # 添加到總結果中
+                    for _, row in result_df.iterrows():
+                        all_results.append({
+                            "data_source": source,
+                            "dataset_date": dataset.get('date', ''),
+                            "dataset_time": dataset.get('time', ''),
+                            "similarity_score": row.get('_similarity_score', 0),
+                            "data": {k: v for k, v in row.items() if not k.startswith('_')}
+                        })
+
+                total_matches += search_info.get('matches_found', 0)
+                total_processed += search_info.get('total_processed', 0)
+
+                logger.info(f"✅ {source} 搜尋完成: {search_info.get('matches_found', 0)} 筆匹配")
+
+            finally:
+                # 清理臨時檔案
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+
+        # 按相似度排序所有結果
+        all_results.sort(key=lambda x: x['similarity_score'], reverse=True)
+
+        # 限制結果數量
+        if max_results and len(all_results) > max_results:
+            all_results = all_results[:max_results]
+
+        # 保存結果（如果需要）
+        results_file = None
+        if save_results and all_results:
+            from src.tools.session_data_manager import session_data_manager
+            from datetime import datetime
+
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"combined_search_results_{timestamp}.json"
+            results_file = session_data_manager.get_temp_file_path(session_id, filename)
+
+            import json
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump(all_results, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"✅ 合併搜尋結果已保存到: {results_file}")
+
+        return {
+            "success": True,
+            "total_matches": total_matches,
+            "total_processed": total_processed,
+            "search_columns": search_columns,
+            "results_file": results_file,
+            "sample_results": all_results[:5],  # 返回前5個結果作為樣本
+            "search_info": {
+                "matches_found": total_matches,
+                "total_processed": total_processed,
+                "datasets_searched": len(combined_data),
+                "query": search_query,
+                "threshold": similarity_threshold
+            },
+            "message": f"在 {len(combined_data)} 個資料源的欄位 {search_columns} 中找到 {total_matches} 筆匹配結果"
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 合併資料集搜尋失敗: {e}")
+        import traceback
+        logger.error(f"❌ 詳細錯誤: {traceback.format_exc()}")
+        return {
+            "success": False,
+            "error": f"合併資料集搜尋失敗: {str(e)}"
+        }
 
 
 @tool
@@ -1526,12 +2117,28 @@ def get_langchain_local_file_tools() -> List:
         create_data_file_tool,
         update_data_rows_tool,
         delete_data_rows_tool,
+        # ❌ analyze_combined_datasets_tool 已刪除，請使用新的多檔案工具
     ]
 
-    # 添加指紋搜尋工具（如果可用）
+    # 添加多檔案分析工具
+    if MULTI_FILE_TOOLS_AVAILABLE:
+        tools.extend([
+            multi_file_reader_tool,
+            multi_file_filter_tool,
+            multi_file_analyzer_tool,
+            multi_file_data_analyzer_tool  # 新增：處理預處理數據的分析工具
+        ])
+        logger.info("✅ 多檔案分析工具已添加到工具列表")
+
+    # 添加 Gmail 指紋搜尋工具（如果可用）
     if FINGERPRINT_SEARCH_AVAILABLE:
+        tools.append(gmail_fingerprint_search_tool)
+        logger.info("✅ Gmail 指紋搜尋工具已添加到工具列表")
+
+    # 添加通用指紋搜尋工具（如果可用）
+    if FLEXIBLE_FINGERPRINT_SEARCH_AVAILABLE:
         tools.append(fingerprint_search_tool)
-        logger.info("✅ 指紋搜尋工具已添加到工具列表")
+        logger.info("✅ 通用指紋搜尋工具已添加到工具列表")
 
     # 添加 CSV 格式轉換工具（如果可用）
     if CSV_CONVERTER_AVAILABLE:

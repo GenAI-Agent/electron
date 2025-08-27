@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Folder, Search, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Maximize2, Minimize2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import { Button } from './button';
@@ -25,6 +25,9 @@ interface HeaderProps {
     avatar?: string;
   };
   rightContent?: React.ReactNode;
+  showViewToggle?: boolean;
+  viewMode?: 'left-only' | 'both';
+  onViewModeChange?: (mode: 'left-only' | 'both') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -36,6 +39,9 @@ const Header: React.FC<HeaderProps> = ({
   onUrlChange,
   userInfo,
   rightContent,
+  showViewToggle = false,
+  viewMode = 'both',
+  onViewModeChange,
 }) => {
   const router = useRouter();
   const [urlInput, setUrlInput] = useState('');
@@ -67,20 +73,64 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className="h-[60px] bg-card flex items-center px-6 relative z-[1000] border-b border-border shadow-sm"
+      className="h-[40px] bg-card flex items-center px-6 relative z-[1000] border-b border-border shadow-sm"
       style={{ WebkitAppRegion: 'drag' }}
     >
-      {/* Left section - Logo and Navigation */}
+      {/* Left section - Navigation */}
       <div className="flex items-center gap-4 flex-1">
-        {/* Logo */}
-        <div className="flex items-center justify-center space-x-4">
-          <LensOSLogo size={35} />
-          <div>
-            <h1 className="text-2xl font-light tracking-wider bg-gradient-to-r from-blue-600 via-purple-600 to-blue-400 bg-clip-text text-transparent">
-              LENS OS
-            </h1>
+        {/* Parallelogram Traffic Lights */}
+        <div
+          className="flex items-center gap-1.5"
+          style={{ WebkitAppRegion: 'no-drag' }}
+        >
+          {/* Close button - Red */}
+          <div
+            className="w-4 h-3 bg-red-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-red-600 hover:text-white transition-colors"
+            style={{
+              clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+            }}
+            onClick={() => {
+              if (window.electronAPI?.closeWindow) {
+                window.electronAPI.closeWindow();
+              }
+            }}
+            title="關閉"
+          >
+            ×
+          </div>
+          {/* Minimize button - Yellow */}
+          <div
+            className="w-4 h-3 bg-yellow-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-yellow-600 hover:text-white transition-colors"
+            style={{
+              clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+            }}
+            onClick={() => {
+              if (window.electronAPI?.minimizeWindow) {
+                window.electronAPI.minimizeWindow();
+              }
+            }}
+            title="最小化"
+          >
+            −
+          </div>
+          {/* Maximize button - Green */}
+          <div
+            className="w-4 h-3 bg-green-500 cursor-pointer flex items-center justify-center text-[8px] text-transparent hover:bg-green-600 hover:text-white transition-colors"
+            style={{
+              clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+            }}
+            onClick={() => {
+              if (window.electronAPI?.maximizeWindow) {
+                window.electronAPI.maximizeWindow();
+              }
+            }}
+            title="最大化"
+          >
+            □
           </div>
         </div>
+
+
 
         {/* Navigation Arrows */}
         {showNavigation && (
@@ -137,44 +187,69 @@ const Header: React.FC<HeaderProps> = ({
           <div
             onClick={handleUrlInputClick}
             className={cn(
-              "h-10 bg-background rounded-lg border border-border flex items-center justify-center text-foreground text-sm px-4 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200",
-              showUrlInput ? "cursor-pointer hover:bg-accent hover:border-ring" : "cursor-default"
+              "h-10 flex items-center justify-center text-foreground text-sm px-4 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 relative",
+              showUrlInput ? "cursor-pointer" : "cursor-default"
             )}
           >
-            {showUrlInput ? urlInput || title : title}
+            {/* Left Double Arrows - Back Navigation */}
+            <button
+              className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
+              onClick={() => router.back()}
+              title="上一頁"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              {/* Outer Left Arrow */}
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {/* Inner Left Arrow */}
+              <svg className="w-4 h-4 -ml-1" viewBox="0 0 16 16" fill="none">
+                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {/* Title Text */}
+            <span className="mx-12">
+              {showUrlInput ? urlInput || title : title}
+            </span>
+
+            {/* Right Double Arrows - Forward Navigation */}
+            <button
+              className="absolute right-2 flex items-center hover:opacity-70 transition-opacity"
+              onClick={() => window.history.forward()}
+              title="下一頁"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              {/* Inner Right Arrow */}
+              <svg className="w-4 h-4 -mr-1" viewBox="0 0 16 16" fill="none">
+                <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {/* Outer Right Arrow */}
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
         )}
       </div>
 
-      {/* Right section - User info and actions */}
-      <div className="flex items-center gap-4 flex-1 justify-end" style={{ WebkitAppRegion: 'no-drag' }}>
+      {/* Right section - Custom content and view toggle */}
+      <div className="flex items-center gap-2 flex-1 justify-end mr-4" style={{ WebkitAppRegion: 'no-drag' }}>
         {rightContent}
 
-        {showUserInfo && userInfo && (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-medium text-foreground">{userInfo.name}</div>
-              <div className="text-xs text-muted-foreground">{userInfo.email}</div>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              {userInfo.avatar ? (
-                <img src={userInfo.avatar} alt={userInfo.name} className="w-full h-full rounded-full" />
-              ) : (
-                <User className="w-5 h-5 text-primary" />
-              )}
-            </div>
-          </div>
-        )}
-
-        {showHomeButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleHomeClick}
-            className="rounded-lg"
+        {/* View Toggle Button */}
+        {showViewToggle && onViewModeChange && (
+          <button
+            onClick={() => onViewModeChange(viewMode === 'both' ? 'left-only' : 'both')}
+            className="text-foreground hover:text-primary transition-all duration-2000 p-2 rounded-md hover:bg-accent transform hover:scale-110"
+            title={viewMode === 'both' ? '全螢幕瀏覽' : '分割視圖'}
           >
-            <Globe className="w-5 h-5" />
-          </Button>
+            {viewMode === 'both' ? (
+              <Maximize2 className="w-5 h-5 transition-all duration-2000 transform" />
+            ) : (
+              <Minimize2 className="w-5 h-5 transition-all duration-2000 transform" />
+            )}
+          </button>
         )}
       </div>
     </header>

@@ -64,6 +64,10 @@ class ParallelToolNode(BaseToolNode):
             # 記錄工具調用參數
             logger.info(f"🔧 執行工具: {tool_name}")
             logger.info(f"📋 工具參數: {tool_args}")
+            print(f"\n🚀 ===== 開始執行工具 =====")
+            print(f"🚀 工具名稱: {tool_name}")
+            print(f"🚀 工具參數: {tool_args}")
+            print(f"🚀 ========================")
             start_time = time.time()
 
             # 執行工具
@@ -78,6 +82,15 @@ class ParallelToolNode(BaseToolNode):
             # 記錄工具執行結果（前300字符）
             result_str = str(result)
             logger.info(f"📤 工具 {tool_name} 執行結果前300字符: {result_str[:300]}")
+
+            # 🔍 詳細日誌：顯示完整的工具執行結果
+            print(f"\n🔧 ===== 工具執行詳情 =====")
+            print(f"🔧 工具名稱: {tool_name}")
+            print(f"🔧 執行時間: {execution_time:.2f}秒")
+            print(f"🔧 參數: {tool_args}")
+            print(f"🔧 完整結果:")
+            print(f"{result_str}")
+            print(f"🔧 ========================\n")
 
             # 包裝工具結果，添加 tool 標籤
             wrapped_result = f"<tool name='{tool_name}' execution_time='{execution_time:.2f}s'>\n{result_str}\n</tool>"
@@ -102,6 +115,15 @@ class ParallelToolNode(BaseToolNode):
 
         except Exception as e:
             logger.error(f"❌ 工具 {tool_name} 執行失敗: {e}")
+            print(f"\n❌ ===== 工具執行異常 =====")
+            print(f"❌ 工具名稱: {tool_name}")
+            print(f"❌ tool_call_id: {tool_call_id}")
+            print(f"❌ 異常信息: {str(e)}")
+            print(f"❌ 異常類型: {type(e).__name__}")
+            import traceback
+            print(f"❌ 完整堆疊: {traceback.format_exc()}")
+            print(f"❌ ========================\n")
+
             error_result = f"<tool name='{tool_name}' status='error'>\n工具執行失敗: {str(e)}\n</tool>"
             return ToolMessage(
                 content=error_result, tool_call_id=tool_call_id, name=tool_name
@@ -128,6 +150,7 @@ class ParallelToolNode(BaseToolNode):
             logger.warning("⚠️ 沒有找到工具調用")
             return {"messages": []}
 
+        print(f"🚀 Agent 準備執行 {len(tool_calls)} 個工具")
         logger.info(f"🚀 平行執行 {len(tool_calls)} 個工具")
 
         # 準備平行執行的任務
@@ -137,10 +160,20 @@ class ParallelToolNode(BaseToolNode):
             tool_args = tool_call.get("args", {})
             tool_call_id = tool_call.get("id", "")
 
+            print(f"🔍 工具調用: {tool_name}")
+            print(f"   - ID: {tool_call_id}")
+            print(f"   - 參數: {tool_args}")
+
             # 調試日誌：檢查 tool_call_id
             logger.info(
                 f"🔍 工具調用詳情: name={tool_name}, id={tool_call_id}, args={tool_args}"
             )
+
+            # 🔍 額外檢查 tool_call_id 是否有效
+            if not tool_call_id:
+                logger.error(f"❌ 工具 {tool_name} 的 tool_call_id 為空！")
+                print(f"❌ 工具 {tool_name} 的 tool_call_id 為空！")
+                continue
 
             if tool_name in self.tools_by_name:
                 tool = self.tools_by_name[tool_name]
@@ -158,17 +191,29 @@ class ParallelToolNode(BaseToolNode):
 
         # 平行執行所有工具
         try:
+            print(f"🚀 開始平行執行 {len(tasks)} 個工具任務...")
             tool_messages = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 處理結果
             valid_messages = []
-            for msg in tool_messages:
+            for i, msg in enumerate(tool_messages):
                 if isinstance(msg, ToolMessage):
                     valid_messages.append(msg)
+                    print(f"✅ 工具 {i} 執行成功，tool_call_id: {msg.tool_call_id}")
                 elif isinstance(msg, Exception):
-                    logger.error(f"❌ 工具執行異常: {msg}")
+                    logger.error(f"❌ 工具執行異常 {i}: {msg}")
+                    print(f"❌ 工具執行異常 {i}: {msg}")
+                    import traceback
+                    print(f"❌ 異常堆疊: {traceback.format_exc()}")
+
+            # 🔍 檢查所有 tool_call_id 是否正確
+            for msg in valid_messages:
+                if not hasattr(msg, 'tool_call_id') or not msg.tool_call_id:
+                    logger.error(f"❌ ToolMessage 缺少 tool_call_id: {msg}")
+                    print(f"❌ ToolMessage 缺少 tool_call_id: {msg}")
 
             logger.info(f"✅ 平行工具執行完成，成功 {len(valid_messages)} 個")
+            print(f"✅ 平行工具執行完成，成功 {len(valid_messages)} 個")
             return {"messages": valid_messages}
 
         except Exception as e:
@@ -938,6 +983,13 @@ class SupervisorAgent:
         page_data = context_data.get("page", {})
         mails = context_data.get("mails", [])
 
+        # 檢查是否為多檔案分析模式
+        is_multi_file = context_data.get("mode") == "multi_file_analysis"
+        files_summary = context_data.get("files_summary", {})
+        platforms = context_data.get("platforms", [])
+        platform_types = context_data.get("platform_types", [])
+        analysis_context = context_data.get("analysis_context", "")
+
         # 檢查是否為 Gmail 數據
         email_address = context_data.get("email_address", "")
         gmail_metadata = context_data.get("gmail_metadata", {})
@@ -946,8 +998,54 @@ class SupervisorAgent:
         # 構建簡潔的數據摘要
         data_summary = ""
 
+        # 🎯 多檔案分析模式摘要
+        if is_multi_file and files_summary:
+            total_files = context_data.get("total_files", 0)
+            total_rows = files_summary.get("summary", {}).get("total_rows", 0)
+
+            # 構建平台信息
+            platform_info = f"{' vs '.join(platform_types)}" if platform_types else "多個平台"
+
+            # 提取檔案詳細信息
+            file_details = []
+            for result in files_summary.get("results", []):
+                if result.get("success"):
+                    platform_name = result.get("platform_name", "Unknown")
+                    platform_type = result.get("platform_type", "未知平台")
+                    rows = result.get("total_rows", 0)
+                    columns = result.get("columns", [])
+                    file_details.append(f"  - {platform_name} ({platform_type}): {rows} 行, {len(columns)} 欄位")
+
+            data_summary = f"""
+                🔄 多檔案分析模式已啟動，數據已準備完成:
+                - 分析目標: {analysis_context}
+                - 檔案數量: {total_files} 個
+                - 平台類型: {platform_info}
+                - 總數據量: {total_rows} 行
+
+                檔案詳情:
+{chr(10).join(file_details)}
+
+                🎯 多檔案分析可用工具：
+
+                **可用檔案路徑**: {json.dumps(context_data.get('file_paths', []))}
+
+                **可用工具**：
+                1. **multi_file_analyzer_tool** - 對完整數據進行綜合分析
+                   - 適用於：平台整體比較、趨勢分析、統計摘要等
+                   - 參數：file_paths, analysis_type, analysis_question
+
+                2. **multi_file_filter_tool** - 先過濾特定條件的數據再分析
+                   - 適用於：需要特定條件篩選的分析
+                   - 參數：file_paths, filter_condition (具體條件如"年齡>30"、"地區=台北市")
+
+                **請根據用戶問題自行判斷**：
+                - 需要完整數據分析 → 直接使用 multi_file_analyzer_tool
+                - 需要特定條件篩選 → 先用 multi_file_filter_tool，再用 multi_file_analyzer_tool
+                - 可以組合使用多個工具來完成複雜分析
+            """
         # Gmail 數據摘要（優先使用 file_summary）
-        if file_summary and file_summary.get("file_type") == "gmail_csv":
+        elif file_summary and file_summary.get("file_type") == "gmail_csv":
             total_emails = file_summary.get("total_emails", 0)
             unread_emails = file_summary.get("unread_emails", 0)
             top_senders = file_summary.get("top_senders", [])
@@ -1124,11 +1222,10 @@ class SupervisorAgent:
 [直接回答用戶問題的主要數字和結論]
 
 ### 📊 詳細數據
-```
+
 | 項目 | 數值 | 佔比 |
 |------|------|------|
 | ... | ... | ... |
-```
 
 ### 💡 重點整理 範例
 - 重點1：[具體發現]
@@ -1182,6 +1279,12 @@ class SupervisorAgent:
     ) -> Dict[str, Any]:
         """執行查詢並返回回應"""
 
+        print(f"🚀 SupervisorAgent 開始處理查詢: {query}")
+        print(f"🔍 詳細參數:")
+        print(f"  - query: {query}")
+        print(f"  - rule_id: {rule_id}")
+        print(f"  - context: {context}")
+
         logger.info(f"🚀 開始處理查詢: {query}")
         logger.info(f"🔍 詳細參數:")
         logger.info(f"  - query: {query}")
@@ -1192,6 +1295,44 @@ class SupervisorAgent:
         if len(context_str) > 300:
             context_str = context_str[:300] + "..."
         logger.info(f"  - context: {context_str}")
+
+        # 檢查 context 中是否有錯誤
+        if context and context.get("context_data") and context["context_data"].get("error"):
+            print(f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}")
+            print(f"❌ 完整錯誤 context: {context['context_data']}")
+            logger.error(f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}")
+            logger.error(f"❌ 完整錯誤 context: {context['context_data']}")
+
+        # 檢查是否有可用的檔案路徑和數據
+        if context and context.get("context_data"):
+            context_data = context["context_data"]
+            if context_data.get("mode") == "multi_file_analysis":
+                print(f"✅ 檢測到多檔案分析模式")
+                print(f"📁 檔案數量: {context_data.get('total_files', 0)}")
+                print(f"🏷️ 平台類型: {context_data.get('platform_types', [])}")
+                print(f"📊 分析上下文: {context_data.get('analysis_context', '')}")
+                if context_data.get("files_summary"):
+                    print(f"📋 檔案摘要已準備完成")
+                    logger.info(f"✅ 多檔案分析模式：{context_data.get('total_files', 0)} 個檔案，平台：{context_data.get('platforms', [])}")
+                else:
+                    print(f"⚠️ 多檔案分析模式但缺少摘要數據")
+                    logger.warning(f"⚠️ 多檔案分析模式但缺少摘要數據")
+            elif context_data.get("file_path"):
+                print(f"✅ 檢測到單檔案路徑: {context_data['file_path']}")
+                logger.info(f"✅ 檢測到檔案路徑: {context_data['file_path']}")
+            elif context_data.get("file_paths"):
+                print(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
+                logger.info(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
+            else:
+                print(f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}")
+                logger.warning(f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}")
+
+        print(f"🔧 可用工具數量: {len(available_tools) if available_tools else 0}")
+        logger.info(f"🔧 可用工具數量: {len(available_tools) if available_tools else 0}")
+        if available_tools:
+            tool_names = [tool.name for tool in available_tools]
+            print(f"🔧 可用工具列表: {tool_names}")
+            logger.info(f"🔧 可用工具列表: {tool_names}")
 
         # 根據 rule_id 載入規則
         rule_data = None
@@ -1234,25 +1375,46 @@ class SupervisorAgent:
 
         # 執行 graph
         start_time = time.time()
+        print(f"🚀 開始執行 Agent Graph...")
+        print(f"📋 初始狀態: query='{parsed_query}', context keys={list(context.keys()) if context else []}")
+
         # TODO: 這是為什麼 流式回覆接不到ToolMessage
         result = await self.current_graph.ainvoke(initial_state, config=config)
         execution_time = time.time() - start_time
+
+        print(f"⏱️ Agent Graph 執行完成，耗時 {execution_time:.2f}秒")
+        print(f"📨 返回的消息數量: {len(result.get('messages', []))}")
 
         logger.info(f"⏱️ 查詢執行完成，耗時 {execution_time:.2f}秒")
 
         # 提取最終回應
         final_message = result["messages"][-1]
+        print(f"📝 最終消息類型: {type(final_message).__name__}")
 
         if isinstance(final_message, AIMessage):
             response_content = final_message.content
+            print(f"✅ AI 回應內容長度: {len(response_content)} 字符")
         else:
             response_content = "抱歉，無法處理您的請求"
+            print(f"❌ 非 AI 消息，使用默認回應")
 
         # 提取使用的工具
         tools_used = []
-        for msg in result["messages"]:
+        for i, msg in enumerate(result["messages"]):
+            print(f"📨 消息 {i}: {type(msg).__name__}")
             if isinstance(msg, ToolMessage):
                 tools_used.append(msg.name)
+                print(f"🔧 使用工具: {msg.name}")
+                # 🔍 顯示工具消息的詳細內容
+                print(f"🔧 工具消息內容前500字符: {msg.content[:500]}")
+            elif isinstance(msg, AIMessage):
+                print(f"🤖 AI 消息內容前200字符: {msg.content[:200]}")
+            elif hasattr(msg, 'content'):
+                print(f"📄 消息內容前200字符: {str(msg.content)[:200]}")
+
+        print(f"🔧 總共使用的工具: {tools_used}")
+        if not tools_used:
+            print(f"⚠️ 警告：Agent 沒有使用任何工具！")
 
         return {
             "response": response_content,

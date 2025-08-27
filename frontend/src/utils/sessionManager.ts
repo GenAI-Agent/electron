@@ -59,6 +59,12 @@ export class SessionManager {
    */
   private loadFromStorage(): void {
     try {
+      // 檢查是否在瀏覽器環境中
+      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+        console.log('⚠️ localStorage不可用（服務器端渲染）');
+        return;
+      }
+
       const stored = localStorage.getItem('current_session');
       if (stored) {
         const data = JSON.parse(stored);
@@ -85,6 +91,11 @@ export class SessionManager {
    */
   private saveToStorage(): void {
     try {
+      // 檢查是否在瀏覽器環境中
+      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+        return;
+      }
+
       const data = {
         sessionId: this.sessionId,
         currentFile: this.currentFile,
@@ -196,6 +207,95 @@ export class SessionManager {
    */
   hasFileContext(): boolean {
     return this.mode === 'local' && this.currentFile !== null;
+  }
+
+  /**
+   * 設置多檔案上下文（用於多檔案分析）
+   */
+  setMultiFileContext(context: {
+    files: Array<{
+      source: string;
+      date: string;
+      time: string;
+      filename: string;
+      data: any[];
+    }>;
+    totalFiles: number;
+  }): void {
+    this.currentFile = 'multi_file_context';
+    this.mode = 'local';
+
+    // 構建多檔案摘要
+    const summary: FileSummary = {
+      file_info: {
+        path: 'multi_file_context',
+        type: 'data',
+        size: JSON.stringify(context.files).length,
+        lines: context.files.reduce((sum, file) => sum + file.data.length, 0),
+        encoding: 'utf-8'
+      },
+      segments: context.files.map((file, index) => ({
+        start_line: index * 1000 + 1,
+        end_line: (index + 1) * 1000,
+        summary: `${file.source} 資料集 (${file.date} ${file.time}) - ${file.data.length} 筆資料`,
+        keywords: Object.keys(file.data[0] || {}),
+        content_type: file.source
+      })),
+      data_schema: {
+        columns: ['source', 'date', 'time', 'filename', 'data'],
+        types: ['string', 'string', 'string', 'string', 'array'],
+        sample_data: context.files, // 直接保存檔案資訊
+        row_count: context.totalFiles
+      },
+      generated_at: new Date().toISOString()
+    };
+
+    this.fileSummary = summary;
+    this.saveToStorage();
+  }
+
+  /**
+   * 設置文件上下文（用於沙盒等場景）
+   */
+  setFileContext(context: {
+    filePath: string;
+    fileName: string;
+    fileType: string;
+    content: any[];
+  }): void {
+    this.currentFile = context.filePath;
+    this.mode = 'local';
+
+    // 處理單一資料集的情況
+    let summary: FileSummary;
+
+    // 單一資料集的情況
+    summary = {
+      file_info: {
+        path: context.filePath,
+        type: 'data',
+        size: JSON.stringify(context.content).length,
+        lines: context.content.length,
+        encoding: 'utf-8'
+      },
+      segments: [{
+        start_line: 1,
+        end_line: context.content.length,
+        summary: `${context.fileName} 包含 ${context.content.length} 筆資料`,
+        keywords: Object.keys(context.content[0] || {}),
+        content_type: context.fileType
+      }],
+      data_schema: {
+        columns: Object.keys(context.content[0] || {}),
+        types: Object.keys(context.content[0] || {}).map(() => 'string'),
+        sample_data: context.content.slice(0, 5),
+        row_count: context.content.length
+      },
+      generated_at: new Date().toISOString()
+    };
+
+    this.fileSummary = summary;
+    this.saveToStorage();
   }
 
   /**

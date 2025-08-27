@@ -84,7 +84,7 @@ export function ReactMarkdownCustom({
           const { children, ...rest } = props;
           return (
             <code
-              className="rounded bg-zinc-700 px-1 py-0.5 font-mono text-sm text-zinc-200"
+              className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-800 border border-slate-200"
               {...rest}
             >
               {children}
@@ -92,8 +92,10 @@ export function ReactMarkdownCustom({
           );
         },
         pre: (props) => (
-          <pre className="my-3 overflow-x-auto rounded-md bg-zinc-800 p-3">
-            {props.children}
+          <pre className="my-3 overflow-x-auto rounded-md bg-slate-50 border border-slate-200 p-3">
+            <code className="text-slate-700 font-mono text-sm">
+              {props.children}
+            </code>
           </pre>
         ),
         img: ({ ...props }) => (

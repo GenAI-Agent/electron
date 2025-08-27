@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Globe, Monitor, Building, Brain, Mail, ExternalLink } from 'lucide-react';
+import { Send, Globe, Monitor, Building, Brain, Mail, ExternalLink, BarChart3 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import Header from '@/components/ui/header';
@@ -47,6 +47,14 @@ const HomePage: React.FC = () => {
       description: '接入企業SaaS系統，使用企業規則讓Supervisor Agent處理業務數據',
       hoverColor: 'hover:border-primary hover:shadow-primary/20',
     },
+    {
+      icon: BarChart3,
+      title: 'AI Election Sandbox',
+      subtitle: 'AI選情沙盒',
+      path: '/sandbox',
+      description: '智能分析選情數據，整合Thread、PTT、陳情系統等多元資料來源，提供深度政治輿情洞察',
+      hoverColor: 'hover:border-orange-500 hover:shadow-orange-500/20',
+    },
   ];
 
   return (
@@ -86,8 +94,8 @@ const HomePage: React.FC = () => {
             </p>
           </div>
 
-          {/* 三個主要卡片選項 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 四個主要卡片選項 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featureCards.map((card, index) => (
               <div key={index} className="relative">
                 <Card
@@ -106,7 +114,15 @@ const HomePage: React.FC = () => {
                       {card.title}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      {card.subtitle}
+                      {card.title === 'AI Election Sandbox' ? (
+                        <span className="flex items-center justify-center w-full">
+                          <span className="text-muted-foreground/50">{'<<'}</span>
+                          <span className="mx-3">{card.subtitle}</span>
+                          <span className="text-muted-foreground/50">{'>>'}</span>
+                        </span>
+                      ) : (
+                        card.subtitle
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {card.description}

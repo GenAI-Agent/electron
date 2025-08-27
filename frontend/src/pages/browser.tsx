@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import BrowserView from '@/components/BrowserView';
-import ViewToggle from '@/components/ViewToggle';
+
 import AgentPanel from '@/components/AgentPanel';
 import Header from '@/components/ui/header';
 import { User } from 'lucide-react';
 
-type ViewMode = 'left-only' | 'right-only' | 'both';
+type ViewMode = 'left-only' | 'both';
 
 const BrowserPage: React.FC = () => {
   const router = useRouter();
@@ -62,15 +62,12 @@ const BrowserPage: React.FC = () => {
       {/* Header */}
       <Header
         title={getTitle()}
-        showHomeButton={true}
         showUrlInput={!isLocalMode}
         showNavigation={true}
-        showUserInfo={true}
         onUrlChange={handleUrlChange}
-        userInfo={{
-          // name: 'User Name',
-          // email: 'user@example.com'
-        }}
+        showViewToggle={true}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Main Content Area */}
@@ -85,7 +82,7 @@ const BrowserPage: React.FC = () => {
         }}
       >
         {/* Left Panel - Browser View */}
-        {(viewMode === 'left-only' || viewMode === 'both') && (
+        {viewMode === 'both' && (
           <div
             className="h-full relative overflow-hidden min-h-0"
             style={{
@@ -169,21 +166,36 @@ const BrowserPage: React.FC = () => {
         )}
 
         {/* Right Panel - Agent Panel */}
-        {(viewMode === 'right-only' || viewMode === 'both') && (
+        <div
+          className="h-full overflow-hidden min-h-0"
+          style={{
+            gridColumn: viewMode === 'both' ? 3 : '1 / -1',
+          }}
+        >
+          <AgentPanel
+            onDragStateChange={(dragging) => setIsDragging(dragging)}
+          />
+        </div>
+
+        {/* Full Browser View */}
+        {viewMode === 'left-only' && (
           <div
-            className="h-full overflow-hidden min-h-0"
+            className="h-full relative overflow-hidden min-h-0"
             style={{
-              gridColumn: viewMode === 'both' ? 3 : '1 / -1',
+              gridColumn: '1 / -1',
             }}
           >
-            <AgentPanel
-              onDragStateChange={(dragging) => setIsDragging(dragging)}
+            <BrowserView
+              url={currentUrl || url as string}
+              path={path as string}
+              file={file as string}
+              mode={isLocalMode ? 'local' : 'web'}
+              disablePointerEvents={isDragging}
             />
           </div>
         )}
 
-        {/* View Toggle */}
-        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+
       </div>
     </div>
   );
