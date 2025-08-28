@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Maximize2, Minimize2 } from 'lucide-react';
+import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Square, Monitor, Home } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import { Button } from './button';
@@ -26,8 +26,8 @@ interface HeaderProps {
   };
   rightContent?: React.ReactNode;
   showViewToggle?: boolean;
-  viewMode?: 'left-only' | 'both';
-  onViewModeChange?: (mode: 'left-only' | 'both') => void;
+  viewMode?: 'with-agent' | 'fullscreen';
+  onViewModeChange?: (mode: 'with-agent' | 'fullscreen') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -40,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({
   userInfo,
   rightContent,
   showViewToggle = false,
-  viewMode = 'both',
+  viewMode = 'with-agent',
   onViewModeChange,
 }) => {
   const router = useRouter();
@@ -237,17 +237,26 @@ const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 flex-1 justify-end mr-4" style={{ WebkitAppRegion: 'no-drag' }}>
         {rightContent}
 
+        {/* Home Button */}
+        {showViewToggle && (
+          <button
+            onClick={() => router.push('/')}
+            className="text-foreground hover:text-primary transition-all duration-200 p-2 rounded-md hover:bg-accent transform hover:scale-110"
+          >
+            <Home className="w-4 h-4" />
+          </button>
+        )}
+
         {/* View Toggle Button */}
         {showViewToggle && onViewModeChange && (
           <button
-            onClick={() => onViewModeChange(viewMode === 'both' ? 'left-only' : 'both')}
-            className="text-foreground hover:text-primary transition-all duration-2000 p-2 rounded-md hover:bg-accent transform hover:scale-110"
-            title={viewMode === 'both' ? '全螢幕瀏覽' : '分割視圖'}
+            onClick={() => onViewModeChange(viewMode === 'with-agent' ? 'fullscreen' : 'with-agent')}
+            className="text-foreground hover:text-primary transition-all duration-200 p-2 rounded-md hover:bg-accent transform hover:scale-110"
           >
-            {viewMode === 'both' ? (
-              <Maximize2 className="w-5 h-5 transition-all duration-2000 transform" />
+            {viewMode === 'with-agent' ? (
+              <Monitor className="w-5 h-5 transition-all duration-200 transform" />
             ) : (
-              <Minimize2 className="w-5 h-5 transition-all duration-2000 transform" />
+              <Square className="w-5 h-5 transition-all duration-200 transform" />
             )}
           </button>
         )}

@@ -22,6 +22,8 @@ const HomePage: React.FC = () => {
     }
   };
 
+
+
   const featureCards = [
     {
       icon: Globe,

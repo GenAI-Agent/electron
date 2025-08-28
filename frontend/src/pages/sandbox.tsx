@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { RefreshCw, Calendar, Database, MessageSquare, FileText, Plus, Minus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RefreshCw, Calendar, Database, MessageSquare, FileText, Plus, Minus, X, ChevronLeft, ChevronRight, Square, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AgentPanel from '@/components/AgentPanel';
 import Header from '@/components/ui/header';
+import ParallelogramTabs, { TabType } from '@/components/ParallelogramTabs';
+import { DataTab } from '@/components/DataTabManager';
+import { DataTab } from '@/components/DataTabManager';
+import IntelligencePage from '@/components/sandbox/IntelligencePage';
+import WarRoomPage from '@/components/sandbox/WarRoomPage';
+import SimulationPage from '@/components/sandbox/SimulationPage';
+import DataDashboard from '@/components/sandbox/DataDashboard';
 
 import { cn } from '@/utils/cn';
 import { sessionManager } from '@/utils/sessionManager';
 
 type DataSource = 'thread' | 'ptt' | 'petition';
-type ViewMode = 'left-only' | 'both';
+type ViewMode = 'with-agent' | 'fullscreen';
 
 interface DataFile {
   filename: string;
@@ -21,133 +27,20 @@ interface DataFile {
   fullPath: string;
 }
 
-interface SelectedDataset {
-  id: string;
-  source: DataSource;
-  filename: string;
-  date: string;
-  time: string;
-  data: any[];
-}
-
 export default function SandboxPage() {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>('both');
+  const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
   const [leftWidth, setLeftWidth] = useState(70);
   const [isDragging, setIsDragging] = useState(false);
 
-  const [selectedSource, setSelectedSource] = useState<DataSource>('thread');
-  const [availableFiles, setAvailableFiles] = useState<DataFile[]>([]);
-  const [selectedDatasets, setSelectedDatasets] = useState<SelectedDataset[]>([]);
-  const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [dataStats, setDataStats] = useState<any>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [expandedDatasets, setExpandedDatasets] = useState<Set<number>>(new Set());
-  const [collapsedDatasets, setCollapsedDatasets] = useState<Set<string>>(new Set());
+  // New state for the redesigned interface
+  const [activeTab, setActiveTab] = useState<TabType>('intelligence');
+  const [dataTabs, setDataTabs] = useState<DataTab[]>([]);
+  const [activeDataTabId, setActiveDataTabId] = useState<string | null>(null);
+  const [showDataDashboard, setShowDataDashboard] = useState(false);
 
-  // 資料來源配置
-  const dataSources = [
-    {
-      id: 'thread' as DataSource,
-      name: 'Thread',
-      icon: MessageSquare,
-      description: '社群討論串資料',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      id: 'ptt' as DataSource,
-      name: 'PTT',
-      icon: Database,
-      description: 'PTT論壇資料',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-    },
-    {
-      id: 'petition' as DataSource,
-      name: '陳情系統',
-      icon: FileText,
-      description: '政府陳情案件資料',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-  ];
 
-  // 載入可用檔案列表
-  const loadAvailableFiles = async (source: DataSource) => {
-    try {
-      setIsLoading(true);
-      console.log(`正在載入 ${source} 的檔案列表...`);
 
-      const [filesResponse, statsResponse] = await Promise.all([
-        fetch(`http://localhost:8021/api/sandbox/files?source=${source}`),
-        fetch(`http://localhost:8021/api/sandbox/stats?source=${source}`)
-      ]);
-
-      console.log(`檔案API回應狀態: ${filesResponse.status}`);
-      console.log(`統計API回應狀態: ${statsResponse.status}`);
-
-      if (filesResponse.ok) {
-        const files = await filesResponse.json();
-        console.log('載入的檔案:', files);
-        setAvailableFiles(files);
-      } else {
-        console.error('檔案API錯誤:', await filesResponse.text());
-        // 如果API失敗，使用模擬資料
-        const mockFiles = [
-          {
-            filename: `${source}_2025-08-27_04-36-02.csv`,
-            date: '2025-08-27',
-            time: '04:36:02',
-            fullPath: `/data/${source}/${source}_2025-08-27_04-36-02.csv`
-          },
-          {
-            filename: `${source}_2025-08-26_15-20-15.csv`,
-            date: '2025-08-26',
-            time: '15:20:15',
-            fullPath: `/data/${source}/${source}_2025-08-26_15-20-15.csv`
-          }
-        ];
-        console.log('使用模擬檔案資料:', mockFiles);
-        setAvailableFiles(mockFiles);
-      }
-
-      if (statsResponse.ok) {
-        const stats = await statsResponse.json();
-        console.log('載入的統計:', stats);
-        setDataStats(stats);
-      } else {
-        console.error('統計API錯誤:', await statsResponse.text());
-        // 使用模擬統計資料
-        setDataStats({
-          total_files: 2,
-          total_records: 100,
-          latest_update: '2025-08-27 04:36:02'
-        });
-      }
-    } catch (error) {
-      console.error('載入檔案列表失敗:', error);
-      // 網路錯誤時使用模擬資料
-      const mockFiles = [
-        {
-          filename: `${source}_2025-08-27_04-36-02.csv`,
-          date: '2025-08-27',
-          time: '04:36:02',
-          fullPath: `/data/${source}/${source}_2025-08-27_04-36-02.csv`
-        }
-      ];
-      setAvailableFiles(mockFiles);
-      setDataStats({
-        total_files: 1,
-        total_records: 50,
-        latest_update: '2025-08-27 04:36:02'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // 載入檔案資料
   const loadFileData = async (filename: string) => {
@@ -180,144 +73,121 @@ export default function SandboxPage() {
     return mockData;
   };
 
-  // 更新Session上下文，支援多個資料集
-  const updateSessionContext = (datasets: SelectedDataset[]) => {
-    if (datasets.length === 0) return;
-
-    if (datasets.length === 1) {
-      const dataset = datasets[0];
-      sessionManager.setFileContext({
-        filePath: `sandbox/${dataset.filename}`,
-        fileName: `${dataset.source}_${dataset.date}_${dataset.time}`,
-        fileType: 'csv',
-        content: dataset.data
-      });
-    } else {
-      // 多檔案情況：保存每個檔案的詳細資訊
-      const filesData = datasets.map(dataset => ({
-        source: dataset.source,
-        date: dataset.date,
-        time: dataset.time,
-        filename: dataset.filename,
-        data: dataset.data
-      }));
-
-      sessionManager.setMultiFileContext({
-        files: filesData,
-        totalFiles: datasets.length
-      });
-    }
-  };
-
-  // 添加資料集到分析列表
-  const addDataset = async (source: DataSource, file: DataFile) => {
+  // Handle opening new data tab
+  const handleOpenDataTab = async (source: DataSource, file: DataFile) => {
     const data = await loadFileData(file.filename);
-    const dataset: SelectedDataset = {
-      id: `${source}_${file.filename}`,
+    const newTab: DataTab = {
+      id: `${source}_${file.filename}_${Date.now()}`,
+      title: `${source.toUpperCase()} ${file.date}`,
       source,
       filename: file.filename,
       date: file.date,
       time: file.time,
-      data
+      data,
     };
 
-    setSelectedDatasets(prev => {
-      const existing = prev.find(d => d.id === dataset.id);
-      if (existing) return prev;
-      const newDatasets = [...prev, dataset];
-      updateSessionContext(newDatasets);
-      return newDatasets;
-    });
+    setDataTabs(prev => [...prev, newTab]);
+    setActiveDataTabId(newTab.id);
+    setShowDataDashboard(true);
   };
 
-  // 移除資料集
-  const removeDataset = (id: string) => {
-    setSelectedDatasets(prev => {
-      const removedIndex = prev.findIndex(d => d.id === id);
-      const newDatasets = prev.filter(d => d.id !== id);
-
-      // 調整activeDatasetIndex
-      if (removedIndex <= activeDatasetIndex && activeDatasetIndex > 0) {
-        setActiveDatasetIndex(activeDatasetIndex - 1);
-      } else if (newDatasets.length === 0) {
-        setActiveDatasetIndex(0);
-      } else if (activeDatasetIndex >= newDatasets.length) {
-        setActiveDatasetIndex(newDatasets.length - 1);
-      }
-
-      updateSessionContext(newDatasets);
-      return newDatasets;
-    });
-  };
-
-  // 刷新資料
-  const refreshData = async () => {
-    if (selectedSource === 'petition') {
-      alert('陳情系統資料為靜態資料，無需刷新');
-      return;
-    }
-
-    try {
-      setIsRefreshing(true);
-      console.log(`正在刷新 ${selectedSource} 資料...`);
-
-      const response = await fetch(`http://localhost:8021/api/sandbox/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ source: selectedSource }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('刷新成功:', result);
-        alert(`資料刷新成功！新檔案：${result.filename}`);
-        await loadAvailableFiles(selectedSource);
+  // Handle closing data tab
+  const handleCloseDataTab = (tabId: string) => {
+    setDataTabs(prev => prev.filter(tab => tab.id !== tabId));
+    if (activeDataTabId === tabId) {
+      const remainingTabs = dataTabs.filter(tab => tab.id !== tabId);
+      if (remainingTabs.length > 0) {
+        setActiveDataTabId(remainingTabs[remainingTabs.length - 1].id);
       } else {
-        console.error('刷新API錯誤:', await response.text());
-        // 即使API失敗，也重新載入檔案列表（可能會使用模擬資料）
-        await loadAvailableFiles(selectedSource);
-        alert('資料刷新完成（使用模擬資料）');
+        setActiveDataTabId(null);
+        setShowDataDashboard(false);
       }
-    } catch (error) {
-      console.error('刷新資料失敗:', error);
-      // 網路錯誤時也重新載入檔案列表
-      await loadAvailableFiles(selectedSource);
-      alert('資料刷新完成（使用模擬資料）');
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    loadAvailableFiles(selectedSource);
-  }, [selectedSource]);
+  // Handle tab selection with navigation
+  const handleTabSelect = (tabId: string) => {
+    setActiveDataTabId(tabId);
+    setActiveTab('data'); // 切換到數據展示頁面
+  };
 
-  // 點擊外部關閉下拉選單
+  // Handle unified tab change (static tabs + data tabs)
+  const handleUnifiedTabChange = (tabId: TabType | string) => {
+    if (tabId === 'intelligence' || tabId === 'warroom' || tabId === 'simulation') {
+      // Static tab selected
+      setActiveTab(tabId as TabType);
+      setActiveDataTabId(null); // Clear data tab selection
+      setShowDataDashboard(false); // Hide data dashboard
+    } else {
+      // Data tab selected
+      setActiveDataTabId(tabId as string);
+      setActiveTab('intelligence'); // Switch to intelligence page to show data
+      setShowDataDashboard(true); // Make sure data dashboard is visible
+    }
+  };
+
+  // Update session context based on open data tabs
+  const updateSessionContext = () => {
+    if (dataTabs.length === 0) return;
+
+    if (dataTabs.length === 1) {
+      const tab = dataTabs[0];
+      sessionManager.setFileContext({
+        filePath: `sandbox/${tab.filename}`,
+        fileName: `${tab.source}_${tab.date}_${tab.time}`,
+        fileType: 'csv',
+        content: tab.data
+      });
+    } else {
+      const filesData = dataTabs.map(tab => ({
+        source: tab.source,
+        date: tab.date,
+        time: tab.time,
+        filename: tab.filename,
+        data: tab.data
+      }));
+
+      sessionManager.setMultiFileContext({
+        files: filesData,
+        totalFiles: dataTabs.length
+      });
+    }
+  };
+
+
+
+  // Update session context when data tabs change
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.dropdown-container')) {
-        setDropdownOpen(false);
+    updateSessionContext();
+  }, [dataTabs]);
+
+  // Render current page content based on active tab
+  const renderPageContent = () => {
+    if (showDataDashboard && activeDataTabId) {
+      const activeDataTab = dataTabs.find(tab => tab.id === activeDataTabId);
+      if (activeDataTab) {
+        return (
+          <DataDashboard
+            dataTab={activeDataTab}
+            onClose={() => {
+              setShowDataDashboard(false);
+              setActiveDataTabId(null);
+            }}
+          />
+        );
       }
-    };
-
-    if (dropdownOpen) {
-      document.addEventListener('click', handleClickOutside);
     }
 
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [dropdownOpen]);
-
-  const getTimeOptions = () => {
-    return availableFiles.map((file, index) => ({
-      value: file.filename,
-      label: index === 0 ? `最新 (${file.date} ${file.time})` : `${file.date} ${file.time}`,
-      file
-    }));
+    switch (activeTab) {
+      case 'intelligence':
+        return <IntelligencePage onOpenDataTab={handleOpenDataTab} />;
+      case 'warroom':
+        return <WarRoomPage />;
+      case 'simulation':
+        return <SimulationPage />;
+      default:
+        return <IntelligencePage onOpenDataTab={handleOpenDataTab} />;
+    }
   };
 
   return (
@@ -334,229 +204,34 @@ export default function SandboxPage() {
       <div
         className="flex-1 grid relative overflow-hidden min-h-0"
         style={{
-          gridTemplateColumns: viewMode === 'both' ? `${leftWidth}% 8px ${100 - leftWidth}%` : '1fr',
+          gridTemplateColumns: viewMode === 'with-agent' ? `${leftWidth}% 8px ${100 - leftWidth}%` : '1fr',
           gridTemplateRows: '1fr',
         }}
       >
-        {(viewMode === 'left-only' || viewMode === 'both') && (
-          <div
-            className="h-full relative overflow-hidden min-h-0 flex flex-col"
-            style={{ gridColumn: viewMode === 'both' ? 1 : '1 / -1' }}
-          >
-            <div className="p-4 border-b border-border">
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {dataSources.map((source) => (
-                  <Card
-                    key={source.id}
-                    onClick={() => setSelectedSource(source.id)}
-                    className={cn(
-                      "p-3 cursor-pointer transition-all duration-200 hover:shadow-md",
-                      selectedSource === source.id
-                        ? "border-2 border-blue-500 bg-blue-50"
-                        : "border border-gray-200 hover:border-blue-300"
-                    )}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <source.icon className={cn("w-5 h-5", source.color)} />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{source.name}</div>
-                        <div className="text-xs text-gray-500">{source.description}</div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+        <div
+          className="h-full relative overflow-hidden min-h-0 flex flex-col"
+          style={{ gridColumn: viewMode === 'with-agent' ? 1 : '1 / -1' }}
+        >
 
-              <div className="flex items-center gap-2 mb-2">
-                {dataStats && (
-                  <div className="text-xs text-gray-600 flex-1">
-                    <span>檔案: {dataStats.total_files} | 資料: {dataStats.total_records} | 更新: {dataStats.latest_update || '無'}</span>
-                  </div>
-                )}
-                <div className="relative">
-                  <div className="flex gap-2">
-                    <div className="relative dropdown-container">
-                      <button
-                        className="flex h-9 w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                        disabled={isLoading}
-                      >
-                        <span className={availableFiles.length === 0 ? "text-muted-foreground" : ""}>
-                          {isLoading ? "載入中..." : availableFiles.length > 0 ? "選擇檔案" : "無可用檔案"}
-                        </span>
-                        <Calendar className="h-4 w-4 opacity-50" />
-                      </button>
 
-                      {dropdownOpen && availableFiles.length > 0 && (
-                        <div className="absolute top-full left-0 w-60 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-background shadow-lg">
-                          {getTimeOptions().map((option) => (
-                            <button
-                              key={option.value}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-left"
-                              onClick={() => {
-                                console.log('選擇檔案:', option.value);
-                                const file = availableFiles.find(f => f.filename === option.value);
-                                if (file) {
-                                  console.log('找到檔案:', file);
-                                  addDataset(selectedSource, file);
-                                  setDropdownOpen(false);
-                                } else {
-                                  console.error('找不到檔案:', option.value, '可用檔案:', availableFiles);
-                                }
-                              }}
-                            >
-                              <Calendar className="w-4 h-4" />
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+            {/* Main Page Content */}
+            <div className="flex-1 flex flex-col relative">
+              {renderPageContent()}
 
-                    {selectedSource !== 'petition' && (
-                      <Button
-                        size="sm"
-                        onClick={refreshData}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2"
-                      >
-                        <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
-                        刷新
-                      </Button>
-                    )}
-                  </div>
-                </div>
+              {/* Bottom Parallelogram Tabs - positioned absolutely at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 z-30">
+                <ParallelogramTabs
+                  activeTab={activeDataTabId || activeTab}
+                  onTabChange={handleUnifiedTabChange}
+                  dataTabs={dataTabs}
+                  onCloseDataTab={handleCloseDataTab}
+                />
               </div>
             </div>
+        </div>
 
-            <div className="flex-1 overflow-hidden flex flex-col">
-              {selectedDatasets.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <Database className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">請選擇時間來添加資料集</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col">
-                  <div className="px-4 py-2 border-b border-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">資料集 ({selectedDatasets.length})</span>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedDatasets.map((dataset, index) => (
-                        <div
-                          key={dataset.id}
-                          className="flex items-center justify-between w-full p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
-                          onClick={() => {
-                            const newCollapsed = new Set(collapsedDatasets);
-                            if (collapsedDatasets.has(dataset.id)) {
-                              newCollapsed.delete(dataset.id);
-                            } else {
-                              newCollapsed.add(dataset.id);
-                            }
-                            setCollapsedDatasets(newCollapsed);
-                          }}
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            {React.createElement(dataSources.find(s => s.id === dataset.source)!.icon, {
-                              className: cn("w-4 h-4", dataSources.find(s => s.id === dataset.source)!.color)
-                            })}
-                            <div className="text-left">
-                              <div className="text-sm font-medium text-gray-900">
-                                {dataSources.find(s => s.id === dataset.source)?.name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {dataset.date} {dataset.time} ({dataset.data.length} 筆)
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-400">
-                              {collapsedDatasets.has(dataset.id) ? '▶' : '▼'}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeDataset(dataset.id);
-                              }}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedDatasets.map((dataset, index) =>
-                    !collapsedDatasets.has(dataset.id) && (
-                      <div key={dataset.id} className="flex-1 overflow-hidden p-2 m-0">
-                        <div className="h-96 overflow-y-auto space-y-2 border rounded-md p-2">
-                          {dataset.data.slice(0, 50).map((item, itemIndex) => {
-                            const isExpanded = expandedDatasets.has(itemIndex);
-                            return (
-                              <Card key={itemIndex} className="p-3 hover:bg-gray-50">
-                                <div className="text-sm">
-                                  {typeof item === 'object' ? (
-                                    <div className="space-y-1">
-                                      {Object.entries(item).slice(0, isExpanded ? undefined : 3).map(([key, value]) => (
-                                        <div key={key} className="flex">
-                                          <span className="text-gray-600 w-20 text-xs shrink-0">{key}:</span>
-                                          <span className={cn(
-                                            "text-gray-900 text-xs flex-1",
-                                            !isExpanded && "truncate"
-                                          )}>
-                                            {String(value)}
-                                          </span>
-                                        </div>
-                                      ))}
-                                      {Object.entries(item).length > 3 && (
-                                        <button
-                                          className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                                          onClick={() => {
-                                            const newExpanded = new Set(expandedDatasets);
-                                            if (isExpanded) {
-                                              newExpanded.delete(itemIndex);
-                                            } else {
-                                              newExpanded.add(itemIndex);
-                                            }
-                                            setExpandedDatasets(newExpanded);
-                                          }}
-                                        >
-                                          {isExpanded
-                                            ? "收合"
-                                            : `展開 (還有 ${Object.entries(item).length - 3} 個欄位)`
-                                          }
-                                        </button>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-900">{String(item)}</span>
-                                  )}
-                                </div>
-                              </Card>
-                            );
-                          })}
-                          {dataset.data.length > 50 && (
-                            <div className="text-center text-xs text-gray-500 py-2">
-                              顯示前 50 筆，共 {dataset.data.length} 筆資料
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {viewMode === 'both' && (
+        {/* Drag Handle */}
+        {viewMode === 'with-agent' && (
           <div
             className={cn(
               "drag-handle drag-handle-horizontal",
@@ -616,36 +291,29 @@ export default function SandboxPage() {
         )}
 
         {/* Right Panel - Agent Panel */}
-        <div
-          className="h-full overflow-hidden min-h-0"
-          style={{
-            gridColumn: viewMode === 'both' ? 3 : '1 / -1',
-          }}
-        >
-          <AgentPanel
-            onDragStateChange={(dragging) => setIsDragging(dragging)}
-            sandboxContext={{
-              selectedDatasets: selectedDatasets,
-              filePaths: selectedDatasets.map(dataset => `../data/sandbox/${dataset.filename}`)
-            }}
-          />
-        </div>
-
-        {/* Full Left View */}
-        {viewMode === 'left-only' && (
+        {viewMode === 'with-agent' && (
           <div
-            className="h-full relative overflow-hidden min-h-0"
+            className="h-full overflow-hidden min-h-0"
             style={{
-              gridColumn: '1 / -1',
+              gridColumn: 3,
             }}
           >
-            {/* Left Panel Content */}
-            <div className="h-full flex flex-col bg-background">
-              {/* 這裡放原本左側的內容 */}
-            </div>
+            <AgentPanel
+              onDragStateChange={(dragging) => setIsDragging(dragging)}
+              sandboxContext={{
+                selectedDatasets: dataTabs.map(tab => ({
+                  id: tab.id,
+                  source: tab.source,
+                  filename: tab.filename,
+                  date: tab.date,
+                  time: tab.time,
+                  data: tab.data
+                })),
+                filePaths: dataTabs.map(tab => `../data/sandbox/${tab.filename}`)
+              }}
+            />
           </div>
         )}
-
 
       </div>
     </div>
