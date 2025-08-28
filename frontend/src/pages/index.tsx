@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
-import { Send, Globe, Monitor, Building, Brain, Mail, ExternalLink, BarChart3 } from 'lucide-react';
+import { Globe, Monitor, Building, Brain, Mail, ExternalLink, BarChart3 } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { cn } from '@/utils/cn';
 import Header from '@/components/ui/header';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { RainbowButton } from '@/components/RainbowButton';
 import { LensOSLogo } from '@/components/LensLogo';
 
 const HomePage: React.FC = () => {
-  const [agentInput, setAgentInput] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const router = useRouter();
-
-  const handleAgentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (agentInput.trim()) {
-      // TODO: 處理 Supervisor Agent 輸入
-      console.log('Supervisor Agent Input:', agentInput);
-    }
-  };
 
 
 
@@ -31,7 +19,9 @@ const HomePage: React.FC = () => {
       subtitle: '開啟網站',
       path: '/browser?url=https://www.google.com',
       description: '將任何網站無縫接入AGI，自動處理網頁數據轉換為AI可理解的Context',
-      hoverColor: 'hover:border-primary hover:shadow-primary/20',
+      gradient: 'from-blue-500 to-cyan-500',
+      bgGradient: 'from-blue-50 to-cyan-50',
+      iconColor: 'text-blue-600',
     },
     {
       icon: Monitor,
@@ -39,7 +29,9 @@ const HomePage: React.FC = () => {
       subtitle: '開啟桌面',
       path: '/local',
       description: '透過AGI處理桌面數據，自定義規則讓AI理解並處理您的本地文件',
-      hoverColor: 'hover:border-primary hover:shadow-primary/20',
+      gradient: 'from-green-500 to-emerald-500',
+      bgGradient: 'from-green-50 to-emerald-50',
+      iconColor: 'text-green-600',
     },
     {
       icon: Building,
@@ -47,20 +39,24 @@ const HomePage: React.FC = () => {
       subtitle: '開啟SaaS系統',
       path: '/browser?url=https://www.taaze.ai/business-intelligent',
       description: '接入企業SaaS系統，使用企業規則讓Supervisor Agent處理業務數據',
-      hoverColor: 'hover:border-primary hover:shadow-primary/20',
+      gradient: 'from-purple-500 to-violet-500',
+      bgGradient: 'from-purple-50 to-violet-50',
+      iconColor: 'text-purple-600',
     },
     {
       icon: BarChart3,
-      title: 'AI Election Sandbox',
-      subtitle: 'AI選情沙盒',
+      title: 'AI Sandbox',
+      subtitle: 'AI 沙盒',
       path: '/sandbox',
-      description: '智能分析選情數據，整合Thread、PTT、陳情系統等多元資料來源，提供深度政治輿情洞察',
-      hoverColor: 'hover:border-orange-500 hover:shadow-orange-500/20',
+      description: '整合多元資料來源，與 AI 智能分析推理，在多次的策略模擬執行中，找出適合的道路',
+      gradient: 'from-orange-500 to-red-500',
+      bgGradient: 'from-orange-50 to-red-50',
+      iconColor: 'text-orange-600',
     },
   ];
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
+    <div className="h-screen w-screen flex flex-col bg-background m-0 p-0 overflow-hidden">
       {/* Header */}
       <Header
         rightContent={
@@ -75,112 +71,135 @@ const HomePage: React.FC = () => {
         }
       />
 
-      {/* Main Content - 中央主視覺 */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 pb-32">
-        <div className="max-w-6xl w-full mx-auto">
-          {/* 主標題和描述 */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center space-x-4 mb-10">
-              <LensOSLogo size={100} />
-              <div>
-                <h1 className="text-5xl font-light tracking-wider bg-gradient-to-r from-blue-600 via-purple-600 to-blue-400 bg-clip-text text-transparent">
-                  LENS OS
-                </h1>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col justify-center items-center relative">
+        {/* 上半部分 - 分為圖片區和文字區 */}
+        <div className="flex-1 relative overflow-hidden w-full">
+          {/* 圖片區域 - 上半部，帶更斜的切割，往上移動 */}
+          <div className="absolute inset-0 w-full" style={{ top: '-5%', height: '75%', clipPath: 'polygon(0 0, 100% 0, 100% 55%, 0 90%)' }}>
+            {hoveredCard !== null ? (
+              // 顯示對應卡片的圖片（暫用橘色色塊）
+              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 relative">
+                {/* 沿著切割線方向的漸層 - 從左上到右下漸變到透明 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 via-orange-300/40 to-white/80"></div>
+                {/* 卡片圖標在圖片區域 */}
+                <div className="absolute inset-0 flex items-center justify-center" style={{ top: '-10%' }}>
+                  <div className="w-32 h-32 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    {React.createElement(featureCards[hoveredCard].icon, { className: "w-16 h-16 text-white" })}
+                  </div>
+                </div>
               </div>
-            </div>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              幫助企業無縫銜接AGI的智能系統
-            </p>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mt-2">
-              為傳統產業注入智能化動力，全方位整合網站、桌面和企業系統的數據處理能力
-            </p>
+            ) : (
+              // 預設 LENS OS 圖片
+              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 relative">
+                {/* 沿著切割線方向的漸層 - 從左上到右下漸變到透明 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 via-orange-300/40 to-white/80"></div>
+                <div className="absolute inset-0 flex items-center justify-center" style={{ top: '-10%' }}>
+                  <div className="w-32 h-32 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <LensOSLogo size={64} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* 四個主要卡片選項 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featureCards.map((card, index) => (
-              <div key={index} className="relative">
-                <Card
-                  onClick={() => router.push(card.path)}
-                  className={cn(
-                    "relative group cursor-pointer transition-all duration-300 border-2 border-border p-8",
-                    "hover:scale-105 hover:shadow-xl",
-                    card.hoverColor
-                  )}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                      <card.icon className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground mb-1">
-                      {card.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {card.title === 'AI Election Sandbox' ? (
-                        <span className="flex items-center justify-center w-full">
-                          <span className="text-muted-foreground/50">{'<<'}</span>
-                          <span className="mx-3">{card.subtitle}</span>
-                          <span className="text-muted-foreground/50">{'>>'}</span>
-                        </span>
-                      ) : (
-                        card.subtitle
-                      )}
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {card.description}
-                    </p>
-                  </div>
-                </Card>
+          {/* 文字區域 - 下半部，右移配合斜線 */}
+          <div className="absolute inset-0 w-full flex items-start px-6 pt-4" style={{ top: '45%', paddingLeft: '35%', paddingRight: '5%' }}>
+            <div className="max-w-4xl w-full mx-auto text-right">
+              {hoveredCard !== null ? (
+                // 顯示被 hover 的卡片內容
+                <div className="space-y-4 animate-in fade-in-0 duration-300">
+                  <h1 className="text-4xl font-bold text-foreground mb-3">
+                    {featureCards[hoveredCard].title}
+                  </h1>
+                  <p className="text-xl text-muted-foreground mb-4">
+                    {featureCards[hoveredCard].subtitle}
+                  </p>
+                  <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+                    {featureCards[hoveredCard].description}
+                  </p>
 
-                {/* 快捷按鈕 - 只在 Open Website 卡片上顯示 */}
-                {card.title === 'Open Website' && (
-                  <div className="absolute top-full left-0 right-0 mt-2 opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
-                    <div className="flex gap-2 justify-center">
+                  {/* Open Website 的快捷鏈接 */}
+                  {featureCards[hoveredCard].title === 'Open Website' && (
+                    <div className="flex gap-4 justify-end">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push('/browser?url=https://mail.google.com');
-                        }}
-                        className="flex items-center px-2 py-1 gap-2 text-sm blue-button-white-text rounded-lg transition-all duration-200"
+                        onClick={() => router.push('/browser?url=https://mail.google.com')}
+                        className="flex items-center px-4 py-2 gap-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors !text-white"
                       >
-                        <Mail className="w-3 h-3" />
+                        <Mail className="w-4 h-4" />
                         Gmail
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push('/browser?url=https://www.ask-lens.ai');
-                        }}
-                        className="flex items-center px-2 py-1 gap-2 text-sm blue-button-white-text rounded-lg transition-all duration-200"
+                        onClick={() => router.push('/browser?url=https://www.ask-lens.ai')}
+                        className="flex items-center px-4 py-2 gap-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors !text-white"
                       >
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-4 h-4" />
                         Lens
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              ) : (
+                // 預設顯示 LENS OS 介紹
+                <div className="space-y-4 animate-in fade-in-0 duration-300">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 bg-clip-text text-transparent mb-3">
+                    LENS OS
+                  </h1>
+                  <p className="text-xl text-muted-foreground mb-4">
+                    幫助企業無縫銜接AGI的智能系統
+                  </p>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    為傳統產業注入智能化動力，全方位整合網站、桌面和企業系統的數據處理能力
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 底部橢圓控制區域 - 直接到底部 */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-orange-100 via-orange-50 to-transparent" style={{borderRadius: '50% 50% 0 0 / 100% 100% 0 0'}}>
+        <div className="relative w-full h-full flex items-center justify-center">
+
+          {/* 左側兩個 Logo type 圖標 */}
+          <div className="absolute left-1/2 bottom-6 flex gap-6 transform -translate-x-1/2" style={{ marginLeft: '-180px' }}>
+            {featureCards.slice(0, 2).map((card, index) => (
+              <div
+                key={index}
+                className="cursor-pointer transition-all duration-300 hover:scale-110"
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
+                onClick={() => router.push(card.path)}
+              >
+                {React.createElement(card.icon, { className: "w-12 h-12 text-primary" })}
+              </div>
+            ))}
+          </div>
+
+          {/* 中央 LENS OS */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+            <span className="text-5xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+              LENS OS
+            </span>
+          </div>
+
+          {/* 右側兩個 Logo type 圖標 */}
+          <div className="absolute left-1/2 bottom-6 flex gap-6 transform -translate-x-1/2" style={{ marginLeft: '180px' }}>
+            {featureCards.slice(2, 4).map((card, index) => (
+              <div
+                key={index + 2}
+                className="cursor-pointer transition-all duration-300 hover:scale-110"
+                onMouseEnter={() => setHoveredCard(index + 2)}
+                onMouseLeave={() => setHoveredCard(null)}
+                onClick={() => router.push(card.path)}
+              >
+                {React.createElement(card.icon, { className: "w-12 h-12 text-primary" })}
               </div>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* 底部 Supervisor Agent Input */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border p-4">
-        <form
-          onSubmit={handleAgentSubmit}
-          className="max-w-4xl mx-auto flex gap-3"
-        >
-          <Input
-            value={agentInput}
-            onChange={(e) => setAgentInput(e.target.value)}
-            placeholder="向 Supervisor Agent 提問或下達指令..."
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" className="blue-button-white-text">
-            <Send className="w-4 h-4 text-white" />
-          </Button>
-        </form>
       </div>
     </div>
   );

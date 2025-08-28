@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Calendar, Database, MessageSquare, FileText, BarChart3 } from 'lucide-react';
+import { RefreshCw, Calendar, Database, MessageSquare, FileText, BarChart3, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import IconSidebar from '@/components/ui/IconSidebar';
 import { cn } from '@/utils/cn';
 
 type DataSource = 'thread' | 'ptt' | 'petition';
@@ -157,64 +158,33 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
     loadAvailableFiles('thread');
   }, []);
 
+  // 準備側邊欄項目數據
+  const sidebarItems = dataSources.map((source) => ({
+    id: source.id,
+    icon: source.icon,
+    label: source.name,
+    isActive: selectedSource === source.id,
+    onClick: () => setSelectedSource(source.id),
+    color: selectedSource === source.id ? 'orange' : 'blue'
+  }));
+
+  const handleAddNew = () => {
+    // 創建新數據源的邏輯
+    console.log('創建新數據源');
+  };
+
   return (
-    <div className={cn("h-full flex", className)}>
-      {/* Left Sidebar */}
-      <div className="w-80 border-r border-border bg-card flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground mb-4">數據來源</h2>
-          
-          {/* Data Source Selection */}
-          <div className="space-y-2">
-            {dataSources.map((source) => (
-              <Card
-                key={source.id}
-                onClick={() => setSelectedSource(source.id)}
-                className={cn(
-                  "p-3 cursor-pointer transition-all duration-200 hover:shadow-md",
-                  selectedSource === source.id
-                    ? "border-2 border-blue-500 bg-blue-50"
-                    : "border border-gray-200 hover:border-blue-300"
-                )}
-              >
-                <div className="flex items-center space-x-3">
-                  <source.icon className={cn("w-5 h-5", source.color)} />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{source.name}</div>
-                    <div className="text-xs text-gray-500">{source.description}</div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Stats */}
-          {dataStats && (
-            <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-2 rounded">
-              <div>檔案: {dataStats.total_files}</div>
-              <div>資料: {dataStats.total_records}</div>
-              <div>更新: {dataStats.latest_update || '無'}</div>
-            </div>
-          )}
-
-          {/* Refresh Button */}
-          <Button
-            onClick={handleRefreshData}
-            disabled={isRefreshing}
-            className="w-full mt-4"
-            variant="outline"
-          >
-            <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
-            {isRefreshing ? '刷新中...' : '刷新資料'}
-          </Button>
-        </div>
-      </div>
+    <div className={cn("h-full flex overflow-hidden", className)}>
+      {/* Left Icon Sidebar */}
+      <IconSidebar
+        items={sidebarItems}
+        onAddNew={handleAddNew}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Content Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-border flex-shrink-0">
           <h3 className="text-lg font-semibold">
             {dataSources.find(s => s.id === selectedSource)?.name}
           </h3>
@@ -224,7 +194,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
         </div>
 
         {/* File List */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {availableFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <Database className="w-12 h-12 mb-4 opacity-50" />

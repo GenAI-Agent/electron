@@ -180,13 +180,13 @@ export default function SandboxPage() {
 
     switch (activeTab) {
       case 'intelligence':
-        return <IntelligencePage onOpenDataTab={handleOpenDataTab} />;
+        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab} />;
       case 'warroom':
-        return <WarRoomPage />;
+        return <WarRoomPage className="h-full" />;
       case 'simulation':
-        return <SimulationPage />;
+        return <SimulationPage className="h-full" />;
       default:
-        return <IntelligencePage onOpenDataTab={handleOpenDataTab} />;
+        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab} />;
     }
   };
 
@@ -215,11 +215,14 @@ export default function SandboxPage() {
 
 
             {/* Main Page Content */}
-            <div className="flex-1 flex flex-col relative">
-              {renderPageContent()}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Page Content Area - with proper scrolling */}
+              <div className="flex-1 overflow-hidden">
+                {renderPageContent()}
+              </div>
 
-              {/* Bottom Parallelogram Tabs - positioned absolutely at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 z-30">
+              {/* Bottom Parallelogram Tabs - fixed at bottom */}
+              <div className="flex-shrink-0 z-30">
                 <ParallelogramTabs
                   activeTab={activeDataTabId || activeTab}
                   onTabChange={handleUnifiedTabChange}

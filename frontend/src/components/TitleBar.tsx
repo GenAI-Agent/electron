@@ -114,25 +114,27 @@ const TitleBar: React.FC<TitleBarProps> = ({
       </div>
 
       {/* Navigation Arrows */}
-      <div
-        className="flex items-center gap-1 ml-2"
-        style={{ WebkitAppRegion: 'no-drag' }}
-      >
-        <button
-          onClick={() => router.back()}
-          className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
-          title="上一頁"
+      {showNavigation && (
+        <div
+          className="flex items-center gap-1 ml-2"
+          style={{ WebkitAppRegion: 'no-drag' }}
         >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => window.history.forward()}
-          className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
-          title="下一頁"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+          <button
+            onClick={() => router.back()}
+            className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+            title="上一頁"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => window.history.forward()}
+            className="p-1 rounded hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
+            title="下一頁"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Title Display / URL Input - 絕對置中，佔頁面寬度的一半 */}
       <div

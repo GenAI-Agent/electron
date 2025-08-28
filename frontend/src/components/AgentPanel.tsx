@@ -716,7 +716,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         }}
       ></div>
 
-      {/* Bottom Panel (Input) - 更紧凑的输入区域 */}
+      {/* Bottom Panel (Input) - 動態高度但底部固定的输入区域 */}
       <div className="flex flex-col min-h-[180px] p-4 pb-2 relative z-[2] bg-card border-t border-border">
         <form
           onSubmit={handleSubmit}

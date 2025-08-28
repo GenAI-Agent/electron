@@ -191,44 +191,49 @@ const Header: React.FC<HeaderProps> = ({
               showUrlInput ? "cursor-pointer" : "cursor-default"
             )}
           >
-            {/* Left Double Arrows - Back Navigation */}
-            <button
-              className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
-              onClick={() => router.back()}
-              title="上一頁"
-              style={{ WebkitAppRegion: 'no-drag' }}
-            >
-              {/* Outer Left Arrow */}
-              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {/* Inner Left Arrow */}
-              <svg className="w-4 h-4 -ml-1" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+            {/* Navigation arrows in title area - only show if showNavigation is true */}
+            {showNavigation && (
+              <>
+                {/* Left Double Arrows - Back Navigation */}
+                <button
+                  className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
+                  onClick={() => router.back()}
+                  title="上一頁"
+                  style={{ WebkitAppRegion: 'no-drag' }}
+                >
+                  {/* Outer Left Arrow */}
+                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                    <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* Inner Left Arrow */}
+                  <svg className="w-4 h-4 -ml-1" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+
+                {/* Right Double Arrows - Forward Navigation */}
+                <button
+                  className="absolute right-2 flex items-center hover:opacity-70 transition-opacity"
+                  onClick={() => window.history.forward()}
+                  title="下一頁"
+                  style={{ WebkitAppRegion: 'no-drag' }}
+                >
+                  {/* Inner Right Arrow */}
+                  <svg className="w-4 h-4 -mr-1" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {/* Outer Right Arrow */}
+                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                    <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </>
+            )}
 
             {/* Title Text */}
-            <span className="mx-12">
+            <span className={showNavigation ? "mx-12" : ""}>
               {showUrlInput ? urlInput || title : title}
             </span>
-
-            {/* Right Double Arrows - Forward Navigation */}
-            <button
-              className="absolute right-2 flex items-center hover:opacity-70 transition-opacity"
-              onClick={() => window.history.forward()}
-              title="下一頁"
-              style={{ WebkitAppRegion: 'no-drag' }}
-            >
-              {/* Inner Right Arrow */}
-              <svg className="w-4 h-4 -mr-1" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {/* Outer Right Arrow */}
-              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
           </div>
         )}
       </div>

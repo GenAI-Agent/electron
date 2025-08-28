@@ -132,9 +132,9 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
   }
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
+    <div className={cn("h-full flex flex-col bg-background overflow-hidden", className)}>
       {/* Header */}
-      <div className="p-4 border-b border-border bg-card">
+      <div className="p-4 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold">
@@ -193,7 +193,7 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         {currentView === 'dashboard' && metrics && (
           <div className="space-y-6">
             {/* Key Metrics */}
