@@ -3,7 +3,8 @@ import { BarChart3, TrendingUp, PieChart, Activity, Download, RefreshCw, Eye, Ey
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
-import { DataTab } from '@/components/DataTabManager';
+import { DataTab } from '@/pages/sandbox';
+import SocialMediaAnalytics from '@/components/sandbox/SocialMediaAnalytics';
 
 interface DataDashboardProps {
   dataTab: DataTab;
@@ -132,7 +133,7 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
   }
 
   return (
-    <div className={cn("h-full flex flex-col bg-background overflow-hidden", className)}>
+    <div className={cn("h-full flex flex-col bg-background overflow-hidden pb-14", className)}>
       {/* Header */}
       <div className="p-4 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -145,42 +146,6 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            {/* View Toggle */}
-            <div className="flex rounded-lg border border-border overflow-hidden">
-              <button
-                onClick={() => setCurrentView('dashboard')}
-                className={cn(
-                  "px-3 py-1 text-xs font-medium transition-colors",
-                  currentView === 'dashboard' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-accent"
-                )}
-              >
-                儀表板
-              </button>
-              <button
-                onClick={() => setCurrentView('analysis')}
-                className={cn(
-                  "px-3 py-1 text-xs font-medium transition-colors",
-                  currentView === 'analysis' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-accent"
-                )}
-              >
-                數據分析
-              </button>
-              <button
-                onClick={() => setCurrentView('raw')}
-                className={cn(
-                  "px-3 py-1 text-xs font-medium transition-colors",
-                  currentView === 'raw' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-accent"
-                )}
-              >
-                原始數據
-              </button>
-            </div>
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               匯出
@@ -194,7 +159,16 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {currentView === 'dashboard' && metrics && (
+        {/* Check if this is an analytics tab */}
+        {dataTab.isAnalytics ? (
+          <SocialMediaAnalytics
+            analyticsData={{
+              source: dataTab.source,
+              data: dataTab.data,
+              sourceName: dataTab.source.charAt(0).toUpperCase() + dataTab.source.slice(1)
+            }}
+          />
+        ) : currentView === 'dashboard' && metrics && (
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

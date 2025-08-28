@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import AgentPanel from '@/components/AgentPanel';
 import Header, { ViewMode } from '@/components/ui/header';
 import ParallelogramTabs, { TabType } from '@/components/ParallelogramTabs';
-import { DataTab } from '@/components/DataTabManager';
 import IntelligencePage from '@/components/sandbox/IntelligencePage';
 import WarRoomPage from '@/components/sandbox/WarRoomPage';
 import WarGamePage from '@/components/sandbox/WarGamePage';
@@ -12,8 +10,18 @@ import DataDashboard from '@/components/sandbox/DataDashboard';
 import { cn } from '@/utils/cn';
 import { sessionManager } from '@/utils/sessionManager';
 
-type DataSource = 'threads' | 'twitter' | 'petition';
-
+type DataSource = 'threads' | 'twitter' | 'facebook' | 'ptt' | 'petition';
+export interface DataTab {
+  id: string;
+  title: string;
+  source: DataSource;
+  filename: string;
+  date: string;
+  time: string;
+  data: any[];
+  isActive?: boolean;
+  isAnalytics?: boolean;
+}
 interface DataFile {
   filename: string;
   date: string;
@@ -64,16 +72,22 @@ export default function SandboxPage() {
   };
 
   // Handle opening new data tab
-  const handleOpenDataTab = async (source: DataSource, file: DataFile) => {
-    const data = await loadFileData(file.filename);
+  const handleOpenDataTab = async (source: DataSource, file: DataFile, providedData?: any[]) => {
+    // Use provided data if available (for analytics), otherwise load from file
+    const data = providedData || await loadFileData(file.filename);
+    
+    // Check if this is an analytics tab
+    const isAnalytics = file.filename.includes('_analytics');
+    
     const newTab: DataTab = {
       id: `${source}_${file.filename}_${Date.now()}`,
-      title: `${source.toUpperCase()} ${file.date}`,
+      title: isAnalytics ? `${source.toUpperCase()} 分析報告` : `${source.toUpperCase()} ${file.date}`,
       source: source as DataSource,
       filename: file.filename,
       date: file.date,
       time: file.time,
       data,
+      isAnalytics, // Add analytics flag
     };
 
     setDataTabs(prev => [...prev, newTab]);
@@ -93,12 +107,6 @@ export default function SandboxPage() {
         setShowDataDashboard(false);
       }
     }
-  };
-
-  // Handle tab selection with navigation
-  const handleTabSelect = (tabId: string) => {
-    setActiveDataTabId(tabId);
-    setActiveTab('data'); // 切換到數據展示頁面
   };
 
   // Handle unified tab change (static tabs + data tabs)
@@ -144,8 +152,6 @@ export default function SandboxPage() {
     }
   };
 
-
-
   // Update session context when data tabs change
   useEffect(() => {
     updateSessionContext();
@@ -170,13 +176,13 @@ export default function SandboxPage() {
 
     switch (activeTab) {
       case 'intelligence':
-        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab} />;
+        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab as any} />;
       case 'warroom':
         return <WarRoomPage className="h-full" />;
       case 'simulation':
         return <WarGamePage className="h-full" />;
       default:
-        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab} />;
+        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab as any} />;
     }
   };
 
@@ -210,7 +216,7 @@ export default function SandboxPage() {
             </div>
 
             {/* Bottom Parallelogram Tabs - fixed at bottom */}
-            <div className="flex-shrink-0 bg-card z-30">
+            <div className="fixed bottom-0 left-0 w-fit bg-card z-30">
               <ParallelogramTabs
                 activeTab={activeDataTabId || activeTab}
                 onTabChange={handleUnifiedTabChange}

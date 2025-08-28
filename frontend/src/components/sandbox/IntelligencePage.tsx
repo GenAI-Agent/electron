@@ -6,22 +6,36 @@ import IconSidebar from '@/components/ui/IconSidebar';
 import BrowserView from '@/components/BrowserView';
 import { cn } from '@/utils/cn';
 
-// Social media post interface
+// Social media post interface (unified structure)
 interface SocialMediaPost {
   post_id: string;
-  author_id: string;
-  author_name: string;
-  author_username: string;
-  author_followers_count: number;
+  author_id?: string;
+  author_name?: string;
+  author_username?: string;
+  author_followers_count?: number;
   post_text: string;
-  hashtags: string[];
-  mentions: string[];
-  emojis: string[];
-  like_count: number;
-  reply_count: number;
-  repost_count: number;
-  quote_count: number;
-  created_time: string;
+  hashtags?: string[];
+  mentions?: string[];
+  emojis?: string[];
+  like_count?: number;
+  reply_count?: number;
+  repost_count?: number;
+  quote_count?: number;
+  created_time?: string;
+  // Facebook specific
+  page_or_user_name?: string;
+  page_or_user_id?: string;
+  reaction_summary?: any;
+  share_count?: number;
+  comment_count?: number;
+  // PTT specific
+  board?: string;
+  title?: string;
+  push_count?: number;
+  boo_count?: number;
+  // Twitter specific
+  tweet_id?: string;
+  tweet_text?: string;
 }
 
 // Custom logo components
@@ -39,7 +53,21 @@ const TwitterLogo: React.FC<{ className?: string }> = ({ className }) => (
   </div>
 );
 
-type DataSource = 'threads' | 'twitter' | 'petition';
+const FacebookLogo: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={cn("w-4 h-4", className)}>
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-blue-600">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  </div>
+);
+
+const PTTLogo: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={cn("w-4 h-4 rounded bg-orange-600 flex items-center justify-center text-white text-xs font-bold", className)}>
+    P
+  </div>
+);
+
+type DataSource = 'threads' | 'twitter' | 'facebook' | 'ptt' | 'petition';
 
 interface DataFile {
   filename: string;
@@ -65,7 +93,7 @@ interface PetitionData {
 }
 
 interface IntelligencePageProps {
-  onOpenDataTab: (source: DataSource, file: DataFile) => void;
+  onOpenDataTab: (source: DataSource, file: DataFile, data?: any[]) => void;
   className?: string;
 }
 
@@ -87,6 +115,24 @@ const dataSources = [
     color: 'text-black',
     requiresAuth: true,
     webUrl: 'https://twitter.com',
+  },
+  {
+    id: 'facebook' as DataSource,
+    name: 'Facebook',
+    description: 'Facebook 社群媒體平台',
+    icon: FacebookLogo,
+    color: 'text-blue-600',
+    requiresAuth: true,
+    webUrl: 'https://facebook.com',
+  },
+  {
+    id: 'ptt' as DataSource,
+    name: 'PTT',
+    description: 'PTT 批踢踢實業坊',
+    icon: PTTLogo,
+    color: 'text-orange-600',
+    requiresAuth: false,
+    webUrl: 'https://www.ptt.cc/bbs/index.html',
   },
   {
     id: 'petition' as DataSource,
@@ -233,16 +279,96 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
           const twitterData = await import('@/data/social-media/twitter_international_politics.json');
           allPosts = twitterData.default.map((post: any) => ({
             ...post,
-            post_id: post.tweet_id,
-            post_text: post.tweet_text,
-            repost_count: 0
+            post_id: post.tweet_id || post.post_id,
+            post_text: post.tweet_text || post.post_text,
+            repost_count: post.repost_count || 0,
+            author_name: post.author_name || post.author_username,
+            created_time: post.created_time || new Date().toISOString()
           }));
         } catch (error) {
           console.error('Error loading twitter data:', error);
           // Fallback to fetch
           const response = await fetch('/src/data/social-media/twitter_international_politics.json');
           if (response.ok) {
-            allPosts = await response.json();
+            const data = await response.json();
+            allPosts = data.map((post: any) => ({
+              ...post,
+              post_id: post.tweet_id || post.post_id,
+              post_text: post.tweet_text || post.post_text,
+              repost_count: post.repost_count || 0
+            }));
+          }
+        }
+      } else if (source === 'facebook') {
+        // Load facebook data
+        try {
+          const facebookEdu = await import('@/data/social-media/facebook_education_policy.json');
+          const facebookElection = await import('@/data/social-media/facebook_election_campaign.json');
+
+          const processedFacebookData = [...facebookEdu.default, ...facebookElection.default].map((post: any) => ({
+            ...post,
+            author_name: post.page_or_user_name,
+            author_id: post.page_or_user_id,
+            like_count: post.reaction_summary?.like || 0,
+            reply_count: post.comment_count || 0,
+            repost_count: post.share_count || 0,
+            author_followers_count: Math.floor(Math.random() * 50000) + 5000, // Mock followers
+            created_time: post.created_time || new Date().toISOString()
+          }));
+
+          allPosts = processedFacebookData;
+        } catch (error) {
+          console.error('Error loading facebook data:', error);
+          // Fallback to fetch
+          const [eduRes, electionRes] = await Promise.all([
+            fetch('/src/data/social-media/facebook_education_policy.json'),
+            fetch('/src/data/social-media/facebook_election_campaign.json')
+          ]);
+
+          if (eduRes.ok && electionRes.ok) {
+            const [edu, election] = await Promise.all([
+              eduRes.json(),
+              electionRes.json()
+            ]);
+            allPosts = [...edu, ...election].map((post: any) => ({
+              ...post,
+              author_name: post.page_or_user_name,
+              like_count: post.reaction_summary?.like || 0,
+              reply_count: post.comment_count || 0
+            }));
+          }
+        }
+      } else if (source === 'ptt') {
+        // Load PTT data
+        try {
+          const pttData = await import('@/data/social-media/ptt_social_issues.json');
+
+          const processedPTTData = pttData.default.map((post: any) => ({
+            ...post,
+            author_name: post.author_id,
+            post_text: post.title + '\n\n' + post.post_text,
+            like_count: post.push_count || 0,
+            reply_count: (post.push_count || 0) + (post.boo_count || 0),
+            repost_count: 0,
+            author_followers_count: 0, // PTT doesn't have followers
+            hashtags: post.hashtags || [],
+            created_time: post.created_time || new Date().toISOString()
+          }));
+
+          allPosts = processedPTTData;
+        } catch (error) {
+          console.error('Error loading PTT data:', error);
+          // Fallback to fetch
+          const response = await fetch('/src/data/social-media/ptt_social_issues.json');
+          if (response.ok) {
+            const data = await response.json();
+            allPosts = data.map((post: any) => ({
+              ...post,
+              author_name: post.author_id,
+              post_text: post.title + '\n\n' + post.post_text,
+              like_count: post.push_count || 0,
+              reply_count: (post.push_count || 0) + (post.boo_count || 0)
+            }));
           }
         }
       }
@@ -266,7 +392,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
   const loadAvailableFiles = async (source: DataSource) => {
     try {
       // For social media sources, load JSON data directly
-      if (source === 'threads' || source === 'twitter') {
+      if (source === 'threads' || source === 'twitter' || source === 'facebook' || source === 'ptt') {
         await loadSocialMediaData(source);
         return;
       }
@@ -279,30 +405,6 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
           latest_update: new Date().toISOString().split('T')[0],
         });
         return;
-      }
-
-      // For other sources, use API
-      console.log(`正在載入 ${source} 的檔案列表...`);
-      const response = await fetch(`http://localhost:8021/api/sandbox/files?source=${source}`);
-
-      if (response.ok) {
-        const files = await response.json();
-        console.log(`成功載入 ${files.length} 個檔案`);
-
-        const filesWithCount = files.map((file: any) => ({
-          ...file,
-          recordCount: Math.floor(Math.random() * 2000) + 500
-        }));
-
-        setAvailableFiles(filesWithCount);
-        setDataStats({
-          total_files: filesWithCount.length,
-          total_records: filesWithCount.reduce((sum: number, f: any) => sum + (f.recordCount || 0), 0),
-          latest_update: filesWithCount[0]?.date || '',
-        });
-      } else {
-        console.error('API 回應錯誤:', response.status, await response.text());
-        throw new Error(`API 錯誤: ${response.status}`);
       }
     } catch (error) {
       console.error('載入檔案失敗:', error);
@@ -385,7 +487,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
   };
 
   return (
-    <div className={cn("h-full flex overflow-hidden", className)}>
+    <div className={cn("h-full flex overflow-hidden pb-14", className)}>
       {/* Left Icon Sidebar */}
       <IconSidebar
         items={sidebarItems}
@@ -410,7 +512,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
             </div>
             <div className="flex gap-2 items-center">
               {/* Refresh Button */}
-              {viewMode === 'data' && (selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'petition') && (
+              {viewMode === 'data' && (selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'facebook' || selectedSource === 'ptt' || selectedSource === 'petition') && (
                 <Button
                   onClick={handleRefreshData}
                   disabled={isRefreshing}
@@ -424,26 +526,53 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
               )}
 
               {/* View Mode Toggle for Social Media Sources */}
-              {(selectedSource === 'threads' || selectedSource === 'twitter') && (
-                <div className="flex rounded-lg border bg-background p-1">
-                  <Button
-                    onClick={() => setViewMode('data')}
-                    variant={viewMode === 'data' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="h-7 px-3 text-xs"
-                  >
-                    <FileType className="w-3 h-3 mr-1" />
-                    資料
-                  </Button>
-                  <Button
-                    onClick={() => setViewMode('webview')}
-                    variant={viewMode === 'webview' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="h-7 px-3 text-xs"
-                  >
-                    <Globe className="w-3 h-3 mr-1" />
-                    網頁
-                  </Button>
+              {(selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'facebook' || selectedSource === 'ptt') && (
+                <div className="flex gap-2">
+                  {/* Analysis Button */}
+                  {viewMode === 'data' && socialMediaPosts.length > 0 && (
+                    <Button
+                      onClick={() => {
+                        // Open analysis tab with current social media data
+                        const analyticsData = {
+                          filename: `${selectedSource}_analytics`,
+                          date: new Date().toISOString().split('T')[0],
+                          time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+                          fullPath: `analytics/${selectedSource}`,
+                          recordCount: socialMediaPosts.length
+                        };
+                        // Pass the current social media posts data
+                        onOpenDataTab(selectedSource, analyticsData, socialMediaPosts);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      分析資料
+                    </Button>
+                  )}
+
+                  {/* View Mode Toggle */}
+                  <div className="flex rounded-lg border bg-background p-1">
+                    <Button
+                      onClick={() => setViewMode('data')}
+                      variant={viewMode === 'data' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-3 text-xs"
+                    >
+                      <FileType className="w-3 h-3 mr-1" />
+                      資料
+                    </Button>
+                    <Button
+                      onClick={() => setViewMode('webview')}
+                      variant={viewMode === 'webview' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-3 text-xs"
+                    >
+                      <Globe className="w-3 h-3 mr-1" />
+                      網頁
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -453,7 +582,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
-          {viewMode === 'webview' && (selectedSource === 'threads' || selectedSource === 'twitter') ? (
+          {viewMode === 'webview' && (selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'facebook' || selectedSource === 'ptt') ? (
             // Social Media Webview Mode
             <div className="w-full h-full">
               <BrowserView
@@ -516,7 +645,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                     ))}
                   </div>
                 </div>
-              ) : (selectedSource === 'threads' || selectedSource === 'twitter') && socialMediaPosts.length > 0 ? (
+              ) : (selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'facebook' || selectedSource === 'ptt') && socialMediaPosts.length > 0 ? (
                 // Social Media Posts View
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
@@ -545,21 +674,30 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="font-medium text-sm text-foreground">
-                                  {post.author_name}
+                                  {post.author_name || post.page_or_user_name || post.author_id || '匿名用戶'}
                                 </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {post.author_username}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  • {post.author_followers_count.toLocaleString()} 粉絲
-                                </span>
+                                {post.author_username && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {post.author_username}
+                                  </span>
+                                )}
+                                {post.board && (
+                                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded">
+                                    {post.board}
+                                  </span>
+                                )}
+                                {post.author_followers_count && post.author_followers_count > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    • {post.author_followers_count.toLocaleString()} 粉絲
+                                  </span>
+                                )}
                               </div>
 
                               <p className="text-sm text-foreground mb-3 leading-relaxed">
                                 {post.post_text}
                               </p>
 
-                              {post.hashtags.length > 0 && (
+                              {post.hashtags && post.hashtags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mb-3">
                                   {post.hashtags.map((tag, index) => (
                                     <span key={index} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
@@ -572,18 +710,30 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <MessageSquare className="w-3 h-3" />
-                                  {post.reply_count}
+                                  {post.reply_count || 0}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <RefreshCw className="w-3 h-3" />
-                                  {post.repost_count}
+                                  {post.repost_count || 0}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <span className="w-3 h-3 text-red-500">♥</span>
-                                  {post.like_count}
+                                  {post.like_count || 0}
                                 </span>
+                                {post.push_count && (
+                                  <span className="flex items-center gap-1 text-green-600">
+                                    <span className="text-green-600">↑</span>
+                                    {post.push_count}
+                                  </span>
+                                )}
+                                {post.boo_count && (
+                                  <span className="flex items-center gap-1 text-red-600">
+                                    <span className="text-red-600">↓</span>
+                                    {post.boo_count}
+                                  </span>
+                                )}
                                 <span className="ml-auto">
-                                  {new Date(post.created_time).toLocaleString('zh-TW')}
+                                  {post.created_time ? new Date(post.created_time).toLocaleString('zh-TW') : '時間未知'}
                                 </span>
                               </div>
                             </div>
@@ -593,7 +743,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                     ))}
                   </div>
                 </div>
-              ) : (selectedSource === 'threads' || selectedSource === 'twitter') && socialMediaPosts.length === 0 ? (
+              ) : (selectedSource === 'threads' || selectedSource === 'twitter' || selectedSource === 'facebook' || selectedSource === 'ptt') && socialMediaPosts.length === 0 ? (
                 // Loading or Empty Social Media View
                 <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                   <div className="mb-4">
