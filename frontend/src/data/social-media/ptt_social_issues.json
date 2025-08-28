@@ -1,0 +1,322 @@
+[
+  {
+    "post_id": "ptt_001",
+    "board": "Gossiping",
+    "author_id": "EconomicExpert",
+    "title": "[問卦] 為什麼薪資成長這麼慢？",
+    "post_text": "最近看到統計數據，台灣的薪資成長率遠低於GDP成長率，這是什麼原因？是企業不願意加薪，還是政策有問題？有沒有八卦？",
+    "emojis": ["🤔", "💰", "📊"],
+    "push_count": 156,
+    "boo_count": 23,
+    "neutral_count": 45,
+    "comment_list": [
+      {
+        "user_id": "WorkerA",
+        "content": "老闆賺飽飽，員工吃土土",
+        "sentiment": "push",
+        "emojis": ["😭"]
+      },
+      {
+        "user_id": "BusinessOwner",
+        "content": "成本上升，利潤微薄，哪有錢加薪",
+        "sentiment": "boo",
+        "emojis": ["😤"]
+      },
+      {
+        "user_id": "PolicyAnalyst",
+        "content": "需要政府介入調整最低工資政策",
+        "sentiment": "neutral",
+        "emojis": ["⚖️"]
+      }
+    ],
+    "created_time": "2024-11-15T14:30:00Z"
+  },
+  {
+    "post_id": "ptt_002",
+    "board": "HatePolitics",
+    "author_id": "VoterTW",
+    "title": "[討論] 這次選舉你們會投給誰？",
+    "post_text": "距離投票日剩不到兩週，想了解一下鄉民的想法。候選人A主打穩定發展，候選人B強調改革創新，大家比較支持哪一個方向？",
+    "emojis": ["🗳️", "🤔"],
+    "push_count": 234,
+    "boo_count": 67,
+    "neutral_count": 89,
+    "comment_list": [
+      {
+        "user_id": "YoungVoter",
+        "content": "當然是改革啊，現狀太爛了",
+        "sentiment": "push",
+        "emojis": ["🔥"]
+      },
+      {
+        "user_id": "ConservativeVoter",
+        "content": "穩定比較重要，不要亂改",
+        "sentiment": "boo",
+        "emojis": ["😐"]
+      },
+      {
+        "user_id": "MiddleVoter",
+        "content": "兩個都有問題，但還是要選一個",
+        "sentiment": "neutral",
+        "emojis": ["🤷"]
+      }
+    ],
+    "created_time": "2024-11-15T16:45:00Z"
+  },
+  {
+    "post_id": "ptt_003",
+    "board": "home-sale",
+    "author_id": "HouseHunter",
+    "title": "[心得] 看房一年還是買不起",
+    "post_text": "在台北看房看了一年，薪水6萬，存款200萬，還是買不起像樣的房子。政府說要打房，但房價還是很高，年輕人到底要怎麼辦？",
+    "emojis": ["😭", "🏠", "💸"],
+    "push_count": 345,
+    "boo_count": 12,
+    "neutral_count": 78,
+    "comment_list": [
+      {
+        "user_id": "RealEstateAgent",
+        "content": "可以考慮新北或桃園",
+        "sentiment": "neutral",
+        "emojis": ["🚇"]
+      },
+      {
+        "user_id": "YoungWorker",
+        "content": "同感，根本買不起",
+        "sentiment": "push",
+        "emojis": ["😢"]
+      },
+      {
+        "user_id": "Investor",
+        "content": "房價合理，是你們賺太少",
+        "sentiment": "boo",
+        "emojis": ["💰"]
+      }
+    ],
+    "created_time": "2024-11-15T19:20:00Z"
+  },
+  {
+    "post_id": "ptt_004",
+    "board": "Tech_Job",
+    "author_id": "Engineer123",
+    "title": "[討論] 科技業薪資天花板",
+    "post_text": "在台灣科技業工作五年，薪資從60K漲到120K，但感覺已經到天花板了。想問大家有沒有突破的方法？還是只能出國？",
+    "emojis": ["💻", "📈", "🤔"],
+    "push_count": 189,
+    "boo_count": 34,
+    "neutral_count": 56,
+    "comment_list": [
+      {
+        "user_id": "SeniorEngineer",
+        "content": "轉管理職或創業",
+        "sentiment": "push",
+        "emojis": ["👨‍💼"]
+      },
+      {
+        "user_id": "Startup_Founder",
+        "content": "出國確實是選項",
+        "sentiment": "neutral",
+        "emojis": ["✈️"]
+      },
+      {
+        "user_id": "HR_Manager",
+        "content": "120K已經很高了好嗎",
+        "sentiment": "boo",
+        "emojis": ["🙄"]
+      }
+    ],
+    "created_time": "2024-11-15T21:10:00Z"
+  },
+  {
+    "post_id": "ptt_005",
+    "board": "WomenTalk",
+    "author_id": "WorkingMom",
+    "title": "[心情] 職業婦女的困境",
+    "post_text": "當媽媽後發現要兼顧工作和家庭真的很困難，托育費用高，工作時間長，政府的育兒政策感覺幫助有限。有沒有媽媽有同感？",
+    "emojis": ["👩‍👧‍👦", "😰", "💼"],
+    "push_count": 267,
+    "boo_count": 8,
+    "neutral_count": 43,
+    "comment_list": [
+      {
+        "user_id": "SingleMom",
+        "content": "超有感，一個人更辛苦",
+        "sentiment": "push",
+        "emojis": ["😭"]
+      },
+      {
+        "user_id": "PolicyMaker",
+        "content": "政府正在努力改善",
+        "sentiment": "neutral",
+        "emojis": ["📋"]
+      },
+      {
+        "user_id": "TraditionalDad",
+        "content": "女生就該在家帶小孩",
+        "sentiment": "boo",
+        "emojis": ["🙄"]
+      }
+    ],
+    "created_time": "2024-11-15T13:25:00Z"
+  },
+  {
+    "post_id": "ptt_006",
+    "board": "Salary",
+    "author_id": "FreshGrad",
+    "title": "[問題] 新鮮人薪資談判",
+    "post_text": "剛畢業要找工作，HR說起薪28K，但我覺得太低了。有沒有談薪水的技巧？還是新人就是沒有議價空間？",
+    "emojis": ["🎓", "💰", "🤝"],
+    "push_count": 123,
+    "boo_count": 45,
+    "neutral_count": 67,
+    "comment_list": [
+      {
+        "user_id": "HR_Professional",
+        "content": "新人確實議價空間有限",
+        "sentiment": "neutral",
+        "emojis": ["📊"]
+      },
+      {
+        "user_id": "ExperiencedWorker",
+        "content": "先累積經驗再談薪水",
+        "sentiment": "push",
+        "emojis": ["💪"]
+      },
+      {
+        "user_id": "UnionRep",
+        "content": "28K太低了，要抗議",
+        "sentiment": "boo",
+        "emojis": ["😡"]
+      }
+    ],
+    "created_time": "2024-11-15T10:15:00Z"
+  },
+  {
+    "post_id": "ptt_007",
+    "board": "Stock",
+    "author_id": "Investor2024",
+    "title": "[標的] 選舉對股市的影響",
+    "post_text": "選舉將近，想討論一下不同候選人當選對股市可能的影響。候選人A比較親商，候選人B主打改革，大家覺得哪個對股市比較有利？",
+    "emojis": ["📈", "🗳️", "💹"],
+    "push_count": 198,
+    "boo_count": 56,
+    "neutral_count": 78,
+    "comment_list": [
+      {
+        "user_id": "FundManager",
+        "content": "穩定政策對股市較好",
+        "sentiment": "push",
+        "emojis": ["📊"]
+      },
+      {
+        "user_id": "DayTrader",
+        "content": "改革可能帶來新機會",
+        "sentiment": "neutral",
+        "emojis": ["🚀"]
+      },
+      {
+        "user_id": "ConservativeInvestor",
+        "content": "不要亂改比較好",
+        "sentiment": "boo",
+        "emojis": ["😰"]
+      }
+    ],
+    "created_time": "2024-11-15T15:40:00Z"
+  },
+  {
+    "post_id": "ptt_008",
+    "board": "PublicServan",
+    "author_id": "CivilServant",
+    "title": "[討論] 公務員薪資調整",
+    "post_text": "聽說政府要調整公務員薪資，但調幅不大。以現在的物價水準，公務員的薪資競爭力確實在下降，大家怎麼看？",
+    "emojis": ["🏛️", "💰", "📋"],
+    "push_count": 145,
+    "boo_count": 89,
+    "neutral_count": 34,
+    "comment_list": [
+      {
+        "user_id": "PrivateSectorWorker",
+        "content": "公務員已經很爽了",
+        "sentiment": "boo",
+        "emojis": ["🙄"]
+      },
+      {
+        "user_id": "PublicAdmin",
+        "content": "工作量大薪水少",
+        "sentiment": "push",
+        "emojis": ["😤"]
+      },
+      {
+        "user_id": "TaxPayer",
+        "content": "要看績效決定",
+        "sentiment": "neutral",
+        "emojis": ["⚖️"]
+      }
+    ],
+    "created_time": "2024-11-15T11:50:00Z"
+  },
+  {
+    "post_id": "ptt_009",
+    "board": "Lifeismoney",
+    "author_id": "BudgetMaster",
+    "title": "[省錢] 通膨時代的理財策略",
+    "post_text": "物價一直漲，薪水沒有跟上，大家都怎麼理財？存錢已經跟不上通膨了，是不是要投資？但又怕風險太高。",
+    "emojis": ["💰", "📈", "😰"],
+    "push_count": 234,
+    "boo_count": 23,
+    "neutral_count": 67,
+    "comment_list": [
+      {
+        "user_id": "FinancialPlanner",
+        "content": "分散投資降低風險",
+        "sentiment": "push",
+        "emojis": ["📊"]
+      },
+      {
+        "user_id": "ConservativeSaver",
+        "content": "還是存定存比較安全",
+        "sentiment": "neutral",
+        "emojis": ["🏦"]
+      },
+      {
+        "user_id": "RiskTaker",
+        "content": "不投資就是等死",
+        "sentiment": "boo",
+        "emojis": ["🚀"]
+      }
+    ],
+    "created_time": "2024-11-15T17:30:00Z"
+  },
+  {
+    "post_id": "ptt_010",
+    "board": "CareerPlan",
+    "author_id": "MidCareer",
+    "title": "[討論] 35歲轉職的困境",
+    "post_text": "35歲了，在現在公司待了8年，薪水沒什麼成長空間，想轉職但又擔心年紀太大。有沒有過來人可以分享經驗？",
+    "emojis": ["🤔", "💼", "⏰"],
+    "push_count": 178,
+    "boo_count": 34,
+    "neutral_count": 56,
+    "comment_list": [
+      {
+        "user_id": "HeadHunter",
+        "content": "35歲正是黃金年齡",
+        "sentiment": "push",
+        "emojis": ["💪"]
+      },
+      {
+        "user_id": "HR_Director",
+        "content": "要看專業能力",
+        "sentiment": "neutral",
+        "emojis": ["📋"]
+      },
+      {
+        "user_id": "StableWorker",
+        "content": "穩定比較重要",
+        "sentiment": "boo",
+        "emojis": ["😐"]
+      }
+    ],
+    "created_time": "2024-11-15T12:20:00Z"
+  }
+]

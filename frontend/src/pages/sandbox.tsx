@@ -11,7 +11,7 @@ import { DataTab } from '@/components/DataTabManager';
 import { DataTab } from '@/components/DataTabManager';
 import IntelligencePage from '@/components/sandbox/IntelligencePage';
 import WarRoomPage from '@/components/sandbox/WarRoomPage';
-import SimulationPage from '@/components/sandbox/SimulationPage';
+import WarGamePage from '@/components/sandbox/WarGamePage';
 import DataDashboard from '@/components/sandbox/DataDashboard';
 
 import { cn } from '@/utils/cn';
@@ -184,7 +184,7 @@ export default function SandboxPage() {
       case 'warroom':
         return <WarRoomPage className="h-full" />;
       case 'simulation':
-        return <SimulationPage className="h-full" />;
+        return <WarGamePage className="h-full" />;
       default:
         return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab} />;
     }

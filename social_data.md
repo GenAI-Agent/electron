@@ -1,0 +1,62 @@
+{
+  "Threads": {
+    "post_id": "string",
+    "author_id": "string",
+    "author_name": "string",
+    "author_username": "string",
+    "author_followers_count": "int",
+    "post_text": "string",
+    "hashtags": "list[string]",
+    "mentions": "list[string]",
+    "emojis": "list[string]",
+    "like_count": "int",
+    "reply_count": "int",
+    "repost_count": "int",
+    "quote_count": "int",
+    "created_time": "datetime"
+  },
+  "Facebook": {
+    "post_id": "string",
+    "page_or_user_id": "string",
+    "page_or_user_name": "string",
+    "post_text": "string",
+    "hashtags": "list[string]",
+    "mentions": "list[string]",
+    "emojis": "list[string]",
+    "reaction_summary": "dict{like:int, love:int, haha:int, wow:int, sad:int, angry:int}",
+    "comment_count": "int",
+    "share_count": "int",
+    "created_time": "datetime",
+    "post_type": "string"
+  },
+  "PTT": {
+    "post_id": "string",
+    "board": "string",
+    "author_id": "string",
+    "title": "string",
+    "post_text": "string",
+    "emojis": "list[string]",
+    "push_count": "int",
+    "boo_count": "int",
+    "neutral_count": "int",
+    "comment_list": "list[dict{user_id:string, content:string, sentiment:string(push|boo|neutral), emojis:list[string]}]",
+    "created_time": "datetime"
+  },
+  "Twitter": {
+    "tweet_id": "string",
+    "author_id": "string",
+    "author_name": "string",
+    "author_username": "string",
+    "author_followers_count": "int",
+    "tweet_text": "string",
+    "hashtags": "list[string]",
+    "mentions": "list[string]",
+    "emojis": "list[string]",
+    "like_count": "int",
+    "reply_count": "int",
+    "retweet_count": "int",
+    "quote_count": "int",
+    "created_time": "datetime",
+    "author_verified": "boolean"
+  }
+}
