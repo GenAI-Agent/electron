@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Square, Monitor, Home } from 'lucide-react';
+import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Square, Monitor, Home, Calendar } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
 import { Button } from './button';
@@ -241,6 +241,17 @@ const Header: React.FC<HeaderProps> = ({
       {/* Right section - Custom content and view toggle */}
       <div className="flex items-center gap-2 flex-1 justify-end mr-4" style={{ WebkitAppRegion: 'no-drag' }}>
         {rightContent}
+
+        {/* Calendar Button */}
+        {showViewToggle && (
+          <button
+            onClick={() => router.push('/calendar')}
+            className="text-foreground hover:text-primary transition-all duration-200 p-2 rounded-md hover:bg-accent transform hover:scale-110"
+            title="日曆系統"
+          >
+            <Calendar className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Home Button */}
         {showViewToggle && (

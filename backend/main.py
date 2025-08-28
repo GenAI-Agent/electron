@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import json
 
-from api.routers import agent, rules, file_processor, task_memory, sandbox
+from api.routers import agent, rules, file_processor, task_memory, sandbox, calendar
 from supervisor_agent.core.supervisor_agent import SupervisorAgent
 from supervisor_agent.utils.logger import get_logger, setup_logging
 
@@ -99,6 +99,7 @@ app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
 app.include_router(file_processor.router, prefix="/api/file", tags=["file_processor"])
 app.include_router(task_memory.router, prefix="/api/task", tags=["task_memory"])
 app.include_router(sandbox.router, prefix="/api/sandbox", tags=["sandbox"])
+app.include_router(calendar.router, prefix="/api/calendar", tags=["calendar"])
 
 
 @app.get("/")

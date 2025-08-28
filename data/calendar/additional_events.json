@@ -1,0 +1,244 @@
+{
+  "additional_events": [
+    {
+      "id": "evt_20250904_media_interview",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-04T11:00:00+08:00",
+        "end": "2025-09-04T12:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_journalist",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_tv_studio",
+        "fallback_text": "TV Studio, Media Center",
+        "geo": { "lat": 25.03, "lon": 121.54 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "interview/media",
+        "topics": ["Media Interview", "Public Relations"],
+        "tags": ["external", "media", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.9,
+      "confidence": 0.95,
+      "notes": "Live TV interview on campaign platform and policies",
+      "provenance": {
+        "source": "email",
+        "created_by": "media_coordinator",
+        "created_at": "2025-09-01T14:20:00+08:00",
+        "updated_at": "2025-09-02T10:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250905_fundraising_dinner",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-05T19:00:00+08:00",
+        "end": "2025-09-05T22:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_fundraising_chair",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_grand_hotel",
+        "fallback_text": "Grand Hotel, Ballroom A",
+        "geo": { "lat": 25.07, "lon": 121.53 },
+        "region": "Taipei/Zhongshan"
+      },
+      "facets": {
+        "type": "event/fundraising",
+        "topics": ["Fundraising", "Campaign Support"],
+        "tags": ["external", "fundraising", "formal"]
+      },
+      "status": "confirmed",
+      "visibility": "private",
+      "priority": 0.95,
+      "confidence": 0.9,
+      "notes": "Annual fundraising dinner with major donors and supporters",
+      "provenance": {
+        "source": "manual",
+        "created_by": "fundraising_chair",
+        "created_at": "2025-08-15T16:45:00+08:00",
+        "updated_at": "2025-09-03T11:20:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250906_team_retrospective",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-06T14:00:00+08:00",
+        "end": "2025-09-06T16:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_scrum_master",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_dev_team",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.9
+        }
+      ],
+      "place": {
+        "entity_id": "place_office_main",
+        "fallback_text": "Main Office, Innovation Lab",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/retrospective",
+        "topics": ["Sprint Retrospective", "Process Improvement"],
+        "tags": ["internal", "agile", "improvement"]
+      },
+      "status": "planned",
+      "visibility": "team",
+      "priority": 0.7,
+      "confidence": 0.85,
+      "notes": "Sprint retrospective meeting to review and improve processes",
+      "provenance": {
+        "source": "agent",
+        "created_by": "scrum_master",
+        "created_at": "2025-09-04T09:00:00+08:00",
+        "updated_at": "2025-09-04T09:00:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250907_policy_workshop",
+      "kind": "activity",
+      "when": {
+        "start": "2025-09-07T09:00:00+08:00",
+        "end": "2025-09-07T17:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_policy_advisor",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_policy_team",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.8
+        }
+      ],
+      "place": {
+        "entity_id": "place_conference_center",
+        "fallback_text": "Taipei Conference Center, Hall B",
+        "geo": { "lat": 25.04, "lon": 121.55 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "workshop/policy",
+        "topics": ["Policy Development", "Legislative Strategy"],
+        "tags": ["internal", "policy", "workshop"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.85,
+      "confidence": 0.9,
+      "notes": "Full-day policy development workshop with expert advisors",
+      "provenance": {
+        "source": "manual",
+        "created_by": "policy_advisor",
+        "created_at": "2025-08-30T13:15:00+08:00",
+        "updated_at": "2025-09-05T16:40:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250908_town_hall",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-08T15:00:00+08:00",
+        "end": "2025-09-08T17:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_moderator",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_civic_center",
+        "fallback_text": "Songshan Civic Center, Main Auditorium",
+        "geo": { "lat": 25.05, "lon": 121.57 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "event/townhall",
+        "topics": ["Public Forum", "Q&A Session"],
+        "tags": ["public", "community", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.9,
+      "confidence": 0.85,
+      "notes": "Public town hall meeting with Q&A session for local residents",
+      "provenance": {
+        "source": "manual",
+        "created_by": "event_coordinator",
+        "created_at": "2025-08-28T10:30:00+08:00",
+        "updated_at": "2025-09-06T14:25:00+08:00"
+      }
+    }
+  ]
+}

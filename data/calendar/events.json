@@ -1,0 +1,971 @@
+{
+  "events": [
+    {
+      "id": "evt_20250828_campaign_strategy",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-28T09:00:00+08:00",
+        "end": "2025-08-28T10:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_campaign_manager",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_strategy_team",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.8
+        }
+      ],
+      "place": {
+        "entity_id": "place_campaign_hq",
+        "fallback_text": "Campaign Headquarters, Conference Room A",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/strategy",
+        "topics": ["Campaign Strategy", "Q4 Planning"],
+        "tags": ["internal", "strategy", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.9,
+      "confidence": 0.95,
+      "notes": "Quarterly campaign strategy review and Q4 planning session",
+      "provenance": {
+        "source": "manual",
+        "created_by": "campaign_manager",
+        "created_at": "2025-08-25T14:30:00+08:00",
+        "updated_at": "2025-08-27T16:45:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250828_voter_outreach",
+      "kind": "activity",
+      "when": {
+        "start": "2025-08-28T14:00:00+08:00",
+        "end": "2025-08-28T17:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_volunteer_coordinator",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_volunteers",
+          "role": "attendee",
+          "required": false,
+          "response_status": "accepted",
+          "weight": 0.6
+        }
+      ],
+      "place": {
+        "entity_id": "place_community_center",
+        "fallback_text": "Songshan Community Center",
+        "geo": { "lat": 25.05, "lon": 121.57 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "outreach/community",
+        "topics": ["Voter Engagement", "Community Outreach"],
+        "tags": ["public", "outreach", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.8,
+      "confidence": 0.9,
+      "notes": "Door-to-door voter outreach in Songshan district",
+      "provenance": {
+        "source": "manual",
+        "created_by": "volunteer_coordinator",
+        "created_at": "2025-08-26T10:15:00+08:00",
+        "updated_at": "2025-08-27T09:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250829_team_standup",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-29T09:30:00+08:00",
+        "end": "2025-08-29T10:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_team_lead",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_dev_team",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.9
+        }
+      ],
+      "place": {
+        "entity_id": "place_office_main",
+        "fallback_text": "Main Office, Meeting Room B",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/standup",
+        "topics": ["Daily Standup", "Sprint Progress"],
+        "tags": ["internal", "agile", "development"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.7,
+      "confidence": 0.95,
+      "notes": "Daily team standup meeting",
+      "provenance": {
+        "source": "agent",
+        "created_by": "system",
+        "created_at": "2025-08-28T18:00:00+08:00",
+        "updated_at": "2025-08-28T18:00:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250829_debate_prep",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-29T15:00:00+08:00",
+        "end": "2025-08-29T17:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_debate_coach",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_campaign_hq",
+        "fallback_text": "Campaign Headquarters, Training Room",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/preparation",
+        "topics": ["Debate Preparation", "Public Speaking"],
+        "tags": ["internal", "training", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "private",
+      "priority": 0.95,
+      "confidence": 0.9,
+      "notes": "Preparation session for upcoming public debate",
+      "provenance": {
+        "source": "manual",
+        "created_by": "campaign_manager",
+        "created_at": "2025-08-27T11:20:00+08:00",
+        "updated_at": "2025-08-28T14:15:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250830_client_meeting",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-30T10:00:00+08:00",
+        "end": "2025-08-30T11:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_account_manager",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_client_rep",
+          "role": "attendee",
+          "required": true,
+          "response_status": "tentative",
+          "weight": 0.8
+        }
+      ],
+      "place": {
+        "entity_id": "place_client_office",
+        "fallback_text": "Client Office, 15F Conference Room",
+        "geo": { "lat": 25.03, "lon": 121.55 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "meeting/client",
+        "topics": ["Project Review", "Contract Renewal"],
+        "tags": ["external", "business", "client"]
+      },
+      "status": "planned",
+      "visibility": "private",
+      "priority": 0.85,
+      "confidence": 0.8,
+      "notes": "Quarterly project review and contract renewal discussion",
+      "provenance": {
+        "source": "email",
+        "created_by": "account_manager",
+        "created_at": "2025-08-28T09:45:00+08:00",
+        "updated_at": "2025-08-28T09:45:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250830_polling_analysis",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-30T14:00:00+08:00",
+        "end": "2025-08-30T15:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_data_analyst",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_campaign_hq",
+        "fallback_text": "Campaign Headquarters, Data Room",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "analysis/polling",
+        "topics": ["Polling Data", "Voter Sentiment"],
+        "tags": ["internal", "data", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.8,
+      "confidence": 0.9,
+      "notes": "Weekly polling data analysis and trend review",
+      "provenance": {
+        "source": "manual",
+        "created_by": "data_analyst",
+        "created_at": "2025-08-29T16:30:00+08:00",
+        "updated_at": "2025-08-29T16:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250831_board_meeting",
+      "kind": "business",
+      "when": {
+        "start": "2025-08-31T09:00:00+08:00",
+        "end": "2025-08-31T12:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_board_chair",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_board_members",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.9
+        }
+      ],
+      "place": {
+        "entity_id": "place_boardroom",
+        "fallback_text": "Executive Boardroom, 20F",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/board",
+        "topics": ["Quarterly Review", "Strategic Planning"],
+        "tags": ["internal", "executive", "governance"]
+      },
+      "status": "confirmed",
+      "visibility": "private",
+      "priority": 0.95,
+      "confidence": 0.95,
+      "notes": "Monthly board meeting - Q3 review and Q4 planning",
+      "provenance": {
+        "source": "manual",
+        "created_by": "board_secretary",
+        "created_at": "2025-08-20T10:00:00+08:00",
+        "updated_at": "2025-08-28T15:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250901_community_event",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-01T10:00:00+08:00",
+        "end": "2025-09-01T16:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_event_coordinator",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_park_pavilion",
+        "fallback_text": "Songshan Park Pavilion",
+        "geo": { "lat": 25.05, "lon": 121.58 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "event/community",
+        "topics": ["Community Engagement", "Public Speaking"],
+        "tags": ["public", "community", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.9,
+      "confidence": 0.85,
+      "notes": "Community meet-and-greet event with local residents",
+      "provenance": {
+        "source": "manual",
+        "created_by": "event_coordinator",
+        "created_at": "2025-08-25T14:00:00+08:00",
+        "updated_at": "2025-08-29T11:20:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250902_strategy_session",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-02T13:00:00+08:00",
+        "end": "2025-09-02T15:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_strategy_director",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_campaign_hq",
+        "fallback_text": "Campaign Headquarters, Strategy Room",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/strategy",
+        "topics": ["Campaign Strategy", "Media Planning"],
+        "tags": ["internal", "strategy", "planning"]
+      },
+      "status": "planned",
+      "visibility": "team",
+      "priority": 0.85,
+      "confidence": 0.9,
+      "notes": "Strategic planning session for upcoming media campaign",
+      "provenance": {
+        "source": "manual",
+        "created_by": "strategy_director",
+        "created_at": "2025-08-30T17:00:00+08:00",
+        "updated_at": "2025-08-30T17:00:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250903_volunteer_training",
+      "kind": "activity",
+      "when": {
+        "start": "2025-09-03T18:30:00+08:00",
+        "end": "2025-09-03T20:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_volunteer_coordinator",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_new_volunteers",
+          "role": "attendee",
+          "required": false,
+          "response_status": "accepted",
+          "weight": 0.7
+        }
+      ],
+      "place": {
+        "entity_id": "place_community_center",
+        "fallback_text": "Songshan Community Center, Training Room",
+        "geo": { "lat": 25.05, "lon": 121.57 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "training/volunteer",
+        "topics": ["Volunteer Training", "Campaign Basics"],
+        "tags": ["public", "training", "volunteers"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.75,
+      "confidence": 0.8,
+      "notes": "New volunteer orientation and training session",
+      "provenance": {
+        "source": "manual",
+        "created_by": "volunteer_coordinator",
+        "created_at": "2025-08-28T12:30:00+08:00",
+        "updated_at": "2025-09-01T09:15:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250904_media_interview",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-04T11:00:00+08:00",
+        "end": "2025-09-04T12:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_journalist",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_tv_studio",
+        "fallback_text": "TV Studio, Media Center",
+        "geo": { "lat": 25.03, "lon": 121.54 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "interview/media",
+        "topics": ["Media Interview", "Public Relations"],
+        "tags": ["external", "media", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.9,
+      "confidence": 0.95,
+      "notes": "Live TV interview on campaign platform and policies",
+      "provenance": {
+        "source": "email",
+        "created_by": "media_coordinator",
+        "created_at": "2025-09-01T14:20:00+08:00",
+        "updated_at": "2025-09-02T10:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250905_fundraising_dinner",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-05T19:00:00+08:00",
+        "end": "2025-09-05T22:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_fundraising_chair",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_grand_hotel",
+        "fallback_text": "Grand Hotel, Ballroom A",
+        "geo": { "lat": 25.07, "lon": 121.53 },
+        "region": "Taipei/Zhongshan"
+      },
+      "facets": {
+        "type": "event/fundraising",
+        "topics": ["Fundraising", "Campaign Support"],
+        "tags": ["external", "fundraising", "formal"]
+      },
+      "status": "confirmed",
+      "visibility": "private",
+      "priority": 0.95,
+      "confidence": 0.9,
+      "notes": "Annual fundraising dinner with major donors and supporters",
+      "provenance": {
+        "source": "manual",
+        "created_by": "fundraising_chair",
+        "created_at": "2025-08-15T16:45:00+08:00",
+        "updated_at": "2025-09-03T11:20:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250909_sprint_planning",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-09T09:00:00+08:00",
+        "end": "2025-09-09T12:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_product_owner",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_dev_team",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.9
+        }
+      ],
+      "place": {
+        "entity_id": "place_office_main",
+        "fallback_text": "Main Office, Agile Room",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/planning",
+        "topics": ["Sprint Planning", "Backlog Refinement"],
+        "tags": ["internal", "agile", "planning"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.8,
+      "confidence": 0.9,
+      "notes": "Sprint planning session for the next development cycle",
+      "provenance": {
+        "source": "manual",
+        "created_by": "product_owner",
+        "created_at": "2025-09-06T15:30:00+08:00",
+        "updated_at": "2025-09-08T10:20:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250910_press_conference",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-10T14:00:00+08:00",
+        "end": "2025-09-10T15:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_press_secretary",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_press_center",
+        "fallback_text": "Taipei Press Center, Main Hall",
+        "geo": { "lat": 25.04, "lon": 121.55 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "event/press",
+        "topics": ["Press Conference", "Policy Announcement"],
+        "tags": ["public", "media", "announcement"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.95,
+      "confidence": 0.9,
+      "notes": "Major policy announcement press conference",
+      "provenance": {
+        "source": "manual",
+        "created_by": "press_secretary",
+        "created_at": "2025-09-05T11:45:00+08:00",
+        "updated_at": "2025-09-09T16:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250911_stakeholder_meeting",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-11T10:00:00+08:00",
+        "end": "2025-09-11T12:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_project_manager",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_stakeholders",
+          "role": "attendee",
+          "required": true,
+          "response_status": "tentative",
+          "weight": 0.8
+        }
+      ],
+      "place": {
+        "entity_id": "place_conference_room",
+        "fallback_text": "Executive Conference Room",
+        "geo": { "lat": 25.04, "lon": 121.56 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "meeting/stakeholder",
+        "topics": ["Project Review", "Budget Discussion"],
+        "tags": ["internal", "executive", "review"]
+      },
+      "status": "planned",
+      "visibility": "private",
+      "priority": 0.85,
+      "confidence": 0.8,
+      "notes": "Quarterly stakeholder review and budget planning",
+      "provenance": {
+        "source": "email",
+        "created_by": "project_manager",
+        "created_at": "2025-09-08T14:15:00+08:00",
+        "updated_at": "2025-09-10T09:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250912_campaign_rally",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-12T18:00:00+08:00",
+        "end": "2025-09-12T21:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_event_coordinator",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_stadium",
+        "fallback_text": "Taipei Arena, Main Floor",
+        "geo": { "lat": 25.05, "lon": 121.55 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "event/rally",
+        "topics": ["Campaign Rally", "Public Speaking"],
+        "tags": ["public", "campaign", "large-scale"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.95,
+      "confidence": 0.9,
+      "notes": "Major campaign rally with expected 5000+ attendees",
+      "provenance": {
+        "source": "manual",
+        "created_by": "event_coordinator",
+        "created_at": "2025-08-20T16:00:00+08:00",
+        "updated_at": "2025-09-10T12:45:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250913_team_building",
+      "kind": "activity",
+      "when": {
+        "start": "2025-09-13T09:00:00+08:00",
+        "end": "2025-09-13T17:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_hr_manager",
+          "role": "organizer",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_all_staff",
+          "role": "attendee",
+          "required": false,
+          "response_status": "accepted",
+          "weight": 0.7
+        }
+      ],
+      "place": {
+        "entity_id": "place_resort",
+        "fallback_text": "Yangmingshan Resort, Activity Center",
+        "geo": { "lat": 25.18, "lon": 121.55 },
+        "region": "Taipei/Beitou"
+      },
+      "facets": {
+        "type": "activity/teambuilding",
+        "topics": ["Team Building", "Staff Bonding"],
+        "tags": ["internal", "recreation", "team"]
+      },
+      "status": "confirmed",
+      "visibility": "team",
+      "priority": 0.6,
+      "confidence": 0.85,
+      "notes": "Annual team building retreat with outdoor activities",
+      "provenance": {
+        "source": "manual",
+        "created_by": "hr_manager",
+        "created_at": "2025-08-15T10:30:00+08:00",
+        "updated_at": "2025-09-11T14:20:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250914_policy_debate",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-14T19:00:00+08:00",
+        "end": "2025-09-14T21:30:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_debate_moderator",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        }
+      ],
+      "place": {
+        "entity_id": "place_university_hall",
+        "fallback_text": "National Taiwan University, Auditorium",
+        "geo": { "lat": 25.02, "lon": 121.54 },
+        "region": "Taipei/Daan"
+      },
+      "facets": {
+        "type": "event/debate",
+        "topics": ["Policy Debate", "Public Discussion"],
+        "tags": ["public", "academic", "election"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.9,
+      "confidence": 0.85,
+      "notes": "University-hosted policy debate with multiple candidates",
+      "provenance": {
+        "source": "email",
+        "created_by": "debate_coordinator",
+        "created_at": "2025-09-01T13:45:00+08:00",
+        "updated_at": "2025-09-12T11:30:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250915_client_presentation",
+      "kind": "business",
+      "when": {
+        "start": "2025-09-15T14:00:00+08:00",
+        "end": "2025-09-15T16:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_sales_director",
+          "role": "host",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_client_executives",
+          "role": "attendee",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 0.9
+        }
+      ],
+      "place": {
+        "entity_id": "place_client_office",
+        "fallback_text": "Client Office, Executive Boardroom",
+        "geo": { "lat": 25.03, "lon": 121.55 },
+        "region": "Taipei/Xinyi"
+      },
+      "facets": {
+        "type": "meeting/presentation",
+        "topics": ["Sales Presentation", "Product Demo"],
+        "tags": ["external", "sales", "presentation"]
+      },
+      "status": "confirmed",
+      "visibility": "private",
+      "priority": 0.9,
+      "confidence": 0.9,
+      "notes": "Final presentation for major client contract renewal",
+      "provenance": {
+        "source": "manual",
+        "created_by": "sales_director",
+        "created_at": "2025-09-10T16:45:00+08:00",
+        "updated_at": "2025-09-14T09:15:00+08:00"
+      }
+    },
+    {
+      "id": "evt_20250916_community_forum",
+      "kind": "public_event",
+      "when": {
+        "start": "2025-09-16T15:00:00+08:00",
+        "end": "2025-09-16T18:00:00+08:00",
+        "timezone": "Asia/Taipei",
+        "all_day": false
+      },
+      "roles": [
+        {
+          "entity_id": "person_candidate",
+          "role": "speaker",
+          "required": true,
+          "response_status": "accepted",
+          "weight": 1.0
+        },
+        {
+          "entity_id": "person_community_leaders",
+          "role": "attendee",
+          "required": false,
+          "response_status": "accepted",
+          "weight": 0.8
+        }
+      ],
+      "place": {
+        "entity_id": "place_community_center",
+        "fallback_text": "Songshan Community Center, Main Hall",
+        "geo": { "lat": 25.05, "lon": 121.57 },
+        "region": "Taipei/Songshan"
+      },
+      "facets": {
+        "type": "event/forum",
+        "topics": ["Community Issues", "Local Development"],
+        "tags": ["public", "community", "local"]
+      },
+      "status": "confirmed",
+      "visibility": "public",
+      "priority": 0.8,
+      "confidence": 0.85,
+      "notes": "Community forum discussing local development and issues",
+      "provenance": {
+        "source": "manual",
+        "created_by": "community_coordinator",
+        "created_at": "2025-09-08T12:30:00+08:00",
+        "updated_at": "2025-09-15T10:45:00+08:00"
+      }
+    }
+  ],
+  "entities": [
+    {
+      "id": "person_campaign_manager",
+      "type": "person",
+      "name": "Sarah Chen",
+      "aliases": ["Sarah C.", "Campaign Manager"],
+      "labels": ["Management", "Strategy"],
+      "contacts": { "emails": ["sarah.chen@campaign.tw"], "phones": ["+886-2-1234-5678"] },
+      "visibility": "team"
+    },
+    {
+      "id": "place_campaign_hq",
+      "type": "place",
+      "name": "Campaign Headquarters",
+      "aliases": ["HQ", "Campaign Office"],
+      "labels": ["Office", "Meeting Space"],
+      "geo": { "lat": 25.04, "lon": 121.56, "address": "123 Songshan Rd, Taipei", "floor": "8F" },
+      "meta": { "capacity": 20, "equipment": ["projector", "whiteboard", "video_conference"] },
+      "visibility": "team"
+    }
+  ]
+}
