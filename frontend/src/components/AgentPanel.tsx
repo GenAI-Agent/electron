@@ -63,9 +63,10 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
   // Rule autocomplete 相關狀態
   const [showRuleAutocomplete, setShowRuleAutocomplete] = useState(false);
-  const [ruleMatches, setRuleMatches] = useState<string[]>([]);
-  const [availableRules, setAvailableRules] = useState<string[]>([]);
+  const [ruleMatches, setRuleMatches] = useState<{ name: string; category?: string }[]>([]);
+  const [availableRules, setAvailableRules] = useState<{ name: string; category?: string }[]>([]);
   const [selectedRuleIndex, setSelectedRuleIndex] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // 刷新 session 功能
   const handleRefreshSession = () => {
@@ -125,9 +126,32 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       const response = await fetch('http://localhost:8021/api/rules/');
       if (response.ok) {
         const rules = await response.json();
-        const ruleNames = rules.map((rule: any) => rule.name);
-        setAvailableRules(ruleNames);
-        console.log('🔧 載入規則列表:', ruleNames);
+        // 將規則按分類整理（如果沒有分類，則使用規則名稱推斷）
+        const rulesWithCategories = rules.map((rule: any) => {
+          // 根據規則名稱推斷分類
+          let category = '一般';
+          const ruleName = rule.name.toLowerCase();
+          
+          if (ruleName.includes('gmail') || ruleName.includes('mail') || ruleName.includes('email')) {
+            category = '郵件';
+          } else if (ruleName.includes('browser') || ruleName.includes('web') || ruleName.includes('page')) {
+            category = '瀏覽器';
+          } else if (ruleName.includes('file') || ruleName.includes('document') || ruleName.includes('local')) {
+            category = '文件';
+          } else if (ruleName.includes('data') || ruleName.includes('analysis') || ruleName.includes('chart')) {
+            category = '數據分析';
+          } else if (ruleName.includes('api') || ruleName.includes('integration')) {
+            category = '整合';
+          }
+          
+          return {
+            name: rule.name,
+            category: rule.category || category
+          };
+        });
+        
+        setAvailableRules(rulesWithCategories);
+        console.log('🔧 載入規則列表:', rulesWithCategories);
       }
     } catch (error) {
       console.warn('⚠️ 載入規則列表失敗:', error);
@@ -275,11 +299,11 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
         // 檢查是否為多檔案情況（currentFile 為 'multi_file_context' 或 sample_data 有 source 欄位）
         if (currentContext.current_file === 'multi_file_context' ||
-            (currentContext.file_summary?.data_schema?.sample_data &&
-             Array.isArray(currentContext.file_summary.data_schema.sample_data) &&
-             currentContext.file_summary.data_schema.sample_data[0]?.source)) {
+          (currentContext.file_summary?.data_schema?.sample_data &&
+            Array.isArray(currentContext.file_summary.data_schema.sample_data) &&
+            currentContext.file_summary.data_schema.sample_data[0]?.source)) {
           // 多檔案情況：傳送檔案路徑列表給後端的新多檔案工具
-          const datasets = currentContext.file_summary.data_schema.sample_data;
+          const datasets = currentContext.file_summary?.data_schema?.sample_data || [];
           const filePaths = datasets.map(dataset => `../data/sandbox/${dataset.filename}`);
 
           contextData = {
@@ -299,8 +323,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             total_files: contextData.total_files,
             files: contextData.files.map(f => ({
               source: f.source,
-              filename: f.filename,
-              data_length: f.data?.length
+              filename: f.filename
             }))
           });
         } else if (currentContext.current_file) {
@@ -576,13 +599,22 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       const query = value.slice(1).toLowerCase(); // 移除 "/" 並轉為小寫
 
       if (query === '') {
-        // 只有 "/" 時顯示所有規則
-        setRuleMatches(availableRules);
+        // 只有 "/" 時顯示所有規則（根據選擇的分類過濾）
+        const filtered = selectedCategory
+          ? availableRules.filter(rule => rule.category === selectedCategory)
+          : availableRules;
+        setRuleMatches(filtered);
       } else {
-        // 模糊匹配規則名稱
-        const matches = availableRules.filter(rule =>
-          rule.toLowerCase().includes(query)
+        // 模糊匹配規則名稱（同時考慮分類過濾）
+        let matches = availableRules.filter(rule =>
+          rule.name.toLowerCase().includes(query)
         );
+        
+        // 如果有選擇分類，進一步過濾
+        if (selectedCategory) {
+          matches = matches.filter(rule => rule.category === selectedCategory);
+        }
+        
         setRuleMatches(matches);
       }
 
@@ -591,6 +623,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     } else {
       setShowRuleAutocomplete(false);
       setRuleMatches([]);
+      setSelectedCategory(null);
     }
   };
 
@@ -614,7 +647,9 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       case 'Tab':
       case 'Enter':
         e.preventDefault();
-        selectRule(ruleMatches[selectedRuleIndex]);
+        if (ruleMatches[selectedRuleIndex]) {
+          selectRule(ruleMatches[selectedRuleIndex]);
+        }
         break;
       case 'Escape':
         e.preventDefault();
@@ -625,10 +660,11 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   // 選擇規則
-  const selectRule = (ruleName: string) => {
-    setInput(`/${ruleName} `);
+  const selectRule = (rule: { name: string; category?: string }) => {
+    setInput(`/${rule.name} `);
     setShowRuleAutocomplete(false);
     setRuleMatches([]);
+    setSelectedCategory(null);
   };
 
   return (
@@ -791,28 +827,81 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             </div>
 
             {/* Rule Autocomplete 下拉列表 */}
-            {showRuleAutocomplete && ruleMatches.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] max-h-48 overflow-y-auto">
-                {ruleMatches.map((rule, index) => (
-                  <div
-                    key={rule}
-                    className={cn(
-                      "px-3 py-2 text-sm cursor-pointer border-b border-slate-100 last:border-b-0",
-                      index === selectedRuleIndex
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700 hover:bg-gray-50"
-                    )}
-                    onClick={() => selectRule(rule)}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-blue-500 mr-2">/</span>
-                      <span className="font-medium">{rule}</span>
-                    </div>
+            {showRuleAutocomplete && (ruleMatches.length > 0 || availableRules.length > 0) && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg z-[1000] max-h-64 overflow-y-auto">
+                {/* 分類選項 */}
+                <div className="sticky top-0 bg-card border-b border-border p-2">
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      className={cn(
+                        "px-2 py-1 text-xs rounded-md transition-colors",
+                        selectedCategory === null
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        handleInputChange(input);
+                      }}
+                    >
+                      全部
+                    </button>
+                    {Array.from(new Set(availableRules.map(r => r.category))).map(category => (
+                      <button
+                        key={category}
+                        className={cn(
+                          "px-2 py-1 text-xs rounded-md transition-colors",
+                          selectedCategory === category
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        onClick={() => {
+                          setSelectedCategory(category || null);
+                          handleInputChange(input);
+                        }}
+                      >
+                        {category}
+                      </button>
+                    ))}
                   </div>
-                ))}
-                <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-t border-slate-100">
-                  使用 ↑↓ 選擇，Tab 或 Enter 確認，Esc 取消
                 </div>
+                
+                {/* 規則列表 */}
+                {ruleMatches.length > 0 ? (
+                  <>
+                    {ruleMatches.map((rule, index) => (
+                      <div
+                        key={rule.name}
+                        className={cn(
+                          "px-3 py-2 text-sm cursor-pointer border-b border-border last:border-b-0",
+                          index === selectedRuleIndex
+                            ? "bg-accent text-accent-foreground"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        onClick={() => selectRule(rule)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center flex-1">
+                            <span className="text-primary mr-2">/</span>
+                            <span className="font-medium">{rule.name}</span>
+                          </div>
+                          {rule.category && (
+                            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded ml-2">
+                              {rule.category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/50 border-t border-border">
+                      使用 ↑↓ 選擇，Tab 或 Enter 確認，Esc 取消
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                    {selectedCategory ? `「${selectedCategory}」分類下沒有符合的規則` : '沒有符合的規則'}
+                  </div>
+                )}
               </div>
             )}
           </div>

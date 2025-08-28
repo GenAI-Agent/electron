@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Folder, Search, ChevronLeft, ChevronRight, User, Square, Monitor, Home, Calendar } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Bot, Home, Calendar } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { cn } from '@/utils/cn';
-import { Button } from './button';
-import { LensOSLogo } from '../LensLogo';
 
 // 擴展 CSSProperties 類型以支持 WebkitAppRegion
 declare module 'react' {
@@ -11,7 +9,7 @@ declare module 'react' {
     WebkitAppRegion?: 'drag' | 'no-drag';
   }
 }
-
+export type ViewMode = 'with-agent' | 'fullscreen';
 interface HeaderProps {
   title?: string;
   showHomeButton?: boolean;
@@ -26,20 +24,18 @@ interface HeaderProps {
   };
   rightContent?: React.ReactNode;
   showViewToggle?: boolean;
-  viewMode?: 'with-agent' | 'fullscreen';
-  onViewModeChange?: (mode: 'with-agent' | 'fullscreen') => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   title = 'Lens OS',
-  showHomeButton = false,
   showUrlInput = false,
-  showNavigation = false,
   showUserInfo = false,
   onUrlChange,
   userInfo,
   rightContent,
-  showViewToggle = false,
+  showViewToggle = true,
   viewMode = 'with-agent',
   onViewModeChange,
 }) => {
@@ -52,10 +48,6 @@ const Header: React.FC<HeaderProps> = ({
       setUrlInput(title);
     }
   }, [title, isEditing]);
-
-  const handleHomeClick = () => {
-    router.push('/');
-  };
 
   const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className="h-[40px] bg-card flex items-center px-6 relative z-[1000] border-b border-border shadow-sm"
+      className="h-[40px] bg-card flex items-center fixed top-0 left-0 right-0 justify-between px-6 z-[1000] shadow-xs"
       style={{ WebkitAppRegion: 'drag' }}
     >
       {/* Left section - Navigation */}
@@ -129,36 +121,11 @@ const Header: React.FC<HeaderProps> = ({
             □
           </div>
         </div>
-
-
-
-        {/* Navigation Arrows */}
-        {showNavigation && (
-          <div
-            className="flex items-center gap-1"
-            style={{ WebkitAppRegion: 'no-drag' }}
-          >
-            <button
-              onClick={() => router.back()}
-              className="p-2 rounded-lg hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
-              title="上一頁"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => window.history.forward()}
-              className="p-2 rounded-lg hover:bg-accent text-foreground/70 hover:text-foreground transition-colors"
-              title="下一頁"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Center section - Title or URL Input */}
       <div
-        className="flex-1 max-w-2xl mx-auto px-4"
+        className="max-w-2xl mx-auto px-4 absolute left-1/2 -translate-x-1/2"
         style={{ WebkitAppRegion: 'no-drag' }}
       >
         {showUrlInput && isEditing ? (
@@ -191,47 +158,43 @@ const Header: React.FC<HeaderProps> = ({
               showUrlInput ? "cursor-pointer" : "cursor-default"
             )}
           >
-            {/* Navigation arrows in title area - only show if showNavigation is true */}
-            {showNavigation && (
-              <>
-                {/* Left Double Arrows - Back Navigation */}
-                <button
-                  className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
-                  onClick={() => router.back()}
-                  title="上一頁"
-                  style={{ WebkitAppRegion: 'no-drag' }}
-                >
-                  {/* Outer Left Arrow */}
-                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                    <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {/* Inner Left Arrow */}
-                  <svg className="w-4 h-4 -ml-1" viewBox="0 0 16 16" fill="none">
-                    <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
 
-                {/* Right Double Arrows - Forward Navigation */}
-                <button
-                  className="absolute right-2 flex items-center hover:opacity-70 transition-opacity"
-                  onClick={() => window.history.forward()}
-                  title="下一頁"
-                  style={{ WebkitAppRegion: 'no-drag' }}
-                >
-                  {/* Inner Right Arrow */}
-                  <svg className="w-4 h-4 -mr-1" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {/* Outer Right Arrow */}
-                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                    <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </>
-            )}
+            {/* Left Double Arrows - Back Navigation */}
+            <button
+              className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
+              onClick={() => router.back()}
+              title="上一頁"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              {/* Outer Left Arrow */}
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {/* Inner Left Arrow */}
+              <svg className="w-4 h-4 -ml-1" viewBox="0 0 16 16" fill="none">
+                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Right Double Arrows - Forward Navigation */}
+            <button
+              className="absolute right-2 flex items-center hover:opacity-70 transition-opacity"
+              onClick={() => window.history.forward()}
+              title="下一頁"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              {/* Inner Right Arrow */}
+              <svg className="w-4 h-4 -mr-1" viewBox="0 0 16 16" fill="none">
+                <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {/* Outer Right Arrow */}
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
 
             {/* Title Text */}
-            <span className={showNavigation ? "mx-12" : ""}>
+            <span className="mx-12">
               {showUrlInput ? urlInput || title : title}
             </span>
           </div>
@@ -239,8 +202,7 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right section - Custom content and view toggle */}
-      <div className="flex items-center gap-2 flex-1 justify-end mr-4" style={{ WebkitAppRegion: 'no-drag' }}>
-        {rightContent}
+      <div className="flex items-center gap-2 justify-end" style={{ WebkitAppRegion: 'no-drag' }}>
 
         {/* Calendar Button */}
         {showViewToggle && (
@@ -266,16 +228,14 @@ const Header: React.FC<HeaderProps> = ({
         {/* View Toggle Button */}
         {showViewToggle && onViewModeChange && (
           <button
-            onClick={() => onViewModeChange(viewMode === 'with-agent' ? 'fullscreen' : 'with-agent')}
+            onClick={() => onViewModeChange(viewMode === 'with-agent' ? 'fullscreen' : 'with-agent') as unknown as ViewMode}
             className="text-foreground hover:text-primary transition-all duration-200 p-2 rounded-md hover:bg-accent transform hover:scale-110"
+            title={viewMode === 'with-agent' ? '切換到全螢幕模式' : '顯示 AI 助理'}
           >
-            {viewMode === 'with-agent' ? (
-              <Monitor className="w-5 h-5 transition-all duration-200 transform" />
-            ) : (
-              <Square className="w-5 h-5 transition-all duration-200 transform" />
-            )}
+            <Bot className="w-5 h-5 transition-all duration-200 transform" />
           </button>
         )}
+        {rightContent}
       </div>
     </header>
   );

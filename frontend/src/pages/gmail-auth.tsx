@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import GoogleAuth from '../components/GoogleAuth';
-import Header from '../components/ui/header';
+import Header, { ViewMode } from '../components/ui/header';
 
 const GmailAuthPage: React.FC = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
   return (
     <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
       {/* Header */}
       <Header
         title="Sign in to Lens OS"
-        showNavigation={true}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Main Content */}

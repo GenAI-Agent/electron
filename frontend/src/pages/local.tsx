@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FolderOpen } from 'lucide-react';
 import { useRouter } from 'next/router';
-import Header from '@/components/ui/header';
+import Header, { ViewMode } from '@/components/ui/header';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LocalFileCards from '@/components/LocalFileCards';
@@ -9,7 +9,7 @@ import LocalFileCards from '@/components/LocalFileCards';
 const LocalPage: React.FC = () => {
   const [path, setPath] = useState('');
   const router = useRouter();
-
+  const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (path.trim()) {
@@ -20,12 +20,12 @@ const LocalPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background m-0 p-0">
+    <div className="h-screen w-screen flex flex-col pt-10 bg-background m-0 p-0">
       {/* Header */}
       <Header
         title="Desktop File Explorer"
-        showHomeButton={true}
-        showNavigation={true}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Main Content Container */}

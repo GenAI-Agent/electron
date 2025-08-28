@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  Plus, 
-  FileText, 
-  Clock, 
-  Target, 
-  BarChart3, 
+import {
+  Plus,
+  FileText,
+  Clock,
+  Target,
+  BarChart3,
   Settings,
   Home,
   Search,
@@ -72,7 +72,7 @@ const IconSidebar: React.FC<IconSidebarProps> = ({
   return (
     <div
       className={cn(
-        "bg-card border-r border-border flex flex-col py-4 relative transition-all duration-300 overflow-hidden",
+        "bg-card flex flex-col py-4 relative transition-all duration-300 overflow-hidden",
         isHovered ? "w-48" : "w-16",
         className
       )}
@@ -119,7 +119,7 @@ const IconSidebar: React.FC<IconSidebarProps> = ({
               <IconComponent className="w-5 h-5 flex-shrink-0" />
               {isHovered && (
                 <div className="ml-3 flex-1 text-left overflow-hidden">
-                  <div className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                  <div className="text-sm text-black font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                     {item.label}
                   </div>
                 </div>

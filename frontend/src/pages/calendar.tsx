@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Users } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import AgentPanel from '@/components/AgentPanel';
-import Header from '@/components/ui/header';
+import Header, { ViewMode } from '@/components/ui/header';
 
 // 類型定義
 interface CalendarEvent {
@@ -50,10 +50,8 @@ interface CalendarResponse {
   filters_applied: Record<string, any>;
 }
 
-type ViewMode = 'with-agent' | 'fullscreen';
 
 const CalendarPage: React.FC = () => {
-  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +68,7 @@ const CalendarPage: React.FC = () => {
       // 計算月份的開始和結束日期
       const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      
+
       const startDate = startOfMonth.toISOString().split('T')[0];
       const endDate = endOfMonth.toISOString().split('T')[0];
 
@@ -117,20 +115,20 @@ const CalendarPage: React.FC = () => {
   const getCalendarDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     const days = [];
     const currentDateObj = new Date(startDate);
-    
+
     for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
       days.push(new Date(currentDateObj));
       currentDateObj.setDate(currentDateObj.getDate() + 1);
     }
-    
+
     return days;
   };
 
@@ -162,10 +160,10 @@ const CalendarPage: React.FC = () => {
   // 格式化時間
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString('zh-TW', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('zh-TW', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     });
   };
 
@@ -177,13 +175,13 @@ const CalendarPage: React.FC = () => {
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background m-0 p-0 overflow-hidden">
+    <div className="h-screen w-screen flex flex-col pt-10 bg-background m-0 p-0 overflow-hidden">
       {/* Header */}
       <Header
         title="日曆系統"
-        showViewToggle={true}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        showViewToggle={true}
       />
 
       {/* Main Content Area */}
@@ -206,12 +204,12 @@ const CalendarPage: React.FC = () => {
                 </h1>
                 <button
                   onClick={goToToday}
-                  className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  className="px-3 py-1 text-sm bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
                 >
                   今天
                 </button>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigateMonth('prev')}
@@ -265,7 +263,7 @@ const CalendarPage: React.FC = () => {
                         key={index}
                         className={cn(
                           "min-h-[120px] p-2 border-r border-b border-border last:border-r-0 transition-colors hover:bg-accent/50",
-                          !isCurrentMonth && "bg-muted/20 text-muted-foreground",
+                          !isCurrentMonth && "bg-muted/20 text-muted-foreground opacity-50",
                           isToday && "bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200"
                         )}
                       >
@@ -275,23 +273,30 @@ const CalendarPage: React.FC = () => {
                         )}>
                           {day.getDate()}
                         </div>
-                        
+
                         <div className="space-y-1">
                           {dayEvents.slice(0, 3).map(event => (
                             <div
                               key={event.id}
                               onClick={() => setSelectedEvent(event)}
                               className={cn(
-                                "text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 hover:scale-[1.02]",
-                                getEventColor(event.kind)
+                                "relative text-xs px-2 py-1.5 rounded cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]",
+                                "bg-card border-l-3",
+                                event.kind === 'business' && "border-l-emerald-500 hover:bg-emerald-50",
+                                event.kind === 'activity' && "border-l-amber-500 hover:bg-amber-50",
+                                event.kind === 'public_event' && "border-l-rose-500 hover:bg-rose-50",
+                                event.kind === 'personal' && "border-l-indigo-500 hover:bg-indigo-50",
+                                !['business', 'activity', 'public_event', 'personal'].includes(event.kind) && "border-l-gray-400 hover:bg-gray-50"
                               )}
                               title={event.notes || event.facets.type}
                             >
-                              <div className="font-semibold truncate text-[10px] leading-tight">
-                                {formatTime(event.when.start)}
-                              </div>
-                              <div className="font-medium truncate mt-0.5">
-                                {event.facets.type.split('/')[1] || event.facets.type}
+                              <div className="flex items-start gap-1">
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  {formatTime(event.when.start)}
+                                </span>
+                                <span className="flex-1 font-medium text-foreground truncate">
+                                  {event.facets.type.split('/')[1] || event.facets.type}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -323,34 +328,34 @@ const CalendarPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedEvent(null)}>
           <div className="bg-card p-6 rounded-lg border border-border max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-4">{selectedEvent.facets.type}</h3>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span>{formatTime(selectedEvent.when.start)} - {formatTime(selectedEvent.when.end)}</span>
               </div>
-              
+
               {selectedEvent.place && (
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
                   <span>{selectedEvent.place.fallback_text}</span>
                 </div>
               )}
-              
+
               {selectedEvent.roles.length > 0 && (
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-muted-foreground" />
                   <span>{selectedEvent.roles.length} 參與者</span>
                 </div>
               )}
-              
+
               {selectedEvent.notes && (
                 <div className="mt-4">
                   <p className="text-muted-foreground">{selectedEvent.notes}</p>
                 </div>
               )}
             </div>
-            
+
             <button
               onClick={() => setSelectedEvent(null)}
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"

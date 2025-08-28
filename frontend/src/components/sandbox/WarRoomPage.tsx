@@ -980,8 +980,8 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
   const sidebarItems = cities.map((city) => ({
     id: city.id,
     icon: city.id === selectedCity?.id ? AlertTriangle :
-          city.type === 'urgent' ? AlertTriangle :
-          city.type === 'warning' ? Activity : FileText,
+      city.type === 'urgent' ? AlertTriangle :
+        city.type === 'warning' ? Activity : FileText,
     label: city.cityName,
     isActive: city.id === selectedCity?.id,
     onClick: () => {
@@ -989,8 +989,8 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
       setSelectedDistrict(null);
     },
     color: city.id === selectedCity?.id ? 'orange' :
-           city.type === 'urgent' ? 'red' :
-           city.type === 'warning' ? 'orange' : 'gray',
+      city.type === 'urgent' ? 'red' :
+        city.type === 'warning' ? 'orange' : 'gray',
     description: city.summary,
     metadata: `${city.timestamp} • 投票率: ${city.metrics.voteRate}% • ${formatSentiment(city.metrics.sentiment).text}`
   }));
@@ -1004,7 +1004,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
     <div className={cn("h-full flex overflow-hidden", className)}>
       {/* Left Icon Sidebar */}
       <IconSidebar
-        items={sidebarItems}
+        items={sidebarItems as any}
         onAddNew={handleAddNew}
       />
 
@@ -1030,7 +1030,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                             onError={(e) => {
                               // 如果圖片載入失敗，顯示備用內容
                               e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'flex';
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
                             }}
                           />
                           <div className="hidden w-full h-full bg-gradient-to-br from-green-100 to-green-200 flex-col items-center justify-center">
@@ -1060,7 +1060,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                             className="max-w-full max-h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'flex';
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
                             }}
                           />
                           <div className="hidden w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex-col items-center justify-center">
@@ -1090,7 +1090,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                             className="max-w-full max-h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'flex';
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
                             }}
                           />
                           <div className="hidden w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex-col items-center justify-center">
@@ -1119,7 +1119,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                     <div className="flex items-center mt-2 text-xs">
                       <div className={cn("w-2 h-2 rounded-full mr-2",
                         selectedCity.type === 'urgent' ? 'bg-red-500' :
-                        selectedCity.type === 'warning' ? 'bg-orange-500' : 'bg-blue-500'
+                          selectedCity.type === 'warning' ? 'bg-orange-500' : 'bg-blue-500'
                       )}></div>
                       領先候選人: {selectedCity.metrics.leadingCandidate} ({selectedCity.metrics.leadingPercentage}%)
                     </div>
@@ -1154,25 +1154,25 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
 
 
             {/* Bottom Comprehensive Dashboard */}
-            <div className="border-t border-border bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900 flex-shrink-0 overflow-y-auto">
+            <div className="border-t border-border bg-gradient-to-br from-slate-50 to-gray-100 flex-shrink-0 overflow-y-auto">
               <div className="p-6">
                 {/* City/District Header with Selector */}
                 <div className="mb-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-xl font-bold text-gray-900">
                         {selectedDistrict ? `${selectedCity.cityName} - ${selectedDistrict.name}` : `${selectedCity.cityName} 總覽`}
                       </h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         {selectedDistrict ? `人口: ${selectedDistrict.demographics.population.toLocaleString()}` : selectedCity.summary}
                       </p>
                     </div>
 
                     {/* District Selector */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-slate-700">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">選擇行政區</div>
+                    <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                      <div className="text-xs font-medium text-gray-700 mb-2">選擇行政區</div>
                       <select
-                        className="text-sm border rounded px-3 py-2 bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white min-w-[120px]"
+                        className="text-sm border rounded px-3 py-2 bg-white min-w-[120px]"
                         value={selectedDistrict?.id || ''}
                         onChange={(e) => {
                           const district = selectedCity?.districts?.find(d => d.id === e.target.value);
@@ -1192,9 +1192,9 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
 
                 {/* Top Metrics Row */}
                 <div className="grid grid-cols-4 gap-6 mb-6">
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">情感分析</h4>
+                      <h4 className="text-sm font-medium text-gray-600">情感分析</h4>
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     </div>
                     <div className="text-2xl font-bold">
@@ -1202,44 +1202,44 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                         {formatSentiment(selectedDistrict?.sentiment || selectedCity.metrics.sentiment).text}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <div className="text-xs text-gray-500 mt-1">
                       {((selectedDistrict?.sentiment || selectedCity.metrics.sentiment) * 100).toFixed(1)}% 支持度
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">投票率</h4>
+                      <h4 className="text-sm font-medium text-gray-600">投票率</h4>
                       <div className={cn("text-xs",
                         selectedCity.metrics.trend === 'up' ? 'text-green-600' :
-                        selectedCity.metrics.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                          selectedCity.metrics.trend === 'down' ? 'text-red-600' : 'text-gray-600'
                       )}>
                         {selectedCity.metrics.trend === 'up' ? '↑' : selectedCity.metrics.trend === 'down' ? '↓' : '→'}
                         {selectedCity.metrics.trend === 'up' ? '+2.1%' : selectedCity.metrics.trend === 'down' ? '-1.5%' : '0%'}
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-2xl font-bold text-blue-600">
                       {selectedDistrict?.voteRate || selectedCity.metrics.voteRate}%
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">預估投票率</div>
+                    <div className="text-xs text-gray-500 mt-1">預估投票率</div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">領先候選人</h4>
-                      <div className="text-xs text-purple-600 dark:text-purple-400">
+                      <h4 className="text-sm font-medium text-gray-600">領先候選人</h4>
+                      <div className="text-xs text-purple-600">
                         {selectedDistrict?.leadingCandidate || selectedCity.metrics.leadingCandidate}
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    <div className="text-2xl font-bold text-purple-600">
                       {selectedDistrict?.leadingPercentage || selectedCity.metrics.leadingPercentage}%
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">支持度</div>
+                    <div className="text-xs text-gray-500 mt-1">支持度</div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">趨勢</h4>
+                      <h4 className="text-sm font-medium text-gray-600">趨勢</h4>
                       <div className="flex items-center justify-center">
                         {selectedCity.metrics.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
                         {selectedCity.metrics.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
@@ -1247,31 +1247,31 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                       </div>
                     </div>
                     <div className="text-2xl font-bold">
-                      <span className={selectedCity.metrics.trend === 'up' ? 'text-green-600 dark:text-green-400' :
-                                     selectedCity.metrics.trend === 'down' ? 'text-red-600 dark:text-red-400' :
-                                     'text-gray-600 dark:text-gray-400'}>
+                      <span className={selectedCity.metrics.trend === 'up' ? 'text-green-600' :
+                        selectedCity.metrics.trend === 'down' ? 'text-red-600' :
+                          'text-gray-600'}>
                         {selectedCity.metrics.trend === 'up' ? '上升' :
-                         selectedCity.metrics.trend === 'down' ? '下降' : '穩定'}
+                          selectedCity.metrics.trend === 'down' ? '下降' : '穩定'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">選情趨勢</div>
+                    <div className="text-xs text-gray-500 mt-1">選情趨勢</div>
                   </div>
                 </div>
 
                 {/* Charts and Analysis Row */}
                 <div className="grid grid-cols-3 gap-6 mb-6">
                   {/* Age Demographics Chart */}
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">年齡分佈</h4>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">年齡分佈</h4>
                     {selectedDistrict ? (
                       <div className="space-y-2">
                         {Object.entries(selectedDistrict.demographics.ageGroups).map(([age, percentage]) => (
                           <div key={age}>
                             <div className="flex justify-between items-center">
-                              <span className="text-xs text-gray-600 dark:text-gray-400">{age}歲</span>
-                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{percentage}%</span>
+                              <span className="text-xs text-gray-600">{age}歲</span>
+                              <span className="text-xs font-medium text-blue-600">{percentage}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
                               <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
                             </div>
                           </div>
@@ -1280,31 +1280,31 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                     ) : (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">18-30歲</span>
-                          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">28%</span>
+                          <span className="text-xs text-gray-600">18-30歲</span>
+                          <span className="text-xs font-medium text-blue-600">28%</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className="bg-blue-500 h-2 rounded-full" style={{ width: '28%' }}></div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">31-50歲</span>
-                          <span className="text-xs font-medium text-green-600 dark:text-green-400">37%</span>
+                          <span className="text-xs text-gray-600">31-50歲</span>
+                          <span className="text-xs font-medium text-green-600">37%</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className="bg-green-500 h-2 rounded-full" style={{ width: '37%' }}></div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">51-65歲</span>
-                          <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">25%</span>
+                          <span className="text-xs text-gray-600">51-65歲</span>
+                          <span className="text-xs font-medium text-yellow-600">25%</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '25%' }}></div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">65+歲</span>
-                          <span className="text-xs font-medium text-purple-600 dark:text-purple-400">10%</span>
+                          <span className="text-xs text-gray-600">65+歲</span>
+                          <span className="text-xs font-medium text-purple-600">10%</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className="bg-purple-500 h-2 rounded-full" style={{ width: '10%' }}></div>
                         </div>
                       </div>
@@ -1312,14 +1312,14 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                   </div>
 
                   {/* Vote Trend Chart */}
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">投票率趨勢</h4>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">投票率趨勢</h4>
                     <div className="h-20 flex items-end justify-between space-x-1">
                       {[45, 52, 48, 61, 55, 67, 72, 68, 74, 69, 71, 75].map((height, i) => (
                         <div key={i} className="bg-green-400 rounded-t" style={{ height: `${height}%`, width: '6px' }}></div>
                       ))}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
                       <span>1月</span>
                       <span>6月</span>
                       <span>12月</span>
@@ -1327,20 +1327,20 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                   </div>
 
                   {/* Key Issues */}
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">關鍵議題</h4>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">關鍵議題</h4>
                     <div className="space-y-2">
                       {selectedCity.tags.slice(0, 4).map((tag, index) => (
                         <div key={tag} className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">{tag}</span>
+                          <span className="text-xs text-gray-600">{tag}</span>
                           <div className="flex items-center">
-                            <div className="w-12 bg-gray-200 dark:bg-slate-600 rounded-full h-1 mr-2">
+                            <div className="w-12 bg-gray-200 rounded-full h-1 mr-2">
                               <div
                                 className="bg-orange-400 h-1 rounded-full"
                                 style={{ width: `${85 - index * 15}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{85 - index * 15}%</span>
+                            <span className="text-xs font-medium text-gray-700">{85 - index * 15}%</span>
                           </div>
                         </div>
                       ))}
@@ -1352,20 +1352,20 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                 {selectedDistrict && (
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     {/* Major Projects */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">重大建設</h4>
+                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">重大建設</h4>
                       <div className="space-y-3">
                         {selectedDistrict.majorProjects.map((project) => (
                           <div key={project.id} className="border-l-4 border-green-400 pl-3">
                             <div className="flex justify-between items-start">
                               <div>
-                                <h5 className="text-sm font-medium text-gray-900 dark:text-white">{project.name}</h5>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
+                                <h5 className="text-sm font-medium text-gray-900">{project.name}</h5>
+                                <p className="text-xs text-gray-600 mt-1">{project.description}</p>
                               </div>
                               <span className={cn("px-2 py-1 rounded text-xs", getProjectStatusColor(project.status))}>
                                 {project.status === 'completed' ? '已完成' :
-                                 project.status === 'ongoing' ? '進行中' :
-                                 project.status === 'planned' ? '規劃中' : '延遲'}
+                                  project.status === 'ongoing' ? '進行中' :
+                                    project.status === 'planned' ? '規劃中' : '延遲'}
                               </span>
                             </div>
                             <div className="flex justify-between items-center mt-2">
@@ -1378,8 +1378,8 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                           <div key={project.id} className="border-l-4 border-yellow-400 pl-3">
                             <div className="flex justify-between items-start">
                               <div>
-                                <h5 className="text-sm font-medium text-gray-900 dark:text-white">{project.name}</h5>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
+                                <h5 className="text-sm font-medium text-gray-900">{project.name}</h5>
+                                <p className="text-xs text-gray-600 mt-1">{project.description}</p>
                               </div>
                               <span className={cn("px-2 py-1 rounded text-xs", getProjectStatusColor(project.status))}>
                                 {project.status === 'planned' ? '待建設' : '延遲'}
@@ -1395,14 +1395,14 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                     </div>
 
                     {/* Citizen Requests */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">民眾陳情與需求</h4>
+                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">民眾陳情與需求</h4>
                       <div className="space-y-3">
                         {selectedDistrict.citizenRequests.map((request) => (
-                          <div key={request.id} className="border rounded-lg p-3 bg-gray-50 dark:bg-slate-700">
+                          <div key={request.id} className="border rounded-lg p-3 bg-gray-50">
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <h5 className="text-sm font-medium text-gray-900 dark:text-white">{request.title}</h5>
+                                <h5 className="text-sm font-medium text-gray-900">{request.title}</h5>
                                 <span className="text-xs text-gray-500">{request.category}</span>
                               </div>
                               <div className="flex items-center space-x-2">
@@ -1412,7 +1412,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                                 <span className="text-xs font-medium text-blue-600">{request.count}件</span>
                               </div>
                             </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{request.description}</p>
+                            <p className="text-xs text-gray-600">{request.description}</p>
                           </div>
                         ))}
                       </div>
@@ -1421,19 +1421,19 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                 )}
 
                 {/* District Table */}
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700 mb-6">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">各區詳細數據</h4>
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">各區詳細數據</h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-gray-200 dark:border-slate-600">
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">行政區</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">人口</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">投票率</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">領先候選人</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">支持度</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">情感</th>
-                          <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">經濟水平</th>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">行政區</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">人口</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">投票率</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">領先候選人</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">支持度</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">情感</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-700">經濟水平</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1441,16 +1441,16 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                           <tr
                             key={district.id}
                             className={cn(
-                              "border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer",
-                              selectedDistrict?.id === district.id && "bg-blue-50 dark:bg-blue-900/20"
+                              "border-b border-gray-100 hover:bg-gray-50 cursor-pointer",
+                              selectedDistrict?.id === district.id && "bg-blue-50"
                             )}
                             onClick={() => setSelectedDistrict(district)}
                           >
-                            <td className="py-2 px-3 font-medium text-gray-900 dark:text-white">{district.name}</td>
-                            <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{district.demographics.population.toLocaleString()}</td>
-                            <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{district.voteRate}%</td>
-                            <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{district.leadingCandidate}</td>
-                            <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{district.leadingPercentage}%</td>
+                            <td className="py-2 px-3 font-medium text-gray-900">{district.name}</td>
+                            <td className="py-2 px-3 text-gray-600">{district.demographics.population.toLocaleString()}</td>
+                            <td className="py-2 px-3 text-gray-600">{district.voteRate}%</td>
+                            <td className="py-2 px-3 text-gray-600">{district.leadingCandidate}</td>
+                            <td className="py-2 px-3 text-gray-600">{district.leadingPercentage}%</td>
                             <td className="py-2 px-3">
                               <span className={formatSentiment(district.sentiment).color}>
                                 {formatSentiment(district.sentiment).text}
@@ -1459,11 +1459,11 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                             <td className="py-2 px-3">
                               <span className={cn("px-2 py-1 rounded text-xs",
                                 district.demographics.economicLevel === 'high' ? 'bg-green-100 text-green-800' :
-                                district.demographics.economicLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                  district.demographics.economicLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
                               )}>
                                 {district.demographics.economicLevel === 'high' ? '高' :
-                                 district.demographics.economicLevel === 'medium' ? '中' : '低'}
+                                  district.demographics.economicLevel === 'medium' ? '中' : '低'}
                               </span>
                             </td>
                           </tr>
@@ -1474,9 +1474,9 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                 </div>
 
                 {/* Bottom Summary */}
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-slate-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">選情分析摘要</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">選情分析摘要</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">
                     {selectedDistrict ?
                       `${selectedDistrict.name}是${selectedCity.cityName}的重要行政區，人口${selectedDistrict.demographics.population.toLocaleString()}人，經濟水平${selectedDistrict.demographics.economicLevel === 'high' ? '較高' : selectedDistrict.demographics.economicLevel === 'medium' ? '中等' : '較低'}。目前${selectedDistrict.leadingCandidate}以${selectedDistrict.leadingPercentage}%的支持度領先，民眾情感傾向${formatSentiment(selectedDistrict.sentiment).text}。` :
                       selectedCity.summary
@@ -1484,7 +1484,7 @@ export const WarRoomPage: React.FC<WarRoomPageProps> = ({ className }) => {
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {selectedCity.tags.slice(0, 6).map((tag, index) => (
-                      <span key={index} className="inline-block bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs border border-blue-200 dark:border-blue-700">
+                      <span key={index} className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border border-blue-200">
                         #{tag}
                       </span>
                     ))}

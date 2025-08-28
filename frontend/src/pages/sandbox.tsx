@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { RefreshCw, Calendar, Database, MessageSquare, FileText, Plus, Minus, X, ChevronLeft, ChevronRight, Square, Monitor } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-
 import AgentPanel from '@/components/AgentPanel';
-import Header from '@/components/ui/header';
+import Header, { ViewMode } from '@/components/ui/header';
 import ParallelogramTabs, { TabType } from '@/components/ParallelogramTabs';
-import { DataTab } from '@/components/DataTabManager';
 import { DataTab } from '@/components/DataTabManager';
 import IntelligencePage from '@/components/sandbox/IntelligencePage';
 import WarRoomPage from '@/components/sandbox/WarRoomPage';
@@ -17,8 +12,7 @@ import DataDashboard from '@/components/sandbox/DataDashboard';
 import { cn } from '@/utils/cn';
 import { sessionManager } from '@/utils/sessionManager';
 
-type DataSource = 'thread' | 'ptt' | 'petition';
-type ViewMode = 'with-agent' | 'fullscreen';
+type DataSource = 'threads' | 'twitter' | 'petition';
 
 interface DataFile {
   filename: string;
@@ -28,7 +22,6 @@ interface DataFile {
 }
 
 export default function SandboxPage() {
-  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
   const [leftWidth, setLeftWidth] = useState(70);
   const [isDragging, setIsDragging] = useState(false);
@@ -38,9 +31,6 @@ export default function SandboxPage() {
   const [dataTabs, setDataTabs] = useState<DataTab[]>([]);
   const [activeDataTabId, setActiveDataTabId] = useState<string | null>(null);
   const [showDataDashboard, setShowDataDashboard] = useState(false);
-
-
-
 
   // 載入檔案資料
   const loadFileData = async (filename: string) => {
@@ -79,7 +69,7 @@ export default function SandboxPage() {
     const newTab: DataTab = {
       id: `${source}_${file.filename}_${Date.now()}`,
       title: `${source.toUpperCase()} ${file.date}`,
-      source,
+      source: source as DataSource,
       filename: file.filename,
       date: file.date,
       time: file.time,
@@ -191,12 +181,10 @@ export default function SandboxPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background relative overflow-hidden">
+    <div className="h-screen w-screen flex flex-col pt-10 bg-background relative overflow-hidden">
       <Header
         title="AI選情沙盒"
         showUrlInput={false}
-        showNavigation={false}
-        showViewToggle={true}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
@@ -214,23 +202,23 @@ export default function SandboxPage() {
         >
 
 
-            {/* Main Page Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Page Content Area - with proper scrolling */}
-              <div className="flex-1 overflow-hidden">
-                {renderPageContent()}
-              </div>
-
-              {/* Bottom Parallelogram Tabs - fixed at bottom */}
-              <div className="flex-shrink-0 z-30">
-                <ParallelogramTabs
-                  activeTab={activeDataTabId || activeTab}
-                  onTabChange={handleUnifiedTabChange}
-                  dataTabs={dataTabs}
-                  onCloseDataTab={handleCloseDataTab}
-                />
-              </div>
+          {/* Main Page Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Page Content Area - with proper scrolling */}
+            <div className="flex-1 overflow-hidden">
+              {renderPageContent()}
             </div>
+
+            {/* Bottom Parallelogram Tabs - fixed at bottom */}
+            <div className="flex-shrink-0 bg-card z-30">
+              <ParallelogramTabs
+                activeTab={activeDataTabId || activeTab}
+                onTabChange={handleUnifiedTabChange}
+                dataTabs={dataTabs as unknown as DataTab[]}
+                onCloseDataTab={handleCloseDataTab}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Drag Handle */}

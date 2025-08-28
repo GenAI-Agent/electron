@@ -7,7 +7,7 @@ export type TabType = 'intelligence' | 'warroom' | 'simulation' | 'data';
 interface DataTab {
   id: string;
   title: string;
-  source: 'thread' | 'ptt' | 'petition';
+  source: 'threads' | 'twitter' | 'petition';
   filename: string;
   date: string;
   time: string;
@@ -63,7 +63,7 @@ export const ParallelogramTabs: React.FC<ParallelogramTabsProps> = ({
   };
 
   return (
-    <div className={cn("flex items-end justify-start overflow-x-auto", className)} style={{ marginLeft: '60px', marginBottom: '-1px' }}>
+    <div className={cn("flex items-end justify-start ml-[60px] mb-[-1px]", className)} >
       {allTabs.map((tab, index) => {
         const isActive = activeTab === tab.id;
 
@@ -78,7 +78,7 @@ export const ParallelogramTabs: React.FC<ParallelogramTabsProps> = ({
               "border-t border-l border-r border-border min-w-0",
               isActive
                 ? "h-12 text-white z-20 bg-card min-w-[140px]"
-                : "h-9 text-gray-600 hover:text-gray-800 z-10 bg-gray-50 hover:bg-gray-100 min-w-[120px]",
+                : "h-9 text-gray-600 hover:text-gray-800 z-10 bg-card hover:bg-muted min-w-[120px]",
               tab.closeable ? "px-8" : "px-12"
             )}
             style={{

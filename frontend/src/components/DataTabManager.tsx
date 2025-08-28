@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 export interface DataTab {
   id: string;
   title: string;
-  source: 'thread' | 'ptt' | 'petition';
+  source: 'threads' | 'twitter' | 'petition';
   filename: string;
   date: string;
   time: string;
@@ -100,7 +100,7 @@ export const DataTabManager: React.FC<DataTabManagerProps> = ({
             <div className="flex-shrink-0">
               {getSourceIcon(tab.source)}
             </div>
-            
+
             {/* Tab title */}
             <div className="flex-1 truncate">
               <div className="truncate font-semibold">
@@ -110,7 +110,7 @@ export const DataTabManager: React.FC<DataTabManagerProps> = ({
                 {tab.date} {tab.time}
               </div>
             </div>
-            
+
             {/* Close button */}
             <button
               onClick={(e) => {
@@ -130,7 +130,7 @@ export const DataTabManager: React.FC<DataTabManagerProps> = ({
           </div>
         );
       })}
-      
+
       {/* Add new tab button */}
       {onNewTab && (
         <Button
