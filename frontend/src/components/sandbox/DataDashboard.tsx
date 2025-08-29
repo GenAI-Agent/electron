@@ -5,6 +5,28 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import SocialMediaAnalytics from '@/components/sandbox/SocialMediaAnalytics';
 import { DataTab } from '@/pages/sandbox-election';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+} from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+);
 
 interface DataDashboardProps {
   dataTab: DataTab;
@@ -220,11 +242,66 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-center">
-                      <PieChart className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                      <p className="text-muted-foreground">圓餅圖 (需要圖表庫)</p>
-                    </div>
+                  <div className="h-64">
+                    <Pie
+                      data={{
+                        labels: ['正面', '負面', '中性'],
+                        datasets: [
+                          {
+                            data: [metrics.sentiment.positive, metrics.sentiment.negative, metrics.sentiment.neutral],
+                            backgroundColor: [
+                              '#16A34A', // 民進黨綠 - 正面情感
+                              '#DC2626', // 中性紅色 - 負面情感
+                              '#1E40AF', // 國民黨藍 - 中性情感
+                            ],
+                            borderColor: [
+                              '#15803D', // 深綠邊框
+                              '#B91C1C', // 深紅邊框
+                              '#1E3A8A', // 深藍邊框
+                            ],
+                            borderWidth: 2,
+                            hoverOffset: 4,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom' as const,
+                            labels: {
+                              padding: 20,
+                              font: {
+                                size: 12,
+                              },
+                              generateLabels: (chart) => {
+                                const data = chart.data;
+                                if (data.labels?.length && data.datasets.length) {
+                                  const colors = ['#16A34A', '#DC2626', '#1E40AF'];
+                                  const borderColors = ['#15803D', '#B91C1C', '#1E3A8A'];
+                                  return data.labels.map((label, i) => ({
+                                    text: `${label}: ${data.datasets[0].data[i]}%`,
+                                    fillStyle: colors[i],
+                                    strokeStyle: borderColors[i],
+                                    lineWidth: 2,
+                                    index: i,
+                                  }));
+                                }
+                                return [];
+                              },
+                            },
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: (context) => {
+                                return `${context.label}: ${context.parsed}%`;
+                              },
+                            },
+                          },
+                        },
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -238,11 +315,57 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-center">
-                      <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                      <p className="text-muted-foreground">長條圖 (需要圖表庫)</p>
-                    </div>
+                  <div className="h-64">
+                    <Bar
+                      data={{
+                        labels: ['高參與', '中參與', '低參與'],
+                        datasets: [
+                          {
+                            label: '參與度分布 (%)',
+                            data: [metrics.engagement.high, metrics.engagement.medium, metrics.engagement.low],
+                            backgroundColor: [
+                              '#16A34A', // 民進黨綠 - 高參與度
+                              '#1E40AF', // 國民黨藍 - 中參與度  
+                              '#DC2626', // 中性紅色 - 低參與度
+                            ],
+                            borderColor: [
+                              '#15803D', // 深綠邊框
+                              '#1E3A8A', // 深藍邊框
+                              '#B91C1C', // 深紅邊框
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 4,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: Math.max(metrics.engagement.high, metrics.engagement.medium, metrics.engagement.low) + 10,
+                            ticks: {
+                              callback: function(value) {
+                                return value + '%';
+                              },
+                            },
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: (context) => {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                              },
+                            },
+                          },
+                        },
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
