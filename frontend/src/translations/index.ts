@@ -126,7 +126,7 @@ export const translations: Record<"zh" | "en", Translations> = {
       subText: "整合多個數據源，運用 AI 智能分析，通過戰略模擬找到最優路徑。",
     },
 
-    explore: "探索",
+    explore: "生成式",
     seeOurProduct: "查看我們的產品",
     tryOurPlatform: "試用我們的平台",
 

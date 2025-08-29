@@ -1,5 +1,38 @@
 @import "tailwindcss";
 
+/* Roobert Font */
+@font-face {
+  font-family: 'Roobert';
+  src: url('/fonts/RoobertTRIAL-Regular-BF67243fd53fdf2.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roobert';
+  src: url('/fonts/RoobertTRIAL-Light-BF67243fd502239.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roobert';
+  src: url('/fonts/RoobertTRIAL-Medium-BF67243fd53e059.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roobert';
+  src: url('/fonts/RoobertTRIAL-Bold-BF67243fd540abb.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -34,7 +67,7 @@
   --popover-foreground: #333333;
 
   /* Brand */
-  --primary: #2563EB;
+  --primary: #a788f2;
   --primary-foreground: #ffffff;
 
   /* Neutrals / UI */
@@ -73,7 +106,7 @@
 
   /* Typography */
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  --font-serif: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-serif: "Roobert", "Georgia",serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Radius */

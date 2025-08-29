@@ -24,7 +24,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
     sentence = "True Focus",
     manualMode = false,
     blurAmount = 5,
-    borderColor = "blue",
+    borderColor = "#a788f2",
     glowColor = "rgba(37, 99, 235, 0.6)",
     animationDuration = 0.5,
     pauseBetweenAnimations = 1,
@@ -142,7 +142,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
                                     ? `blur(0px)`
                                     : `blur(${blurAmount}px)`,
                             transition: `filter ${animationDuration}s ease`,
-                            color: shouldHighlight ? '#2563eb' : '#6b7280',
+                            color: shouldHighlight ? '#a788f2' : '#6b7280',
                         } as React.CSSProperties}
                         onMouseEnter={() => handleMouseEnter(index)}
                         onMouseLeave={handleMouseLeave}

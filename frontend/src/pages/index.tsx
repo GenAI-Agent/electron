@@ -11,6 +11,10 @@ import AuthManager, { AuthStatus } from '@/utils/authManager';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguageStore } from '@/stores/languageStore';
 import { translations } from '@/translations';
+import { BrowserDemoComponent } from '@/components/demos/BrowserDemoComponent';
+import { DesktopDemoComponent } from '@/components/demos/DesktopDemoComponent';
+import { EnterpriseDemoComponent } from '@/components/demos/EnterpriseDemoComponent';
+import { SandboxDemoComponent } from '@/components/demos/SandboxDemoComponent';
 
 
 const HomePage: React.FC = () => {
@@ -77,38 +81,38 @@ const HomePage: React.FC = () => {
 
   const tagContent = [
     {
-      title: t.browserAutomation.title,
-      tagText: t.browserAutomation.tagText,
+      title: '打開網頁',
+      tagText: 'Website',
       icon: Globe,
-      mainText: t.browserAutomation.mainText,
-      subText: t.browserAutomation.subText,
+      mainText: 'Open Website',
+      subText: '點開任意網站即可即時接入 AGI，立即生成 AI 協作 Agent 團隊',
       gifUrl: '/placeholder-browser.gif',
       path: '/browser?url=https://www.google.com',
     },
     {
-      title: t.desktopIntelligence.title,
-      tagText: t.desktopIntelligence.tagText,
+      title: '打開桌面',
+      tagText: 'Desktop',
       icon: Monitor,
-      mainText: t.desktopIntelligence.mainText,
-      subText: t.desktopIntelligence.subText,
+      mainText: 'Open Desktop',
+      subText: 'LLM 本地化，實現 Edge AI 資料隱私安全，遵守指令的局域網 Agent 工作流',
       gifUrl: '/placeholder-desktop.gif',
       path: '/local',
     },
     {
-      title: t.enterpriseIntegration.title,
-      tagText: t.enterpriseIntegration.tagText,
+      title: '打開 SaaS',
+      tagText: 'SaaS',
       icon: Building,
-      mainText: t.enterpriseIntegration.mainText,
-      subText: t.enterpriseIntegration.subText,
+      mainText: 'Open SaaS System',
+      subText: '用 AI 打開 SaaS 系統，將你的 CRM、ERP、BI 全面導入 Supervisor Agent',
       gifUrl: '/placeholder-saas.gif',
       path: '/browser?url=https://www.taaze.ai/business-intelligent',
     },
     {
-      title: t.aiSandbox.title,
-      tagText: t.aiSandbox.tagText,
+      title: 'AI沙盒',
+      tagText: 'Sandbox',
       icon: BarChart3,
-      mainText: t.aiSandbox.mainText,
-      subText: t.aiSandbox.subText,
+      mainText: 'AI Sandbox',
+      subText: '賽局理論驅動智慧系統，模擬競爭場景、推演策略決策\n電商、行銷、選情或各種商業場景，綜觀全局、剖析獨特視角',
       gifUrl: '/placeholder-sandbox.gif',
       path: '/sandbox',
     },
@@ -184,7 +188,7 @@ const HomePage: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Language Toggle */}
             <LanguageToggle />
-            
+
             {!authStatus.isAuthenticated ? (
               <button
                 className="relative inline-flex h-6 cursor-pointer items-center justify-center rounded-md border border-border bg-background px-4 py-1.5 text-sm font-medium text-foreground transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
@@ -241,9 +245,9 @@ const HomePage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center pt-32 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden">
         {/* Background Light Rays */}
-        <div className="absolute top-10  inset-0 w-full h-full">
+        <div className="absolute top-10 inset-0 w-full h-full">
           <LightRays
             raysOrigin="top-center"
             raysColor="#000000"
@@ -267,19 +271,41 @@ const HomePage: React.FC = () => {
               <h1 className="text-2xl bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">LensOS</h1>
             </div>
           </div>
+          <div className="text-center mb-4 px-6 min-h-[250px]">
+            <h1 className="text-4xl uppercase md:text-5xl font-serif text-foreground mb-6 leading-tight">
+              Unlock AGI <br />for Everything You Own
+            </h1>
+            {/* <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Unstructured? Unfiltered? Still Understood.
+            </p>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Don’t Clean Your Data — Let AGI Do the Work.
+            </p>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              AI That Reads What You Have — Not What You Curate.
+            </p> */}
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              免標註、免格式化，資料原樣也能推理
+            </p>
+            {/* <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              企業資料資料不上妝，不再等待才有價值
+            </p> */}
+
+
+          </div>
           {/* Main Text with Fade Animation */}
           <div className="text-center mb-4 px-6">
-            <div className="relative min-h-[200px] flex flex-col justify-center">
+            <div className="relative flex flex-col justify-center">
               <div
                 className={cn(
                   "transition-opacity duration-300 flex flex-col justify-center",
                   isTransitioning ? "opacity-0" : "opacity-100"
                 )}
               >
-                <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
+                <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2 leading-tight">
                   {tagContent[selectedTag].mainText}
                 </h1>
-                <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                <p className="text-lg text-muted-foreground whitespace-pre-line max-w-3xl mx-auto leading-relaxed">
                   {tagContent[selectedTag].subText}
                 </p>
               </div>
@@ -302,7 +328,7 @@ const HomePage: React.FC = () => {
               sentence={tagContent.map(item => item.tagText).join(' ')}
               manualMode={true}
               blurAmount={2}
-              borderColor="#2563eb"
+              borderColor="#a788f2"
               glowColor="rgba(37, 99, 235, 0.6)"
               animationDuration={0.4}
               selectedIndex={selectedTag}
@@ -310,21 +336,19 @@ const HomePage: React.FC = () => {
             />
           </div>
 
-          {/* GIF/Demo Area */}
-          <div className="w-full max-w-4xl mx-auto px-6 mb-28">
+          {/* Demo Area */}
+          <div className="w-full max-w-6xl mx-auto px-6 mb-28">
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden shadow-xl">
               <div
                 className={cn(
-                  "absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 transition-opacity duration-300",
+                  "absolute inset-0 transition-opacity duration-300",
                   isTransitioning ? "opacity-0" : "opacity-100"
                 )}
               >
-                <div className="text-center">
-                  {React.createElement(tagContent[selectedTag].icon, {
-                    className: "w-24 h-24 text-primary/30 mx-auto mb-4"
-                  })}
-                  <p className="text-muted-foreground">Demo Animation Placeholder</p>
-                </div>
+                {selectedTag === 0 && <BrowserDemoComponent />}
+                {selectedTag === 1 && <DesktopDemoComponent />}
+                {selectedTag === 2 && <EnterpriseDemoComponent />}
+                {selectedTag === 3 && <SandboxDemoComponent />}
               </div>
             </div>
           </div>
