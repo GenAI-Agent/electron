@@ -21,7 +21,7 @@ interface FocusRect {
 }
 
 const TrueFocus: React.FC<TrueFocusProps> = ({
-    sentence = "True Focus",
+    sentence = "True|Focus",
     manualMode = false,
     blurAmount = 5,
     borderColor = "#a788f2",
@@ -31,7 +31,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
     onWordSelect,
     selectedIndex = 0,
 }) => {
-    const words = sentence.split(" ");
+    const words = sentence.split("|");
     const [currentIndex, setCurrentIndex] = useState<number>(selectedIndex);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);

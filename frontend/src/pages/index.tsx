@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
     },
     {
       title: 'AI沙盒',
-      tagText: 'Sandbox',
+      tagText: 'Lens Sandbox',
       icon: BarChart3,
       mainText: 'AI Sandbox',
       subText: '賽局理論驅動智慧系統，模擬競爭場景、推演策略決策\n電商、行銷、選情或各種商業場景，綜觀全局、剖析獨特視角',
@@ -325,7 +325,7 @@ const HomePage: React.FC = () => {
           {/* Tag Selection with TrueFocus */}
           <div className="mb-16 px-6">
             <TrueFocus
-              sentence={tagContent.map(item => item.tagText).join(' ')}
+              sentence={tagContent.map(item => item.tagText).join('|')}
               manualMode={true}
               blurAmount={2}
               borderColor="#a788f2"

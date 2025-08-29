@@ -1,321 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import AgentPanel from '@/components/AgentPanel';
+import React, { useState } from 'react';
+import { useRouter } from 'next/router';
+import { ShoppingCart, TrendingUp, Vote, Building2, Briefcase, Users, Clock, ChevronRight } from 'lucide-react';
 import Header, { ViewMode } from '@/components/ui/header';
-import ParallelogramTabs, { TabType } from '@/components/ParallelogramTabs';
-import IntelligencePage from '@/components/sandbox/IntelligencePage';
-import WarRoomPage from '@/components/sandbox/WarRoomPage';
-import WarGamePage from '@/components/sandbox/WarGamePage';
-import DataDashboard from '@/components/sandbox/DataDashboard';
-
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/utils/cn';
-import { sessionManager } from '@/utils/sessionManager';
 
-type DataSource = 'threads' | 'twitter' | 'facebook' | 'ptt' | 'petition';
-export interface DataTab {
+interface BusinessScenario {
   id: string;
   title: string;
-  source: DataSource;
-  filename: string;
-  date: string;
-  time: string;
-  data: any[];
-  isActive?: boolean;
-  isAnalytics?: boolean;
-}
-interface DataFile {
-  filename: string;
-  date: string;
-  time: string;
-  fullPath: string;
+  description: string;
+  icon: React.ReactNode;
+  status: 'available' | 'coming-soon';
+  route?: string;
+  examples: string[];
 }
 
-export default function SandboxPage() {
+const SandboxOverviewPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
-  const [leftWidth, setLeftWidth] = useState(70);
-  const [isDragging, setIsDragging] = useState(false);
+  const router = useRouter();
 
-  // New state for the redesigned interface
-  const [activeTab, setActiveTab] = useState<TabType>('intelligence');
-  const [dataTabs, setDataTabs] = useState<DataTab[]>([]);
-  const [activeDataTabId, setActiveDataTabId] = useState<string | null>(null);
-  const [showDataDashboard, setShowDataDashboard] = useState(false);
-
-  // 載入檔案資料
-  const loadFileData = async (filename: string) => {
-    try {
-      console.log(`正在載入檔案資料: ${filename}`);
-      const response = await fetch(`http://localhost:8021/api/sandbox/data?filename=${filename}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`載入的資料筆數: ${data.length}`);
-        return data;
-      } else {
-        console.error('資料API錯誤:', await response.text());
-      }
-    } catch (error) {
-      console.error('載入檔案資料失敗:', error);
+  const businessScenarios: BusinessScenario[] = [
+    {
+      id: 'election',
+      title: '選舉情報分析',
+      description: '政治選舉數據分析、民調追蹤、輿情監控和競選策略模擬',
+      icon: <Vote className="w-8 h-8" />,
+      status: 'available',
+      route: '/sandbox-election',
+      examples: ['社群媒體輿情分析', '民調數據追蹤', '候選人聲量監控', '選情預測模擬']
+    },
+    {
+      id: 'ecommerce',
+      title: '電商智能分析',
+      description: '電子商務數據洞察、消費者行為分析、銷售預測和競品監控',
+      icon: <ShoppingCart className="w-8 h-8" />,
+      status: 'coming-soon',
+      examples: ['消費者購買行為分析', '產品銷售趨勢預測', '競品價格監控', '庫存優化建議']
+    },
+    {
+      id: 'marketing',
+      title: '行銷策略優化',
+      description: '數位行銷效果追蹤、廣告投放優化、用戶轉換分析和ROI監控',
+      icon: <TrendingUp className="w-8 h-8" />,
+      status: 'coming-soon',
+      examples: ['廣告投放效果分析', '用戶轉換漏斗監控', '內容行銷成效評估', '社群媒體影響力追蹤']
+    },
+    {
+      id: 'enterprise',
+      title: '企業營運智能',
+      description: '企業內部數據分析、營運效率優化、風險評估和決策支援',
+      icon: <Building2 className="w-8 h-8" />,
+      status: 'coming-soon',
+      examples: ['營運效率分析', '供應鏈風險評估', '人力資源配置優化', '財務績效監控']
+    },
+    {
+      id: 'consulting',
+      title: '顧問諮詢服務',
+      description: '商業諮詢數據分析、市場研究、競爭情報和策略規劃支援',
+      icon: <Briefcase className="w-8 h-8" />,
+      status: 'coming-soon',
+      examples: ['市場競爭分析', '行業趨勢研究', '客戶滿意度調查', '商業模式評估']
+    },
+    {
+      id: 'social',
+      title: '社會議題研究',
+      description: '社會現象分析、公共政策評估、民意調查和社會趨勢預測',
+      icon: <Users className="w-8 h-8" />,
+      status: 'coming-soon',
+      examples: ['社會議題討論分析', '公共政策影響評估', '民意趨勢監控', '社會問題預警']
     }
+  ];
 
-    // 如果API失敗，返回模擬資料
-    const mockData = Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      title: `模擬標題 ${i + 1}`,
-      content: `這是第 ${i + 1} 筆模擬資料內容，用於測試界面顯示效果。`,
-      author: `用戶${i + 1}`,
-      timestamp: `2025-08-27 ${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-      category: ['政治', '經濟', '社會', '科技'][Math.floor(Math.random() * 4)],
-      score: Math.floor(Math.random() * 100)
-    }));
-
-    console.log('使用模擬資料:', mockData.length, '筆');
-    return mockData;
-  };
-
-  // Handle opening new data tab
-  const handleOpenDataTab = async (source: DataSource, file: DataFile, providedData?: any[]) => {
-    // Use provided data if available (for analytics), otherwise load from file
-    const data = providedData || await loadFileData(file.filename);
-    
-    // Check if this is an analytics tab
-    const isAnalytics = file.filename.includes('_analytics');
-    
-    const newTab: DataTab = {
-      id: `${source}_${file.filename}_${Date.now()}`,
-      title: isAnalytics ? `${source.toUpperCase()} 分析報告` : `${source.toUpperCase()} ${file.date}`,
-      source: source as DataSource,
-      filename: file.filename,
-      date: file.date,
-      time: file.time,
-      data,
-      isAnalytics, // Add analytics flag
-    };
-
-    setDataTabs(prev => [...prev, newTab]);
-    setActiveDataTabId(newTab.id);
-    setShowDataDashboard(true);
-  };
-
-  // Handle closing data tab
-  const handleCloseDataTab = (tabId: string) => {
-    setDataTabs(prev => prev.filter(tab => tab.id !== tabId));
-    if (activeDataTabId === tabId) {
-      const remainingTabs = dataTabs.filter(tab => tab.id !== tabId);
-      if (remainingTabs.length > 0) {
-        setActiveDataTabId(remainingTabs[remainingTabs.length - 1].id);
-      } else {
-        setActiveDataTabId(null);
-        setShowDataDashboard(false);
-      }
-    }
-  };
-
-  // Handle unified tab change (static tabs + data tabs)
-  const handleUnifiedTabChange = (tabId: TabType | string) => {
-    if (tabId === 'intelligence' || tabId === 'warroom' || tabId === 'simulation') {
-      // Static tab selected
-      setActiveTab(tabId as TabType);
-      setActiveDataTabId(null); // Clear data tab selection
-      setShowDataDashboard(false); // Hide data dashboard
-    } else {
-      // Data tab selected
-      setActiveDataTabId(tabId as string);
-      setActiveTab('intelligence'); // Switch to intelligence page to show data
-      setShowDataDashboard(true); // Make sure data dashboard is visible
-    }
-  };
-
-  // Update session context based on open data tabs
-  const updateSessionContext = () => {
-    if (dataTabs.length === 0) return;
-
-    if (dataTabs.length === 1) {
-      const tab = dataTabs[0];
-      sessionManager.setFileContext({
-        filePath: `sandbox/${tab.filename}`,
-        fileName: `${tab.source}_${tab.date}_${tab.time}`,
-        fileType: 'csv',
-        content: tab.data
-      });
-    } else {
-      const filesData = dataTabs.map(tab => ({
-        source: tab.source,
-        date: tab.date,
-        time: tab.time,
-        filename: tab.filename,
-        data: tab.data
-      }));
-
-      sessionManager.setMultiFileContext({
-        files: filesData,
-        totalFiles: dataTabs.length
-      });
-    }
-  };
-
-  // Update session context when data tabs change
-  useEffect(() => {
-    updateSessionContext();
-  }, [dataTabs]);
-
-  // Render current page content based on active tab
-  const renderPageContent = () => {
-    if (showDataDashboard && activeDataTabId) {
-      const activeDataTab = dataTabs.find(tab => tab.id === activeDataTabId);
-      if (activeDataTab) {
-        return (
-          <DataDashboard
-            dataTab={activeDataTab}
-            onClose={() => {
-              setShowDataDashboard(false);
-              setActiveDataTabId(null);
-            }}
-          />
-        );
-      }
-    }
-
-    switch (activeTab) {
-      case 'intelligence':
-        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab as any} />;
-      case 'warroom':
-        return <WarRoomPage className="h-full" />;
-      case 'simulation':
-        return <WarGamePage className="h-full" />;
-      default:
-        return <IntelligencePage className="h-full" onOpenDataTab={handleOpenDataTab as any} />;
+  const handleScenarioClick = (scenario: BusinessScenario) => {
+    if (scenario.status === 'available' && scenario.route) {
+      router.push(scenario.route);
     }
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col pt-10 bg-background relative overflow-hidden">
+    <div className="h-screen w-screen flex flex-col pt-10 bg-background m-0 p-0">
+      {/* Header */}
       <Header
-        title="AI選情沙盒"
-        showUrlInput={false}
+        title="Lens Sandbox 總覽"
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
 
-      <div
-        className="flex-1 grid relative overflow-hidden min-h-0"
-        style={{
-          gridTemplateColumns: viewMode === 'with-agent' ? `${leftWidth}% 8px ${100 - leftWidth}%` : '1fr',
-          gridTemplateRows: '1fr',
-        }}
-      >
-        <div
-          className="h-full relative overflow-hidden min-h-0 flex flex-col"
-          style={{ gridColumn: viewMode === 'with-agent' ? 1 : '1 / -1' }}
-        >
-
-
-          {/* Main Page Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Page Content Area - with proper scrolling */}
-            <div className="flex-1 overflow-hidden">
-              {renderPageContent()}
-            </div>
-
-            {/* Bottom Parallelogram Tabs - fixed at bottom */}
-            <div className="fixed bottom-0 left-0 w-fit bg-card z-30">
-              <ParallelogramTabs
-                activeTab={activeDataTabId || activeTab}
-                onTabChange={handleUnifiedTabChange}
-                dataTabs={dataTabs as unknown as DataTab[]}
-                onCloseDataTab={handleCloseDataTab}
-              />
-            </div>
-          </div>
+      {/* Main Content Container */}
+      <div className="flex-1 flex flex-col items-center justify-start p-8 space-y-8 overflow-y-auto">
+        {/* 主標題和描述 */}
+        <div className="text-center mb-8 max-w-4xl">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Lens Sandbox
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            探索各種商業場景的 AI 分析解決方案，從政治選舉到企業營運，提供全面的數據洞察和智能決策支援
+          </p>
         </div>
 
-        {/* Drag Handle */}
-        {viewMode === 'with-agent' && (
-          <div
-            className={cn(
-              "drag-handle drag-handle-horizontal",
-              "h-full cursor-col-resize bg-transparent hover:bg-accent",
-              "z-[2000] relative select-none transition-colors",
-              "after:content-[''] after:absolute after:top-1/2 after:left-1/2",
-              "after:-translate-x-1/2 after:-translate-y-1/2",
-              "after:w-[2px] after:h-8 after:bg-border after:rounded-sm",
-              "after:opacity-70 hover:after:opacity-100"
-            )}
-            style={{
-              gridColumn: 2,
-              WebkitAppRegion: 'no-drag',
-            }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+        {/* Business Scenarios Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+          {businessScenarios.map((scenario) => (
+            <Card
+              key={scenario.id}
+              className={cn(
+                "p-6 cursor-pointer transition-all duration-200 relative overflow-hidden group",
+                scenario.status === 'available'
+                  ? "hover:shadow-lg hover:scale-105 border-primary/20 hover:border-primary/40"
+                  : "opacity-75 hover:shadow-md border-muted/40",
+                scenario.status === 'coming-soon' && "bg-muted/10"
+              )}
+              onClick={() => handleScenarioClick(scenario)}
+            >
+              {/* Status Badge */}
+              {/* {scenario.status === 'coming-soon' && (
+                <div className="absolute top-4 right-4 flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                  <Clock className="w-3 h-3" />
+                  即將推出
+                </div>
+              )} */}
 
-              setIsDragging(true);
+              {/* Available Badge */}
+              {scenario.status === 'available' && (
+                <div className="absolute top-4 right-4 flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  <ChevronRight className="w-3 h-3" />
+                  可用
+                </div>
+              )}
 
-              const startX = e.clientX;
-              const startWidth = leftWidth;
+              {/* Icon */}
+              <div className={cn(
+                "mb-4 p-3 rounded-lg w-fit",
+                scenario.status === 'available'
+                  ? "bg-primary/10 text-primary group-hover:bg-primary/20"
+                  : "bg-muted/20 text-muted-foreground"
+              )}>
+                {scenario.icon}
+              </div>
 
-              const onMove = (ev: MouseEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                const delta = ev.clientX - startX;
-                const containerWidth = window.innerWidth;
-                const newWidth = startWidth + (delta / containerWidth) * 100;
-                setLeftWidth(Math.max(40, Math.min(75, newWidth)));
-              };
+              {/* Content */}
+              <div className="space-y-3">
+                <h3 className="text-xl font-semibold text-foreground">
+                  {scenario.title}
+                </h3>
 
-              const onUp = (ev: MouseEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {scenario.description}
+                </p>
 
-                document.removeEventListener('mousemove', onMove, { capture: true } as any);
-                document.removeEventListener('mouseup', onUp, { capture: true } as any);
+                {/* Examples */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    應用場景
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1">
+                    {scenario.examples.map((example, index) => (
+                      <div
+                        key={index}
+                        className="text-xs text-muted-foreground bg-muted/20 px-2 py-1 rounded-sm"
+                      >
+                        • {example}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-                document.body.style.pointerEvents = '';
-                document.body.classList.remove('dragging');
+              {/* Action Button */}
+              <div className="mt-4">
+                <Button
+                  variant={scenario.status === 'available' ? "default" : "secondary"}
+                  size="sm"
+                  disabled={scenario.status === 'coming-soon'}
+                  className={cn(
+                    "w-full",
+                    scenario.status === 'available' && "group-hover:bg-primary/90"
+                  )}
+                >
+                  立即探索
+                  {/* {scenario.status === 'available' ? '立即探索' : '敬請期待'} */}
+                  {scenario.status === 'available' && <ChevronRight className="w-4 h-4 ml-2" />}
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
 
-                setIsDragging(false);
-              };
-
-              document.body.style.cursor = 'col-resize';
-              document.body.style.userSelect = 'none';
-              document.body.style.pointerEvents = 'none';
-              document.body.classList.add('dragging');
-
-              document.addEventListener('mousemove', onMove, { passive: false, capture: true });
-              document.addEventListener('mouseup', onUp, { passive: false, capture: true });
-            }}
-          ></div>
-        )}
-
-        {/* Right Panel - Agent Panel */}
-        {viewMode === 'with-agent' && (
-          <div
-            className="h-full overflow-hidden min-h-0"
-            style={{
-              gridColumn: 3,
-            }}
-          >
-            <AgentPanel
-              onDragStateChange={(dragging) => setIsDragging(dragging)}
-              sandboxContext={{
-                selectedDatasets: dataTabs.map(tab => ({
-                  id: tab.id,
-                  source: tab.source,
-                  filename: tab.filename,
-                  date: tab.date,
-                  time: tab.time,
-                  data: tab.data
-                })),
-                filePaths: dataTabs.map(tab => {
-                  const filename = tab.filename;
-                  return `../data/sandbox/${filename.endsWith('.csv') ? filename : filename + '.csv'}`;
-                })
-              }}
-            />
-          </div>
-        )}
-
+        {/* Footer Info */}
+        <div className="mt-12 text-center text-muted-foreground text-sm max-w-2xl">
+          <p>
+            更多商業場景正在開發中。如有特定需求或建議，歡迎透過 AI 助手提供反饋。
+          </p>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default SandboxOverviewPage;

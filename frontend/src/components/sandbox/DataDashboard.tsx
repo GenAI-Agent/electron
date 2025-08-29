@@ -3,8 +3,8 @@ import { BarChart3, TrendingUp, PieChart, Activity, Download, RefreshCw, Eye, Ey
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
-import { DataTab } from '@/pages/sandbox';
 import SocialMediaAnalytics from '@/components/sandbox/SocialMediaAnalytics';
+import { DataTab } from '@/pages/sandbox-election';
 
 interface DataDashboardProps {
   dataTab: DataTab;
