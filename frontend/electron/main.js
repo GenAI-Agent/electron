@@ -54,8 +54,11 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  
+  // Register handlers immediately after creating window
   oauthHandlers.register(mainWindow);
   browserHandlers.register(mainWindow);
+  
   startHttpServer();
 });
 

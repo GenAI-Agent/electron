@@ -45,6 +45,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exchangeToken: (config) => ipcRenderer.invoke('oauth-exchange-token', config),
     refreshToken: (config) => ipcRenderer.invoke('oauth-refresh-token', config),
     stopFlow: () => ipcRenderer.invoke('oauth-stop-flow'),
+    getUserInfo: (accessToken) => ipcRenderer.invoke('oauth-get-user-info', { accessToken }),
+    getAuthStatus: () => ipcRenderer.invoke('oauth-get-auth-status'),
+    clearCookies: (domain) => ipcRenderer.invoke('oauth-clear-cookies', domain),
   },
 
   // Debug APIs (deprecated - moved to oauth)

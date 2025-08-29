@@ -84,12 +84,12 @@ interface DataStats {
 }
 
 interface PetitionData {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  date: string;
-  status: 'pending' | 'processing' | 'resolved';
+  topic: string;
+  user_quote: string;
+  issue_analysis: string;
+  id?: string;
+  date?: string;
+  status?: 'pending' | 'processing' | 'resolved';
 }
 
 interface IntelligencePageProps {
@@ -148,81 +148,81 @@ const dataSources = [
 const mockPetitions: PetitionData[] = [
   {
     id: '2024001',
-    title: '建議增設公車站牌及候車亭',
-    category: '交通運輸',
-    description: '住宅區附近缺乏公車站牌，居民候車不便，建議增設站牌及候車亭。',
+    topic: '交通安全',
+    user_quote: '每天走路去市場都要閃機車，整條人行道都被停滿，老人小孩很危險，政府怎麼都不管？',
+    issue_analysis: '人行道長期被違規停車佔用，影響行人通行，需政府加強取締並改善人行空間。',
     date: '2024-08-20',
     status: 'processing'
   },
   {
     id: '2024002',
-    title: '社區公園照明設備改善',
-    category: '公共設施',
-    description: '公園內路燈老舊昏暗，影響夜間運動安全，請求改善照明設備。',
+    topic: '環境污染',
+    user_quote: '晚上工廠一開工就整個臭味飄過來，窗戶都不能開，住這裡快喘不過氣了！',
+    issue_analysis: '工廠排放廢氣造成空氣污染，居民生活品質受影響，需環保單位稽查並改善。',
     date: '2024-08-18',
     status: 'pending'
   },
   {
     id: '2024003',
-    title: '學校周邊交通安全改善',
-    category: '交通安全',
-    description: '小學上下學時間車流量大，建議增設交通號誌及導護設施。',
+    topic: '醫療資源不足',
+    user_quote: '這裡看病要跑一小時去市區，老人有急病都拖很久才送醫，希望政府派醫生來駐點。',
+    issue_analysis: '偏鄉缺乏醫療人力與設施，病患就醫困難，民眾希望政府增派醫療資源或巡迴服務。',
     date: '2024-08-15',
     status: 'resolved'
   },
   {
     id: '2024004',
-    title: '垃圾清運時間調整建議',
-    category: '環境衛生',
-    description: '現行垃圾清運時間與上班族作息不符，建議調整清運時段。',
+    topic: '社區治安',
+    user_quote: '最近鄰居被偷好幾次，大家晚上都不敢出門，警察都沒來巡邏，太不安心了。',
+    issue_analysis: '社區竊案頻傳，居民缺乏安全感，需要警方加強巡邏與防治措施。',
     date: '2024-08-12',
     status: 'processing'
   },
   {
     id: '2024005',
-    title: '老人活動中心設施更新',
-    category: '社會福利',
-    description: '社區老人活動中心設備老舊，建議更新桌椅及運動器材。',
+    topic: '教育資源',
+    user_quote: '學校電風扇壞掉好幾年，夏天小孩熱到受不了，為什麼都沒人修？',
+    issue_analysis: '校園基礎設施不足，影響學童學習環境，居民要求教育單位改善並撥款整修。',
     date: '2024-08-10',
     status: 'pending'
   },
   {
     id: '2024006',
-    title: '噪音管制加強執行',
-    category: '環境品質',
-    description: '夜市攤商營業時間過長產生噪音，影響住戶休息品質。',
+    topic: '土地徵收爭議',
+    user_quote: '我們祖傳的農地被徵收，賠償金根本不夠買新的地，怎麼生活？',
+    issue_analysis: '政府徵收農地，補償金額過低，民眾認為不公，需要重新檢討徵收與補償機制。',
     date: '2024-08-08',
     status: 'processing'
   },
   {
     id: '2024007',
-    title: '增設兒童遊樂設施',
-    category: '休閒育樂',
-    description: '社區缺乏適合兒童的遊樂設施，建議在公園內增設。',
+    topic: '社會福利',
+    user_quote: '我要幫媽媽申請身障補助，文件一大堆，跑了三次還被退件，真的很累！',
+    issue_analysis: '身心障礙者補助流程過於複雜，民眾希望簡化申請程序並提供更友善的窗口。',
     date: '2024-08-05',
     status: 'resolved'
   },
   {
     id: '2024008',
-    title: '道路坑洞修補改善',
-    category: '道路維護',
-    description: '主要道路多處坑洞未修補，影響行車安全及舒適度。',
+    topic: '基礎建設',
+    user_quote: '每天騎車都要閃坑洞，朋友還摔倒受傷，為什麼路都沒修？',
+    issue_analysis: '道路長期未維修，坑洞影響用路人安全，民眾要求政府立即修補道路。',
     date: '2024-08-03',
     status: 'processing'
   },
   {
     id: '2024009',
-    title: '圖書館開放時間延長',
-    category: '教育文化',
-    description: '圖書館週末開放時間過短，建議延長開放時間服務民眾。',
+    topic: '公共交通',
+    user_quote: '上班時間公車常常滿了上不去，等下一班又要半小時，真的很不方便！',
+    issue_analysis: '公車班次不足，尖峰時段無法滿足需求，民眾希望增加班次以改善通勤困境。',
     date: '2024-08-01',
     status: 'pending'
   },
   {
     id: '2024010',
-    title: '停車位不足問題改善',
-    category: '交通運輸',
-    description: '住宅區停車位嚴重不足，造成違停問題，建議增設停車場。',
+    topic: '物價與民生',
+    user_quote: '菜價一直漲，薪水沒漲，低收入家庭真的快撐不下去，希望政府幫幫忙。',
+    issue_analysis: '物價上升造成低收入戶生活壓力，民眾期望政府提供補貼或津貼支援。',
     date: '2024-07-28',
     status: 'processing'
   }
@@ -599,7 +599,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-medium text-sm text-muted-foreground">共 {mockPetitions.length} 件陳情案件</h4>
                     <div className="flex gap-2">
-                      {['全部', '交通運輸', '公共設施', '環境品質', '社會福利'].map((category) => (
+                      {['全部', '交通安全', '環境污染', '社會福利', '基礎建設'].map((category) => (
                         <Button key={category} variant="outline" size="sm" className="text-xs">
                           {category}
                         </Button>
@@ -618,7 +618,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                                  {petition.category}
+                                  {petition.topic}
                                 </span>
                                 <span className={cn(
                                   "text-xs px-2 py-1 rounded",
@@ -631,8 +631,12 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                                   {petition.status === 'resolved' && '已解決'}
                                 </span>
                               </div>
-                              <h5 className="font-medium text-sm text-foreground mb-1">{petition.title}</h5>
-                              <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{petition.description}</p>
+                              <div className="mb-2">
+                                <h5 className="font-medium text-sm text-foreground mb-1">民眾陳述</h5>
+                                <p className="text-xs text-gray-700 bg-gray-50 rounded p-2 italic mb-2">"{ petition.user_quote}"</p>
+                                <h6 className="font-medium text-xs text-blue-700 mb-1">問題分析</h6>
+                                <p className="text-xs text-muted-foreground line-clamp-2">{petition.issue_analysis}</p>
+                              </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3" />
                                 <span>{petition.date}</span>

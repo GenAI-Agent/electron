@@ -225,6 +225,121 @@ function register(window) {
       return { success: false, error: error.message };
     }
   });
+
+  // Get user info using access token
+  ipcMain.handle('oauth-get-user-info', async (_, { accessToken }) => {
+    try {
+      const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get user info: ${response.status}`);
+      }
+
+      const userInfo = await response.json();
+      return { success: true, userInfo };
+    } catch (error) {
+      console.error('Get user info error:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Check if user is authenticated (by checking stored tokens)
+  ipcMain.handle('oauth-get-auth-status', async () => {
+    try {
+      // Check if mainWindow exists and is not destroyed
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        console.log('MainWindow not available for auth status check');
+        return { success: false, error: 'MainWindow not available', isAuthenticated: false };
+      }
+
+      // Check if we have valid tokens in main session
+      const cookies = await mainWindow.webContents.session.cookies.get({
+        domain: '.google.com'
+      });
+      
+      const hasAuthCookies = cookies.some(cookie => 
+        cookie.name.includes('session') || 
+        cookie.name.includes('auth') || 
+        cookie.name.includes('SAPISID') ||
+        cookie.name.includes('HSID')
+      );
+
+      console.log(`Auth status check: found ${cookies.length} cookies, hasAuthCookies: ${hasAuthCookies}`);
+
+      return { 
+        success: true, 
+        isAuthenticated: hasAuthCookies,
+        cookieCount: cookies.length 
+      };
+    } catch (error) {
+      console.error('Get auth status error:', error);
+      return { success: false, error: error.message, isAuthenticated: false };
+    }
+  });
+
+  // Clear cookies for logout
+  ipcMain.handle('oauth-clear-cookies', async (_, domain) => {
+    try {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        console.log('MainWindow not available for clearing cookies');
+        return { success: false, error: 'MainWindow not available' };
+      }
+
+      console.log(`Clearing cookies for domain: ${domain}`);
+      
+      // Get all cookies for the domain
+      const cookies = await mainWindow.webContents.session.cookies.get({
+        domain: domain
+      });
+
+      console.log(`Found ${cookies.length} cookies to clear`);
+
+      // Clear each cookie
+      let clearedCount = 0;
+      for (const cookie of cookies) {
+        try {
+          const cookieUrl = `https://${cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain}`;
+          await mainWindow.webContents.session.cookies.remove(cookieUrl, cookie.name);
+          clearedCount++;
+        } catch (err) {
+          console.warn(`Failed to clear cookie ${cookie.name}:`, err.message);
+        }
+      }
+
+      // Also clear browser session cookies
+      const { session } = require('electron');
+      const browserSession = session.fromPartition('persist:browser');
+      const browserCookies = await browserSession.cookies.get({ domain: domain });
+      
+      console.log(`Found ${browserCookies.length} browser session cookies to clear`);
+      
+      for (const cookie of browserCookies) {
+        try {
+          const cookieUrl = `https://${cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain}`;
+          await browserSession.cookies.remove(cookieUrl, cookie.name);
+          clearedCount++;
+        } catch (err) {
+          console.warn(`Failed to clear browser cookie ${cookie.name}:`, err.message);
+        }
+      }
+
+      console.log(`Successfully cleared ${clearedCount} cookies`);
+
+      return { 
+        success: true, 
+        clearedCount,
+        totalFound: cookies.length + browserCookies.length
+      };
+    } catch (error) {
+      console.error('Clear cookies error:', error);
+      return { success: false, error: error.message };
+    }
+  });
 }
 
 module.exports = { register };
