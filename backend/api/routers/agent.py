@@ -305,10 +305,19 @@ async def generate_stream_response(
                                 filename = file_path.split("/")[-1].lower()
                                 if "thread" in filename:
                                     platform_type = "社群討論串"
-                                    platform_name = "Thread"
+                                    platform_name = "Threads"
                                 elif "ptt" in filename:
                                     platform_type = "PTT論壇"
                                     platform_name = "PTT"
+                                elif "facebook" in filename or "fb" in filename:
+                                    platform_type = "社群媒體"
+                                    platform_name = "Facebook"
+                                elif "twitter" in filename:
+                                    platform_type = "社群媒體"
+                                    platform_name = "Twitter"
+                                elif "petition" in filename:
+                                    platform_type = "陳情系統"
+                                    platform_name = "Petition"
                                 else:
                                     platform_type = "未知平台"
                                     platform_name = "Unknown"

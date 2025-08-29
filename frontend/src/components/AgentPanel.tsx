@@ -270,7 +270,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             filename: dataset.filename,
             date: dataset.date,
             time: dataset.time,
-            file_path: `../data/sandbox/${dataset.filename}`
+            file_path: `../data/sandbox/${dataset.filename.endsWith('.csv') ? dataset.filename : dataset.filename + '.csv'}`
           })),
           total_files: sandboxContext.selectedDatasets.length
         };
@@ -314,7 +314,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
               filename: dataset.filename,
               date: dataset.date,
               time: dataset.time,
-              file_path: `../data/sandbox/${dataset.filename}`
+              file_path: `../data/sandbox/${dataset.filename.endsWith('.csv') ? dataset.filename : dataset.filename + '.csv'}`
             })),
             total_files: datasets.length
           };

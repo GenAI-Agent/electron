@@ -532,9 +532,25 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                   {viewMode === 'data' && socialMediaPosts.length > 0 && (
                     <Button
                       onClick={() => {
+                        // Map source to actual CSV filename (use the main policy file for each platform)
+                        const getCSVFilename = (source: string) => {
+                          switch (source) {
+                            case 'facebook':
+                              return 'facebook_election_campaign.csv'; // Use election campaign data for analysis
+                            case 'threads':
+                              return 'threads_economic_policy.csv'; // Use economic policy data for analysis
+                            case 'twitter':
+                              return 'twitter_international_politics.csv';
+                            case 'ptt':
+                              return 'ptt_social_issues.csv';
+                            default:
+                              return `${source}_analytics.csv`;
+                          }
+                        };
+
                         // Open analysis tab with current social media data
                         const analyticsData = {
-                          filename: `${selectedSource}_analytics`,
+                          filename: getCSVFilename(selectedSource),
                           date: new Date().toISOString().split('T')[0],
                           time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
                           fullPath: `analytics/${selectedSource}`,

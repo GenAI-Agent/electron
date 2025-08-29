@@ -306,7 +306,10 @@ export default function SandboxPage() {
                   time: tab.time,
                   data: tab.data
                 })),
-                filePaths: dataTabs.map(tab => `../data/sandbox/${tab.filename}`)
+                filePaths: dataTabs.map(tab => {
+                  const filename = tab.filename;
+                  return `../data/sandbox/${filename.endsWith('.csv') ? filename : filename + '.csv'}`;
+                })
               }}
             />
           </div>
