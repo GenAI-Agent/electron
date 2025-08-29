@@ -217,7 +217,7 @@ export const translations: Record<"zh" | "en", Translations> = {
         "Connect your enterprise systems with our Supervisor Agent. Apply business rules and let AI handle complex data processing.",
     },
     aiSandbox: {
-      title: "AI Sandbox",
+      title: "Lens Sandbox",
       tagText: "Sandbox",
       mainText: "Experiment, Simulate, Innovate",
       subText:

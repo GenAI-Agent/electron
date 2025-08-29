@@ -111,7 +111,7 @@ const HomePage: React.FC = () => {
       title: 'AI沙盒',
       tagText: 'Lens Sandbox',
       icon: BarChart3,
-      mainText: 'AI Sandbox',
+      mainText: 'Lens Sandbox',
       subText: '賽局理論驅動智慧系統，模擬競爭場景、推演策略決策\n電商、行銷、選情或各種商業場景，綜觀全局、剖析獨特視角',
       gifUrl: '/placeholder-sandbox.gif',
       path: '/sandbox',

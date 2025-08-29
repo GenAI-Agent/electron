@@ -69,7 +69,7 @@ const mockCityReports: CityReport[] = [
     id: '1',
     cityName: '新北市',
     type: 'warning',
-    timestamp: '2024-12-01 14:30',
+    timestamp: '2025-12-01 14:30',
     summary: '新北市整體選情穩定，但部分區域需要加強關注',
     metrics: {
       sentiment: 0.15,
@@ -346,7 +346,7 @@ const mockCityReports: CityReport[] = [
     id: '2',
     cityName: '台北市',
     type: 'urgent',
-    timestamp: '2024-12-01 15:45',
+    timestamp: '2025-12-01 15:45',
     summary: '台北市選情激烈，各區域差異明顯',
     metrics: {
       sentiment: -0.12,
@@ -615,7 +615,7 @@ const mockCityReports: CityReport[] = [
     id: '3',
     cityName: '高雄市',
     type: 'info',
-    timestamp: '2024-12-01 13:20',
+    timestamp: '2025-12-01 13:20',
     summary: '高雄市選情樂觀，南部地區支持度穩定上升',
     metrics: {
       sentiment: 0.42,

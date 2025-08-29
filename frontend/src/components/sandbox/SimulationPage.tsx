@@ -50,7 +50,7 @@ const mockSimulationRecords: SimulationRecord[] = [
   {
     id: '1',
     title: '北部 vs 南部選情對比',
-    date: '2024-12-01 13:45',
+    date: '2025-12-01 13:45',
     participants: {
       side1: '北部選區',
       side2: '南部選區'
@@ -65,7 +65,7 @@ const mockSimulationRecords: SimulationRecord[] = [
   {
     id: '2',
     title: '青年政策 vs 長者福利',
-    date: '2024-12-01 11:20',
+    date: '2025-12-01 11:20',
     participants: {
       side1: '青年政策',
       side2: '長者福利'
@@ -80,7 +80,7 @@ const mockSimulationRecords: SimulationRecord[] = [
   {
     id: '3',
     title: '經濟政策對比分析',
-    date: '2024-12-01 09:15',
+    date: '2025-12-01 09:15',
     participants: {
       side1: '方案A',
       side2: '方案B'
