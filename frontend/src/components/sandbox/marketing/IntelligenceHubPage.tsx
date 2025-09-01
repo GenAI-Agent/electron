@@ -15,7 +15,9 @@ import {
   Filter,
   RefreshCw,
   ExternalLink,
-  FileText
+  FileText,
+  CheckCircle,
+  DollarSign
 } from 'lucide-react';
 
 interface IntelligenceHubPageProps {
@@ -96,6 +98,39 @@ interface ServiceStandard {
   target: number;
   current: number;
   trend: 'improving' | 'declining' | 'stable';
+}
+
+interface CouponActivity {
+  id: string;
+  name: string;
+  type: 'coupon' | 'promotion' | 'event' | 'campaign';
+  status: 'active' | 'ended' | 'planned';
+  startDate: string;
+  endDate: string;
+  description: string;
+  targetAudience: string[];
+  discountType: 'percentage' | 'fixed' | 'free_upgrade' | 'bonus_miles';
+  discountValue: number;
+  conditions: string[];
+  budget: number;
+  expectedRevenue: number;
+  actualRevenue?: number;
+  expectedParticipation: number;
+  actualParticipation?: number;
+  performance: {
+    conversionRate?: number;
+    averageOrderValue?: number;
+    customerAcquisition?: number;
+    retentionRate?: number;
+  };
+  analysis: {
+    successFactors: string[];
+    failureReasons?: string[];
+    varianceAnalysis: string;
+    recommendations: string[];
+  };
+  channels: string[];
+  relatedRoutes: string[];
 }
 
 // Mock data
@@ -625,6 +660,174 @@ const mockComplaintData: ComplaintData[] = [
     resolutionTime: 2,
     satisfaction: 3,
     followUp: true
+  },
+  {
+    id: 'C004',
+    date: '2025-08-30',
+    category: '座位問題',
+    severity: 'medium',
+    channel: 'email',
+    description: '預訂的靠窗座位被更換，影響觀景體驗',
+    customerType: 'leisure',
+    route: 'TPE-HKG',
+    resolution: '提供下次航班座位優先選擇權',
+    resolutionTime: 6,
+    satisfaction: 4,
+    followUp: false
+  },
+  {
+    id: 'C005',
+    date: '2025-08-29',
+    category: '客服態度',
+    severity: 'high',
+    channel: 'phone',
+    description: '客服人員態度不佳，處理問題效率低',
+    customerType: 'business',
+    route: 'TPE-SIN',
+    resolution: '重新培訓該客服人員，提供額外補償',
+    resolutionTime: 8,
+    satisfaction: 2,
+    followUp: true
+  },
+  {
+    id: 'C006',
+    date: '2025-08-28',
+    category: '機上設備',
+    severity: 'medium',
+    channel: 'social',
+    description: '娛樂系統故障，無法使用個人螢幕',
+    customerType: 'frequent',
+    route: 'TPE-LAX',
+    resolution: '提供免費WiFi補償，下次航班升級優惠',
+    resolutionTime: 12,
+    satisfaction: 3,
+    followUp: true
+  },
+  {
+    id: 'C007',
+    date: '2025-08-27',
+    category: '登機程序',
+    severity: 'low',
+    channel: 'counter',
+    description: '登機時間過長，隊伍混亂',
+    customerType: 'leisure',
+    route: 'TPE-BKK',
+    resolution: '改善登機流程，增加工作人員',
+    resolutionTime: 3,
+    satisfaction: 4,
+    followUp: false
+  },
+  {
+    id: 'C008',
+    date: '2025-08-26',
+    category: '票價問題',
+    severity: 'high',
+    channel: 'email',
+    description: '票價突然上漲，與預期不符',
+    customerType: 'business',
+    route: 'TPE-NRT',
+    resolution: '提供價格保護，差額退還',
+    resolutionTime: 24,
+    satisfaction: 4,
+    followUp: true
+  },
+  {
+    id: 'C009',
+    date: '2025-08-25',
+    category: '行李損壞',
+    severity: 'medium',
+    channel: 'counter',
+    description: '托運行李輪子損壞，要求賠償',
+    customerType: 'leisure',
+    route: 'TPE-ICN',
+    resolution: '提供維修費用，下次航班免費托運',
+    resolutionTime: 36,
+    satisfaction: 4,
+    followUp: false
+  },
+  {
+    id: 'C010',
+    date: '2025-08-24',
+    category: '機上服務',
+    severity: 'low',
+    channel: 'social',
+    description: '空服員服務態度良好，但餐點份量不足',
+    customerType: 'frequent',
+    route: 'TPE-HKG',
+    resolution: '記錄意見，改善餐點份量',
+    resolutionTime: 2,
+    satisfaction: 4,
+    followUp: true
+  },
+  {
+    id: 'C011',
+    date: '2025-08-23',
+    category: '航班取消',
+    severity: 'high',
+    channel: 'phone',
+    description: '航班因天氣取消，影響重要行程',
+    customerType: 'business',
+    route: 'TPE-SIN',
+    resolution: '提供免費改期，住宿和餐飲補償',
+    resolutionTime: 2,
+    satisfaction: 3,
+    followUp: true
+  },
+  {
+    id: 'C012',
+    date: '2025-08-22',
+    category: '會員權益',
+    severity: 'medium',
+    channel: 'email',
+    description: '會員積分未正確累積，影響升級權益',
+    customerType: 'frequent',
+    route: 'TPE-LAX',
+    resolution: '補發積分，提供額外補償積分',
+    resolutionTime: 48,
+    satisfaction: 4,
+    followUp: false
+  },
+  {
+    id: 'C013',
+    date: '2025-08-21',
+    category: '機場服務',
+    severity: 'low',
+    channel: 'counter',
+    description: '機場貴賓室設施老舊，需要更新',
+    customerType: 'business',
+    route: 'TPE-NRT',
+    resolution: '記錄意見，規劃設施更新',
+    resolutionTime: 1,
+    satisfaction: 3,
+    followUp: true
+  },
+  {
+    id: 'C014',
+    date: '2025-08-20',
+    category: '網路服務',
+    severity: 'medium',
+    channel: 'social',
+    description: '機上WiFi連線不穩定，影響工作',
+    customerType: 'business',
+    route: 'TPE-ICN',
+    resolution: '提供網路費用退還，改善連線品質',
+    resolutionTime: 18,
+    satisfaction: 3,
+    followUp: true
+  },
+  {
+    id: 'C015',
+    date: '2025-08-19',
+    category: '兒童服務',
+    severity: 'low',
+    channel: 'email',
+    description: '兒童餐點選擇有限，希望增加選項',
+    customerType: 'leisure',
+    route: 'TPE-BKK',
+    resolution: '記錄意見，規劃兒童餐點改善',
+    resolutionTime: 4,
+    satisfaction: 4,
+    followUp: true
   }
 ];
 
@@ -882,13 +1085,174 @@ const mockServiceStandards: ServiceStandard[] = [
   }
 ];
 
+// Mock coupon and activity data
+const mockCouponActivities: CouponActivity[] = [
+  {
+    id: 'CA001',
+    name: '早鳥優惠券',
+    type: 'coupon',
+    status: 'active',
+    startDate: '2025-09-01',
+    endDate: '2025-12-31',
+    description: '提前30天訂票享8折優惠，適用於所有國際航線',
+    targetAudience: ['商務旅客', '自由行旅客'],
+    discountType: 'percentage',
+    discountValue: 20,
+    conditions: ['需提前30天訂票', '不可與其他優惠併用', '限國際航線'],
+    budget: 5000000,
+    expectedRevenue: 25000000,
+    actualRevenue: 28000000,
+    expectedParticipation: 5000,
+    actualParticipation: 6200,
+    performance: {
+      conversionRate: 12.4,
+      averageOrderValue: 4500,
+      customerAcquisition: 1200,
+      retentionRate: 68
+    },
+    analysis: {
+      successFactors: ['提前訂票習慣培養', '價格敏感度分析準確', '目標客群定位精準'],
+      failureReasons: [],
+      varianceAnalysis: '實際營收超出預期12%，主要因為轉換率優於預期',
+      recommendations: ['延長活動期間', '擴大適用航線', '增加宣傳力度']
+    },
+    channels: ['官網', 'APP', '旅行社', '社群媒體'],
+    relatedRoutes: ['TPE-NRT', 'TPE-ICN', 'TPE-BKK', 'TPE-SIN']
+  },
+  {
+    id: 'CA002',
+    name: '會員專屬里程加倍',
+    type: 'promotion',
+    status: 'ended',
+    startDate: '2025-06-01',
+    endDate: '2025-08-31',
+    description: 'Dynasty Flyer會員在指定航線飛行可獲得雙倍里程',
+    targetAudience: ['現有會員', '高價值客戶'],
+    discountType: 'bonus_miles',
+    discountValue: 100,
+    conditions: ['限Dynasty Flyer會員', '指定航線適用', '需在活動期間完成飛行'],
+    budget: 3000000,
+    expectedRevenue: 18000000,
+    actualRevenue: 16500000,
+    expectedParticipation: 3000,
+    actualParticipation: 2800,
+    performance: {
+      conversionRate: 8.5,
+      averageOrderValue: 5800,
+      customerAcquisition: 450,
+      retentionRate: 75
+    },
+    analysis: {
+      successFactors: ['會員忠誠度提升', '高價值客戶參與度高'],
+      failureReasons: ['宣傳力度不足', '適用航線限制過多', '活動期間較短'],
+      varianceAnalysis: '實際營收低於預期8.3%，主要因為參與人數未達預期',
+      recommendations: ['增加宣傳管道', '擴大適用航線', '延長活動期間', '簡化參與條件']
+    },
+    channels: ['會員通訊', '官網', 'APP'],
+    relatedRoutes: ['TPE-NRT', 'TPE-ICN', 'TPE-BKK']
+  },
+  {
+    id: 'CA003',
+    name: '暑假親子遊專案',
+    type: 'campaign',
+    status: 'ended',
+    startDate: '2025-07-01',
+    endDate: '2025-08-31',
+    description: '暑假期間推出親子旅遊套裝，包含機票、住宿、景點門票',
+    targetAudience: ['家庭旅客', '親子旅遊'],
+    discountType: 'fixed',
+    discountValue: 2000,
+    conditions: ['需購買套裝行程', '限暑假期間', '需包含至少一名兒童'],
+    budget: 8000000,
+    expectedRevenue: 40000000,
+    actualRevenue: 52000000,
+    expectedParticipation: 2000,
+    actualParticipation: 2600,
+    performance: {
+      conversionRate: 15.2,
+      averageOrderValue: 20000,
+      customerAcquisition: 1800,
+      retentionRate: 82
+    },
+    analysis: {
+      successFactors: ['暑假需求強勁', '套裝行程便利性', '價格競爭力強', '目標客群精準'],
+      failureReasons: [],
+      varianceAnalysis: '實際營收超出預期30%，主要因為家庭旅遊市場需求超預期',
+      recommendations: ['明年擴大規模', '增加更多目的地', '開發其他季節套裝']
+    },
+    channels: ['官網', '旅行社', '社群媒體', '親子網站'],
+    relatedRoutes: ['TPE-NRT', 'TPE-ICN', 'TPE-BKK', 'TPE-SIN', 'TPE-HKG']
+  },
+  {
+    id: 'CA004',
+    name: '商務艙升等券',
+    type: 'coupon',
+    status: 'active',
+    startDate: '2025-09-15',
+    endDate: '2025-12-31',
+    description: '購買經濟艙機票可加價升等至商務艙，限指定航線',
+    targetAudience: ['商務旅客', '高價值客戶'],
+    discountType: 'free_upgrade',
+    discountValue: 5000,
+    conditions: ['需購買經濟艙機票', '限指定航線', '需提前24小時申請'],
+    budget: 2000000,
+    expectedRevenue: 12000000,
+    actualRevenue: 8500000,
+    expectedParticipation: 800,
+    actualParticipation: 650,
+    performance: {
+      conversionRate: 6.8,
+      averageOrderValue: 13000,
+      customerAcquisition: 320,
+      retentionRate: 70
+    },
+    analysis: {
+      successFactors: ['商務艙體驗提升', '價格優勢明顯'],
+      failureReasons: ['申請流程複雜', '適用航線有限', '宣傳不足'],
+      varianceAnalysis: '實際營收低於預期29.2%，主要因為參與人數和平均訂單金額都低於預期',
+      recommendations: ['簡化申請流程', '擴大適用航線', '加強宣傳', '調整價格策略']
+    },
+    channels: ['官網', 'APP', '商務客戶專線'],
+    relatedRoutes: ['TPE-NRT', 'TPE-ICN', 'TPE-BKK', 'TPE-SIN']
+  },
+  {
+    id: 'CA005',
+    name: '聖誕節特別活動',
+    type: 'event',
+    status: 'planned',
+    startDate: '2025-12-20',
+    endDate: '2025-12-31',
+    description: '聖誕節期間推出特別活動，包含機上聖誕餐點、禮物抽獎',
+    targetAudience: ['所有旅客', '節慶旅遊'],
+    discountType: 'percentage',
+    discountValue: 10,
+    conditions: ['限聖誕節期間航班', '需提前預訂', '機上活動需參與'],
+    budget: 1500000,
+    expectedRevenue: 8000000,
+    expectedParticipation: 1500,
+    performance: {
+      conversionRate: 0,
+      averageOrderValue: 0,
+      customerAcquisition: 0,
+      retentionRate: 0
+    },
+    analysis: {
+      successFactors: ['節慶氛圍營造', '機上體驗提升'],
+      failureReasons: [],
+      varianceAnalysis: '活動尚未開始，無法分析實際效果',
+      recommendations: ['加強宣傳', '準備充足禮物', '培訓機組人員']
+    },
+    channels: ['官網', 'APP', '社群媒體', '旅行社'],
+    relatedRoutes: ['TPE-NRT', 'TPE-ICN', 'TPE-BKK', 'TPE-SIN', 'TPE-HKG']
+  }
+];
+
 export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
   className,
   onOpenDataTab
 }) => {
-  const [activeTab, setActiveTab] = useState<'countries' | 'social' | 'complaints' | 'policies'>('countries');
+  const [activeTab, setActiveTab] = useState<'countries' | 'social' | 'complaints' | 'policies' | 'coupons'>('social');
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(mockCountryData[0]);
-  const [socialFilter, setSocialFilter] = useState<'all' | 'positive' | 'negative' | 'neutral'>('all');
   const [platformFilter, setPlatformFilter] = useState<'all' | 'twitter' | 'threads' | 'ptt'>('all');
   const [complaintFilter, setComplaintFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [selectedPolicy, setSelectedPolicy] = useState<CompanyPolicy | null>(null);
@@ -922,7 +1286,6 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
   };
 
   const filteredSocialPosts = mockSocialPosts.filter(post =>
-    (socialFilter === 'all' || post.sentiment === socialFilter) &&
     (platformFilter === 'all' || post.platform === platformFilter)
   );
 
@@ -948,9 +1311,6 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
           break;
         case 'social':
           data = mockSocialPosts;
-          break;
-        case 'trends':
-          data = mockTrendingTopics;
           break;
       }
       
@@ -990,7 +1350,8 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
           { id: 'countries', name: '國家分析', icon: Globe },
           { id: 'social', name: '社群監控', icon: MessageSquare },
           { id: 'complaints', name: '客訴數據', icon: AlertCircle },
-          { id: 'policies', name: '公司政策', icon: FileText }
+          { id: 'policies', name: '公司政策', icon: FileText },
+          { id: 'coupons', name: '優惠券及活動', icon: Calendar }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -1206,31 +1567,7 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
             </div>
           </div>
 
-          {/* 情感分析篩選 */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <h4 className="font-medium text-gray-900 mb-3">情感分析</h4>
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {[
-                { id: 'all', name: '全部', color: 'text-gray-600' },
-                { id: 'positive', name: '正面', color: 'text-green-600' },
-                { id: 'negative', name: '負面', color: 'text-red-600' },
-                { id: 'neutral', name: '中性', color: 'text-gray-600' }
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setSocialFilter(filter.id as any)}
-                  className={cn(
-                    "px-4 py-2 rounded-md text-sm font-medium transition-colors flex-1",
-                    socialFilter === filter.id
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : filter.color + " hover:text-gray-900"
-                  )}
-                >
-                  {filter.name}
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredSocialPosts.map((post) => (
@@ -1282,76 +1619,6 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
                         #{topic}
                       </span>
                     ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'trends' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">熱門趨勢追蹤</h3>
-            <button
-              onClick={() => exportData('trends')}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              匯出數據
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {mockTrendingTopics.map((topic, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-gray-900">{topic.topic}</h4>
-                  <span className={cn(
-                    "px-2 py-1 rounded-full text-xs font-medium",
-                    topic.growth > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                  )}>
-                    {topic.growth > 0 ? '+' : ''}{topic.growth}%
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">討論量</span>
-                    <span className="font-medium text-gray-900">{topic.volume.toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">情緒指數</span>
-                    <span className={cn(
-                      "font-medium",
-                      topic.sentiment > 70 ? "text-green-600" :
-                      topic.sentiment > 40 ? "text-yellow-600" : "text-red-600"
-                    )}>
-                      {topic.sentiment}%
-                    </span>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">相關關鍵字</p>
-                    <div className="flex flex-wrap gap-1">
-                      {topic.relatedKeywords.map((keyword, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">主要平台</p>
-                    <div className="flex space-x-2">
-                      {topic.platforms.map((platform, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                          {platform}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1597,6 +1864,165 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
                   <p>選擇一個政策查看詳情</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coupons and Activities Tab */}
+      {activeTab === 'coupons' && (
+        <div className="space-y-6">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">進行中活動</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {mockCouponActivities.filter(c => c.status === 'active').length}
+                  </p>
+                </div>
+                <Calendar className="w-8 h-8 text-blue-500" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">已結束活動</p>
+                  <p className="text-2xl font-bold text-gray-600">
+                    {mockCouponActivities.filter(c => c.status === 'ended').length}
+                  </p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-gray-500" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">總預算</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${(mockCouponActivities.reduce((sum, c) => sum + c.budget, 0) / 1000000).toFixed(1)}M
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-500" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">平均轉換率</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {((mockCouponActivities.filter(c => c.performance.conversionRate).reduce((sum, c) => sum + (c.performance.conversionRate || 0), 0) / mockCouponActivities.filter(c => c.performance.conversionRate).length) || 0).toFixed(1)}%
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-purple-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* Activities List */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">優惠券及活動管理</h3>
+              <button
+                onClick={() => onOpenDataTab && onOpenDataTab('coupons', {
+                  filename: 'coupon_activities.csv',
+                  date: new Date().toISOString().split('T')[0],
+                  time: new Date().toTimeString().split(' ')[0],
+                  fullPath: 'marketing-sandbox/coupons.csv'
+                }, mockCouponActivities)}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                匯出活動數據
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {mockCouponActivities.map((activity) => (
+                <div key={activity.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-semibold text-gray-900">{activity.name}</h4>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          activity.status === 'active' ? "bg-green-50 text-green-600" :
+                          activity.status === 'ended' ? "bg-gray-50 text-gray-600" :
+                          "bg-blue-50 text-blue-600"
+                        )}>
+                          {activity.status === 'active' ? '進行中' :
+                           activity.status === 'ended' ? '已結束' : '規劃中'}
+                        </span>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          activity.type === 'coupon' ? "bg-blue-50 text-blue-600" :
+                          activity.type === 'promotion' ? "bg-purple-50 text-purple-600" :
+                          activity.type === 'campaign' ? "bg-orange-50 text-orange-600" :
+                          "bg-green-50 text-green-600"
+                        )}>
+                          {activity.type === 'coupon' ? '優惠券' :
+                           activity.type === 'promotion' ? '促銷活動' :
+                           activity.type === 'campaign' ? '專案活動' : '特別活動'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>{activity.startDate} - {activity.endDate}</span>
+                        <span>預算: ${(activity.budget / 10000).toFixed(0)}萬</span>
+                        <span>預期營收: ${(activity.expectedRevenue / 10000).toFixed(0)}萬</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Metrics */}
+                  {activity.status === 'ended' && activity.actualRevenue && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded">
+                      <div>
+                        <p className="text-xs text-gray-600">實際營收</p>
+                        <p className={cn(
+                          "font-semibold",
+                          activity.actualRevenue >= activity.expectedRevenue ? "text-green-600" : "text-red-600"
+                        )}>
+                          ${(activity.actualRevenue / 10000).toFixed(0)}萬
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">轉換率</p>
+                        <p className="font-semibold text-blue-600">
+                          {activity.performance.conversionRate?.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">平均訂單</p>
+                        <p className="font-semibold text-purple-600">
+                          ${activity.performance.averageOrderValue?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">新客戶</p>
+                        <p className="font-semibold text-green-600">
+                          {activity.performance.customerAcquisition?.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Analysis */}
+                  <div className="border-t pt-3">
+                    <h5 className="font-medium text-gray-900 mb-2">分析結果</h5>
+                    <div className="text-sm text-gray-600 mb-2">
+                      <strong>差異分析:</strong> {activity.analysis.varianceAnalysis}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {activity.analysis.recommendations.map((rec, index) => (
+                        <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                          {rec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
