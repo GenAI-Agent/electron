@@ -3,8 +3,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, CheckCircle, Clock, Target } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { EmailSummary } from '@/types'
+import { cn } from '@/utils/cn'
+
+interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  timestamp: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  labels: any[];
+  importance?: 'high' | 'medium' | 'low';
+  category?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  actionRequired?: boolean;
+  summary?: string;
+  actionItems?: string[];
+  structuredData?: any;
+  project?: string;
+  deadline?: string;
+  amount?: string;
+  location?: string;
+  isInternal?: boolean;
+  isExternal?: boolean;
+}
 
 interface EmailSummaryDisplayProps {
   summary: EmailSummary

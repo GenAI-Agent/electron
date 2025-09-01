@@ -149,41 +149,20 @@ const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSave }) =>
       );
       
       return (
-        <Box
+        <div
           key={index}
-          sx={{
-            display: 'flex',
-            backgroundColor: isHighlighted ? '#fff3e0' : 'transparent',
-            '&:hover': { backgroundColor: '#f5f5f5' }
-          }}
+          className={cn(
+            "flex hover:bg-gray-50",
+            isHighlighted ? "bg-orange-50" : "bg-transparent"
+          )}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              minWidth: 50,
-              textAlign: 'right',
-              pr: 2,
-              color: 'text.secondary',
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-              lineHeight: 1.5
-            }}
-          >
+          <span className="min-w-[50px] text-right pr-2 text-gray-500 font-mono text-sm leading-6">
             {lineNumber}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-              lineHeight: 1.5,
-              whiteSpace: 'pre',
-              flex: 1
-            }}
-          >
+          </span>
+          <span className="font-mono text-sm leading-6 whitespace-pre flex-1">
             {line || ' '}
-          </Typography>
-        </Box>
+          </span>
+        </div>
       );
     });
   };

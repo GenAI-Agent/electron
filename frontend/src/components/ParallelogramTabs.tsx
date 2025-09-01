@@ -3,6 +3,7 @@ import { cn } from '@/utils/cn';
 import { X } from 'lucide-react';
 
 export type TabType = 'intelligence' | 'warroom' | 'simulation' | 'data';
+export type MarketingTabType = 'strategy' | 'prediction' | 'country' | 'action' | 'heatmap' | 'competitor' | 'membership';
 
 interface DataTab {
   id: string;

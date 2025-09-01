@@ -2,8 +2,14 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Tag, Mail, Bot } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { EmailLabel } from '@/types'
+import { cn } from '@/utils/cn'
+
+interface EmailLabel {
+  id: string;
+  name: string;
+  color: string;
+  type?: 'gmail' | 'ai' | 'custom';
+}
 
 interface EmailLabelsDisplayProps {
   labels: EmailLabel[]

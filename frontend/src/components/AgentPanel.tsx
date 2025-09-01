@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Paperclip, Image, Headphones, FileText, Puzzle, Brain, Send, Edit } from 'lucide-react';
+import { Paperclip, Image, Headphones, FileText, Puzzle, Brain, Send, Edit, Target, Swords } from 'lucide-react';
 import { useRouter } from 'next/router';
 import ResultPanel from './ResultPanel';
 import { sessionManager, FileContext } from '@/utils/sessionManager';
 import { cn } from '@/utils/cn';
 import { getOAuthTokens, isGmailPage } from '@/utils/PageDataExtractor';
 
-type PanelMode = 'result' | 'rules' | 'skills';
+type PanelMode = 'result' | 'rules' | 'skills' | 'simulation';
 
 interface StreamMessage {
   type: 'start' | 'rule' | 'processing' | 'tools' | 'content' | 'complete' | 'error';
@@ -40,6 +40,15 @@ interface AgentPanelProps {
     }>;
     filePaths: string[];
   };
+  simulationRecords?: Array<{
+    id: string;
+    title: string;
+    participants: { side1: string; side2: string };
+    date: string;
+    status: string;
+    result: { confidence: number };
+  }>;
+  onSimulationRecordSelect?: (record: any) => void;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -49,6 +58,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   onTopHeightChange,
   onDragStateChange,
   sandboxContext,
+  simulationRecords,
+  onSimulationRecordSelect,
 }) => {
   const router = useRouter();
   const [input, setInput] = useState('');
@@ -698,6 +709,20 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
             </button>
+            {simulationRecords && simulationRecords.length > 0 && (
+              <button
+                onClick={() => setPanelMode('simulation')}
+                className={cn(
+                  "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
+                  panelMode === 'simulation'
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+                title="推演記錄"
+              >
+                <Swords className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               onClick={() => setPanelMode('rules')}
               className={cn(
@@ -731,6 +756,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           isLoading={isLoading}
           messages={messages}
           onRulesUpdate={loadAvailableRules}
+          simulationRecords={simulationRecords}
+          onSimulationRecordSelect={onSimulationRecordSelect}
         />
       </div>
 

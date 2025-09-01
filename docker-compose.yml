@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  supervisor-agent:
+    build: .
+    ports:
+      - "8000:8000"  # Backend API
+      - "3000:3000"  # Frontend
+    volumes:
+      - ./data:/app/data
+      - ./task_memory:/app/task_memory
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: supervisor-agent-app
+
+  # Optional: Add a reverse proxy for single port access
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - supervisor-agent
+    container_name: supervisor-agent-proxy

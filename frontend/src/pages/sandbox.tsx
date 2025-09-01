@@ -43,8 +43,9 @@ const SandboxOverviewPage: React.FC = () => {
       title: '行銷策略優化',
       description: '數位行銷效果追蹤、廣告投放優化、用戶轉換分析和ROI監控',
       icon: <TrendingUp className="w-8 h-8" />,
-      status: 'coming-soon',
-      examples: ['廣告投放效果分析', '用戶轉換漏斗監控', '內容行銷成效評估', '社群媒體影響力追蹤']
+      status: 'available',
+      route: '/sandbox-marketing',
+      examples: ['用戶行為分析', '策略時間推演', '競爭者情報', '航線市場機會', '會員忠誠計畫']
     },
     {
       id: 'enterprise',

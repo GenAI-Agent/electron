@@ -2,14 +2,71 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { format, formatDistanceToNow } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 import { ChevronDown, ChevronRight, Paperclip, Star, Mail, Download } from 'lucide-react'
-import type { EmailThread as EmailThreadType, Email, Attachment, EmailSummary } from '@/types'
+// Define types locally
+interface EmailLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  timestamp: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  labels: EmailLabel[];
+}
+
+interface Email extends EmailSummary {
+  body: string;
+  recipients: string[];
+  cc?: string[];
+  bcc?: string[];
+  from: string;
+  fromName?: string;
+  importance?: 'high' | 'normal' | 'low';
+  isImportant?: boolean;
+  attachmentCount?: number;
+  sizeEstimate?: number;
+  attachments?: Attachment[];
+}
+
+interface Attachment {
+  id: string;
+  name: string;
+  filename: string;
+  size: number;
+  type: string;
+  mimeType: string;
+  isIndexed?: boolean;
+  shouldIndex?: boolean;
+  contentSummary?: string;
+  url?: string;
+}
+
+interface EmailThreadType {
+  id: string;
+  subject: string;
+  participants: string[];
+  messageCount: number;
+  lastActivity: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  labels: EmailLabel[];
+  emails: Email[];
+}
 
 interface EmailThreadProps {
   thread: EmailThreadType & {
@@ -30,7 +87,7 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
 
   const firstEmail = thread.emails[0]
   const lastEmail = thread.emails[thread.emails.length - 1]
-  const hasAttachments = thread.emails.some(email => email.attachments.length > 0)
+  const hasAttachments = thread.emails.some(email => email.attachments && email.attachments.length > 0)
 
   const formatEmailDate = (date: Date) => {
     const now = new Date()

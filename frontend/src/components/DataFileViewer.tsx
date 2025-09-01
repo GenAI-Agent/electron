@@ -21,11 +21,11 @@ import {
 } from '@mui/material';
 import {
   Download,
-  Refresh,
-  TableChart,
+  RefreshCw,
+  Table as TableIcon,
   Code,
-  DataObject
-} from '@mui/icons-material';
+  Database
+} from 'lucide-react';
 
 interface DataFileViewerProps {
   fileContent: {
@@ -161,7 +161,7 @@ const DataFileViewer: React.FC<DataFileViewerProps> = ({
             <Button
               variant={viewMode === 'table' ? 'contained' : 'outlined'}
               size="small"
-              startIcon={<TableChart />}
+              startIcon={<TableIcon />}
               onClick={() => setViewMode('table')}
               disabled={!Array.isArray(jsonData)}
             >
@@ -240,7 +240,7 @@ const DataFileViewer: React.FC<DataFileViewerProps> = ({
   const renderExcelInfo = () => {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
-        <DataObject sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+        <Database size={64} className="text-gray-500 mb-2" />
         <Typography variant="h6" gutterBottom>
           Excel 試算表
         </Typography>

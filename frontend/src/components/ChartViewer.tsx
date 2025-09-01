@@ -98,9 +98,17 @@ const ChartViewer: React.FC<ChartViewerProps> = ({
       // 使用 Electron API 讀取文件
       if (typeof window !== 'undefined' && window.electronAPI?.readFile) {
         const result = await window.electronAPI.readFile(chart.filepath);
-        if (result.type === 'binary') {
+        if (result.type === 'binary' && result.content) {
           // 創建下載鏈接
-          const blob = new Blob([new Uint8Array(result.content)], { type: 'image/png' });
+          // 如果content是base64字符串，需要先解碼
+          const binaryString = typeof result.content === 'string'
+            ? atob(result.content)
+            : result.content;
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'image/png' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;

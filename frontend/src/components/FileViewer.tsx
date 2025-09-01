@@ -79,7 +79,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
           if (result.type === 'pdf') {
             try {
               const base64Result = await window.electronAPI.readFileBase64(filePath);
-              if (base64Result.success) {
+              if (base64Result.success && base64Result.data) {
                 setPdfData(base64Result.data);
               }
             } catch (e) {

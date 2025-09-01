@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const http = require('http');
+const { spawn } = require('child_process');
 const oauthHandlers = require('./handlers/oauth-handlers');
 const browserHandlers = require('./handlers/browser-handlers');
 const { extractRealWebviewUrl, extractWebviewContent } = require('./utils/webview-utils');
@@ -10,6 +11,88 @@ const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
 let httpServer;
+let backendProcess;
+
+// Backend management functions
+function startBackend() {
+  return new Promise((resolve, reject) => {
+    if (isDev) {
+      // In development, assume backend is running separately
+      console.log('Development mode: Backend should be running separately');
+      resolve();
+      return;
+    }
+
+    const backendPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'backend', 'supervisor-agent-backend.exe')
+      : path.join(__dirname, 'backend', 'supervisor-agent-backend.exe');
+
+    if (!fs.existsSync(backendPath)) {
+      reject(new Error(`Backend executable not found at: ${backendPath}`));
+      return;
+    }
+
+    console.log('Starting backend process...');
+    backendProcess = spawn(backendPath, [], {
+      cwd: path.dirname(backendPath),
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    backendProcess.stdout.on('data', (data) => {
+      console.log(`Backend stdout: ${data}`);
+    });
+
+    backendProcess.stderr.on('data', (data) => {
+      console.error(`Backend stderr: ${data}`);
+    });
+
+    backendProcess.on('close', (code) => {
+      console.log(`Backend process exited with code ${code}`);
+    });
+
+    // Wait for backend to be ready
+    setTimeout(() => {
+      checkBackendHealth()
+        .then(() => resolve())
+        .catch(() => reject(new Error('Backend failed to start')));
+    }, 3000);
+  });
+}
+
+function checkBackendHealth() {
+  return new Promise((resolve, reject) => {
+    const req = http.get('http://localhost:8000/health', (res) => {
+      if (res.statusCode === 200) {
+        resolve();
+      } else {
+        reject(new Error(`Backend health check failed: ${res.statusCode}`));
+      }
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.setTimeout(5000, () => {
+      req.destroy();
+      reject(new Error('Backend health check timeout'));
+    });
+  });
+}
+
+function stopBackend() {
+  if (backendProcess && !backendProcess.killed) {
+    console.log('Stopping backend process...');
+    backendProcess.kill('SIGTERM');
+
+    // Force kill after 5 seconds if not terminated
+    setTimeout(() => {
+      if (!backendProcess.killed) {
+        backendProcess.kill('SIGKILL');
+      }
+    }, 5000);
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -52,19 +135,49 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  
-  // Register handlers immediately after creating window
-  oauthHandlers.register(mainWindow);
-  browserHandlers.register(mainWindow);
-  
-  startHttpServer();
+app.whenReady().then(async () => {
+  try {
+    // Start backend first
+    await startBackend();
+    console.log('Backend started successfully');
+
+    createWindow();
+
+    // Register handlers immediately after creating window
+    oauthHandlers.register(mainWindow);
+    browserHandlers.register(mainWindow);
+
+    startHttpServer();
+  } catch (error) {
+    console.error('Failed to start backend:', error);
+    // Show error dialog to user
+    const { dialog } = require('electron');
+    dialog.showErrorBox('Backend Error', `Failed to start backend service: ${error.message}`);
+    app.quit();
+  }
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  console.log('App is quitting, stopping backend...');
+  stopBackend();
+});
+
+app.on('activate', async () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    try {
+      if (!isDev) {
+        await startBackend();
+      }
+      createWindow();
+    } catch (error) {
+      console.error('Failed to restart backend:', error);
+    }
   }
 });
 

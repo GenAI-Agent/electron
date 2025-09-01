@@ -14,11 +14,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@tanstack/react-query": "^5.85.5",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "electron": "^33.0.0",
     "leaflet": "^1.9.4",
@@ -62,6 +66,15 @@
       "out/**/*",
       "electron/**/*",
       "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/backend/",
+        "to": "backend/",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "mac": {
       "category": "public.app-category.productivity"

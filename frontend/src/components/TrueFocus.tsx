@@ -61,8 +61,9 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
         if (!wordRefs.current[targetIndex] || !containerRef.current) return;
 
         const updateRect = () => {
-            const parentRect = containerRef.current!.getBoundingClientRect();
-            const activeRect = wordRefs.current[targetIndex]!.getBoundingClientRect();
+            if (!containerRef.current || !wordRefs.current[targetIndex]) return;
+            const parentRect = containerRef.current.getBoundingClientRect();
+            const activeRect = wordRefs.current[targetIndex].getBoundingClientRect();
 
             const newRect = {
                 x: activeRect.left - parentRect.left,

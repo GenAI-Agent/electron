@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "date": "2025-09-01",
+    "hour": 0,
+    "searches": 245,
+    "bookings": 12,
+    "conversion_rate": 4.9,
+    "avg_session_time": "6m 32s",
+    "top_destinations": ["東京", "首爾", "曼谷"],
+    "device_type": "mobile",
+    "user_segment": "leisure"
+  },
+  {
+    "id": 2,
+    "date": "2025-09-01",
+    "hour": 1,
+    "searches": 189,
+    "bookings": 8,
+    "conversion_rate": 4.2,
+    "avg_session_time": "5m 45s",
+    "top_destinations": ["東京", "新加坡", "香港"],
+    "device_type": "desktop",
+    "user_segment": "business"
+  },
+  {
+    "id": 3,
+    "date": "2025-09-01",
+    "hour": 2,
+    "searches": 156,
+    "bookings": 6,
+    "conversion_rate": 3.8,
+    "avg_session_time": "4m 12s",
+    "top_destinations": ["首爾", "曼谷", "東京"],
+    "device_type": "mobile",
+    "user_segment": "leisure"
+  },
+  {
+    "id": 4,
+    "date": "2025-09-01",
+    "hour": 8,
+    "searches": 1245,
+    "bookings": 89,
+    "conversion_rate": 7.1,
+    "avg_session_time": "9m 15s",
+    "top_destinations": ["東京", "首爾", "新加坡"],
+    "device_type": "desktop",
+    "user_segment": "business"
+  },
+  {
+    "id": 5,
+    "date": "2025-09-01",
+    "hour": 9,
+    "searches": 1456,
+    "bookings": 112,
+    "conversion_rate": 7.7,
+    "avg_session_time": "10m 32s",
+    "top_destinations": ["東京", "曼谷", "首爾"],
+    "device_type": "desktop",
+    "user_segment": "business"
+  },
+  {
+    "id": 6,
+    "date": "2025-09-01",
+    "hour": 10,
+    "searches": 1678,
+    "bookings": 145,
+    "conversion_rate": 8.6,
+    "avg_session_time": "11m 45s",
+    "top_destinations": ["首爾", "東京", "新加坡"],
+    "device_type": "desktop",
+    "user_segment": "mixed"
+  },
+  {
+    "id": 7,
+    "date": "2025-09-01",
+    "hour": 14,
+    "searches": 1234,
+    "bookings": 98,
+    "conversion_rate": 7.9,
+    "avg_session_time": "8m 56s",
+    "top_destinations": ["曼谷", "東京", "香港"],
+    "device_type": "mobile",
+    "user_segment": "leisure"
+  },
+  {
+    "id": 8,
+    "date": "2025-09-01",
+    "hour": 18,
+    "searches": 1890,
+    "bookings": 156,
+    "conversion_rate": 8.3,
+    "avg_session_time": "12m 18s",
+    "top_destinations": ["東京", "首爾", "曼谷"],
+    "device_type": "mobile",
+    "user_segment": "leisure"
+  },
+  {
+    "id": 9,
+    "date": "2025-09-01",
+    "hour": 19,
+    "searches": 2145,
+    "bookings": 189,
+    "conversion_rate": 8.8,
+    "avg_session_time": "13m 42s",
+    "top_destinations": ["首爾", "東京", "新加坡"],
+    "device_type": "mobile",
+    "user_segment": "leisure"
+  },
+  {
+    "id": 10,
+    "date": "2025-09-01",
+    "hour": 20,
+    "searches": 1987,
+    "bookings": 167,
+    "conversion_rate": 8.4,
+    "avg_session_time": "11m 28s",
+    "top_destinations": ["東京", "曼谷", "首爾"],
+    "device_type": "mobile",
+    "user_segment": "mixed"
+  }
+]

@@ -15,8 +15,19 @@ import {
   Eye,
   Search
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Attachment } from '@/types'
+import { cn } from '@/utils/cn'
+interface Attachment {
+  id: string;
+  name: string;
+  filename: string;
+  size: number;
+  type: string;
+  mimeType: string;
+  isIndexed?: boolean;
+  shouldIndex?: boolean;
+  contentSummary?: string;
+  url?: string;
+}
 
 interface AttachmentsDisplayProps {
   attachments: Attachment[]

@@ -1,0 +1,152 @@
+[
+  {
+    "competitor": "長榮航空",
+    "market_share": 28.5,
+    "routes": ["TPE-LAX", "TPE-NRT", "TPE-LHR", "TPE-BKK", "TPE-SIN"],
+    "fleet_size": 85,
+    "annual_passengers": 12500000,
+    "revenue": 185000000000,
+    "pricing_strategy": "premium",
+    "avg_economy_price": 25000,
+    "avg_business_price": 85000,
+    "service_rating": 4.2,
+    "on_time_performance": 87.3,
+    "loyalty_program": "Infinity MileageLands",
+    "loyalty_members": 2800000,
+    "strengths": ["服務品質", "航線網絡", "品牌形象", "星空聯盟"],
+    "weaknesses": ["票價較高", "數位化程度", "年輕客群吸引力"],
+    "recent_campaigns": [
+      {
+        "name": "Hello Kitty彩繪機",
+        "budget": 50000000,
+        "effectiveness": 85,
+        "target": "家庭旅遊"
+      }
+    ]
+  },
+  {
+    "competitor": "中華航空",
+    "market_share": 32.1,
+    "routes": ["TPE-LAX", "TPE-NRT", "TPE-FRA", "TPE-SYD", "TPE-BKK"],
+    "fleet_size": 92,
+    "annual_passengers": 14200000,
+    "revenue": 198000000000,
+    "pricing_strategy": "competitive",
+    "avg_economy_price": 23500,
+    "avg_business_price": 82000,
+    "service_rating": 4.0,
+    "on_time_performance": 85.7,
+    "loyalty_program": "Dynasty Flyer",
+    "loyalty_members": 3200000,
+    "strengths": ["航線覆蓋", "價格競爭力", "政府支持", "天合聯盟"],
+    "weaknesses": ["品牌形象", "服務創新", "數位體驗"],
+    "recent_campaigns": [
+      {
+        "name": "台灣精神號",
+        "budget": 35000000,
+        "effectiveness": 72,
+        "target": "愛國情懷"
+      }
+    ]
+  },
+  {
+    "competitor": "星宇航空",
+    "market_share": 12.3,
+    "routes": ["TPE-NRT", "TPE-ICN", "TPE-BKK", "TPE-KUL", "TPE-SIN"],
+    "fleet_size": 28,
+    "annual_passengers": 3800000,
+    "revenue": 68000000000,
+    "pricing_strategy": "premium",
+    "avg_economy_price": 28000,
+    "avg_business_price": 95000,
+    "service_rating": 4.5,
+    "on_time_performance": 91.2,
+    "loyalty_program": "COSMILE",
+    "loyalty_members": 850000,
+    "strengths": ["新穎機隊", "創新服務", "高端定位", "數位體驗"],
+    "weaknesses": ["航線有限", "品牌知名度", "價格競爭力", "規模經濟"],
+    "recent_campaigns": [
+      {
+        "name": "星宇體驗營",
+        "budget": 20000000,
+        "effectiveness": 92,
+        "target": "高端旅客"
+      }
+    ]
+  },
+  {
+    "competitor": "台灣虎航",
+    "market_share": 8.7,
+    "routes": ["TPE-NRT", "TPE-ICN", "TPE-BKK", "TPE-SIN", "TPE-HKG"],
+    "fleet_size": 18,
+    "annual_passengers": 2900000,
+    "revenue": 28000000000,
+    "pricing_strategy": "low-cost",
+    "avg_economy_price": 12000,
+    "avg_business_price": 0,
+    "service_rating": 3.5,
+    "on_time_performance": 82.1,
+    "loyalty_program": "TigerClub",
+    "loyalty_members": 450000,
+    "strengths": ["低價策略", "年輕客群", "靈活營運", "快速成長"],
+    "weaknesses": ["服務有限", "準點率", "品牌形象", "航線網絡"],
+    "recent_campaigns": [
+      {
+        "name": "虎力全開",
+        "budget": 12000000,
+        "effectiveness": 68,
+        "target": "預算旅客"
+      }
+    ]
+  },
+  {
+    "competitor": "酷航",
+    "market_share": 6.2,
+    "routes": ["TPE-SIN", "TPE-BKK", "TPE-SYD", "TPE-PER"],
+    "fleet_size": 15,
+    "annual_passengers": 1800000,
+    "revenue": 22000000000,
+    "pricing_strategy": "low-cost",
+    "avg_economy_price": 15000,
+    "avg_business_price": 35000,
+    "service_rating": 3.8,
+    "on_time_performance": 84.5,
+    "loyalty_program": "KrisFlyer",
+    "loyalty_members": 320000,
+    "strengths": ["新加坡航空支持", "區域網絡", "服務品質", "創新產品"],
+    "weaknesses": ["航線有限", "品牌認知", "價格競爭", "市場滲透"],
+    "recent_campaigns": [
+      {
+        "name": "Scoot and Save",
+        "budget": 8000000,
+        "effectiveness": 75,
+        "target": "精打細算旅客"
+      }
+    ]
+  },
+  {
+    "competitor": "樂桃航空",
+    "market_share": 4.8,
+    "routes": ["TPE-KIX", "TPE-NRT", "TPE-FUK", "TPE-CTS"],
+    "fleet_size": 12,
+    "annual_passengers": 1200000,
+    "revenue": 18000000000,
+    "pricing_strategy": "low-cost",
+    "avg_economy_price": 11500,
+    "avg_business_price": 0,
+    "service_rating": 3.6,
+    "on_time_performance": 79.8,
+    "loyalty_program": "Peach Points",
+    "loyalty_members": 280000,
+    "strengths": ["日本市場專精", "低價優勢", "年輕品牌", "靈活調度"],
+    "weaknesses": ["航線單一", "服務基本", "準點率低", "季節性強"],
+    "recent_campaigns": [
+      {
+        "name": "桃園直飛日本",
+        "budget": 6000000,
+        "effectiveness": 82,
+        "target": "日本旅遊愛好者"
+      }
+    ]
+  }
+]

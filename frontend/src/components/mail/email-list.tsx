@@ -4,13 +4,53 @@ import { useState, useEffect } from 'react'
 import { EmailCard } from './email-card'
 import { SummaryPanel } from './summary-panel'
 import { EmailThread } from './email-thread'
-import { IndexBanner } from '@/components/indexing/index-banner'
+// import { IndexBanner } from '@/components/indexing/index-banner'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChevronLeft, ChevronRight, Search, Mail, Settings } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 import { useRouter } from 'next/navigation'
-import type { EmailMessage, EmailSummary, SearchResult, ViewMode } from '@/types'
+
+// Define types locally
+interface EmailLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  timestamp: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  labels: EmailLabel[];
+}
+
+interface EmailMessage extends EmailSummary {
+  body: string;
+  recipients: string[];
+  cc?: string[];
+  bcc?: string[];
+  from: string;
+  fromName?: string;
+  importance?: 'high' | 'normal' | 'low';
+  isImportant?: boolean;
+  attachmentCount?: number;
+  sizeEstimate?: number;
+  attachments?: any[];
+}
+
+interface SearchResult {
+  emails: EmailMessage[];
+  totalCount: number;
+  query: string;
+}
+
+type ViewMode = 'list' | 'thread' | 'summary';
 
 interface IndexStatus {
   status: 'not_indexed' | 'indexing' | 'indexed' | 'error'
@@ -89,7 +129,7 @@ export function EmailList({
     if (!isLoadingIndex && indexStatus && indexStatus.status !== 'indexed') {
       return (
         <div className={cn("space-y-6", className)}>
-          <IndexBanner />
+          {/* <IndexBanner /> */}
           <div className="text-center py-8">
             <div className="space-y-4">
               <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
@@ -124,8 +164,8 @@ export function EmailList({
   }
 
   // Handle empty results
-  const isEmpty = searchResult 
-    ? searchResult.results.length === 0 
+  const isEmpty = searchResult
+    ? searchResult.emails.length === 0
     : emailThreads?.threads?.length === 0
 
   if (isEmpty) {
@@ -137,8 +177,8 @@ export function EmailList({
   }
 
   // Get results and pagination info
-  const results = searchResult 
-    ? searchResult.results as (EmailMessage[] | EmailSummary[])
+  const results = searchResult
+    ? searchResult.emails as (EmailMessage[] | EmailSummary[])
     : emailThreads?.threads || []
   
   const totalCount = searchResult?.totalCount || emailThreads?.totalCount || 0
@@ -200,7 +240,7 @@ export function EmailList({
           ))
         ) : (
           // Detailed 模式 - 顯示郵件threads
-          emailThreads || searchResult?.threads ? (
+          emailThreads ? (
             // 如果有threads資料，顯示thread view
             (currentResults as any[]).map((thread) => (
               <EmailThread

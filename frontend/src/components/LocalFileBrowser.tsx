@@ -96,7 +96,7 @@ const LocalFileBrowser: React.FC<LocalFileBrowserProps> = ({ initialPath }) => {
     try {
       if (window.electronAPI?.readDirectory) {
         const result = await window.electronAPI.readDirectory(path);
-        if (result.success) {
+        if (result.success && result.items) {
           setItems(result.items);
           setCurrentPath(path);
         } else {

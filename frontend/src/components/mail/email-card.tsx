@@ -21,8 +21,39 @@ import {
   Bot,
   Tag
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { EmailMessage, EmailSummary, EmailLabel } from '@/types'
+import { cn } from '@/utils/cn'
+// Define types locally
+interface EmailLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  timestamp: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  labels: EmailLabel[];
+}
+
+interface EmailMessage extends EmailSummary {
+  body: string;
+  recipients: string[];
+  cc?: string[];
+  bcc?: string[];
+  from: string;
+  fromName?: string;
+  importance?: 'high' | 'normal' | 'low';
+  isImportant?: boolean;
+  attachmentCount?: number;
+  sizeEstimate?: number;
+  attachments?: any[];
+}
 import { format, isToday, isYesterday, isThisWeek, isThisYear } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 
@@ -94,7 +125,7 @@ export function EmailCard({
         className={cn(
           "cursor-pointer transition-all duration-200 hover:shadow-md border-l-4 group",
           isSelected ? "ring-2 ring-blue-500 border-l-blue-500" : "border-l-transparent hover:border-l-blue-200",
-          email.isUnread ? "bg-white" : "bg-gray-50/50",
+          !email.isRead ? "bg-white" : "bg-gray-50/50",
           className
         )}
         onClick={() => onSelect?.(email)}
@@ -103,7 +134,7 @@ export function EmailCard({
           <div className="flex items-start gap-3">
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="flex items-center justify-center">
-                {email.isUnread ? (
+                {!email.isRead ? (
                   <Mail className="w-4 h-4 text-blue-600" />
                 ) : (
                   <MailOpen className="w-4 h-4 text-gray-400" />
@@ -112,7 +143,7 @@ export function EmailCard({
               <Avatar className="w-10 h-10">
                 <AvatarFallback className={cn(
                   "text-sm font-medium",
-                  email.isUnread ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                  !email.isRead ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
                 )}>
                   {getInitials(getDisplayName())}
                 </AvatarFallback>
@@ -125,7 +156,7 @@ export function EmailCard({
                 <div className="flex items-center gap-2 min-w-0">
                   <p className={cn(
                     "text-sm truncate",
-                    email.isUnread ? "font-semibold text-gray-900" : "font-medium text-gray-700"
+                    !email.isRead ? "font-semibold text-gray-900" : "font-medium text-gray-700"
                   )}>
                     {getDisplayName()}
                   </p>
@@ -135,21 +166,21 @@ export function EmailCard({
                 </div>
                 <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
                   <Clock className="w-3 h-3" />
-                  {formatDate(email.date)}
+                  {formatDate(email.timestamp.toISOString())}
                 </div>
               </div>
               
               {/* 主旨 */}
               <p className={cn(
                 "text-sm truncate",
-                email.isUnread ? "font-medium text-gray-900" : "text-gray-700"
+                !email.isRead ? "font-medium text-gray-900" : "text-gray-700"
               )}>
                 {email.subject || '(無主旨)'}
               </p>
               
               {/* 內容預覽 */}
               <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                {email.snippet || email.body?.substring(0, 120) + '...' || '(無內容)'}
+                {email.preview || email.body?.substring(0, 120) + '...' || '(無內容)'}
               </p>
               
               {/* 底部標籤和圖示 */}
@@ -163,7 +194,7 @@ export function EmailCard({
                       )}
                     </div>
                   )}
-                  {email.isUnread && (
+                  {!email.isRead && (
                     <Badge variant="default" className="text-xs px-2 py-0 bg-blue-600">
                       未讀
                     </Badge>
@@ -180,9 +211,9 @@ export function EmailCard({
                       <span className="text-xs text-gray-500">{emailLabels.length}</span>
                     </div>
                   )}
-                  {email.labelIds?.filter(label => !['UNREAD', 'IMPORTANT', 'STARRED', 'HAS_ATTACHMENT'].includes(label)).map((label) => (
-                    <Badge key={label} variant="outline" className="text-xs px-1 py-0">
-                      {label}
+                  {email.labels?.filter(label => !['UNREAD', 'IMPORTANT', 'STARRED', 'HAS_ATTACHMENT'].includes(label.name)).map((label) => (
+                    <Badge key={label.id} variant="outline" className="text-xs px-1 py-0">
+                      {label.name}
                     </Badge>
                   ))}
                 </div>
@@ -213,7 +244,7 @@ export function EmailCard({
       className={cn(
         "cursor-pointer transition-all duration-200 hover:shadow-lg group",
         isSelected ? "ring-2 ring-blue-500" : "",
-        email.isUnread ? "bg-white" : "bg-gray-50/30",
+        !email.isRead ? "bg-white" : "bg-gray-50/30",
         className
       )}
       onClick={() => onSelect?.(email)}
@@ -226,7 +257,7 @@ export function EmailCard({
               <Avatar className="w-12 h-12">
                 <AvatarFallback className={cn(
                   "text-sm font-medium",
-                  email.isUnread ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                  !email.isRead ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
                 )}>
                   {getInitials(getDisplayName())}
                 </AvatarFallback>
@@ -235,14 +266,14 @@ export function EmailCard({
                 <div className="flex items-center gap-2">
                   <p className={cn(
                     "font-medium",
-                    email.isUnread ? "text-gray-900" : "text-gray-700"
+                    !email.isRead ? "text-gray-900" : "text-gray-700"
                   )}>
                     {getDisplayName()}
                   </p>
                   {email.isImportant && (
                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
                   )}
-                  {email.isUnread && (
+                  {!email.isRead && (
                     <Badge variant="default" className="text-xs px-2 py-0 bg-blue-600">
                       未讀
                     </Badge>
@@ -251,7 +282,7 @@ export function EmailCard({
                 <p className="text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
-                    收件者: {email.to}
+                    收件者: {email.recipients?.join(', ')}
                   </span>
                 </p>
               </div>
@@ -259,7 +290,7 @@ export function EmailCard({
             
             <div className="flex items-center gap-2">
               <div className="text-right text-sm text-gray-500">
-                <p>{formatDate(email.date)}</p>
+                <p>{formatDate(email.timestamp.toISOString())}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {email.hasAttachments && (
                     <div className="flex items-center gap-1">
@@ -288,7 +319,7 @@ export function EmailCard({
           <div>
             <h3 className={cn(
               "text-lg leading-tight",
-              email.isUnread ? "font-semibold text-gray-900" : "font-medium text-gray-800"
+              !email.isRead ? "font-semibold text-gray-900" : "font-medium text-gray-800"
             )}>
               {email.subject || '(無主旨)'}
             </h3>
@@ -296,7 +327,7 @@ export function EmailCard({
 
           {/* 內容預覽 */}
           <div className="text-gray-700 leading-relaxed line-clamp-3">
-            {email.snippet || email.body?.substring(0, 300) + '...' || '(無內容預覽)'}
+            {email.preview || email.body?.substring(0, 300) + '...' || '(無內容預覽)'}
           </div>
 
           {/* 擴展信息區域 - 僅在 detailed 模式和 showExtendedInfo 為 true 時顯示 */}
@@ -334,9 +365,9 @@ export function EmailCard({
           {/* 底部操作區 */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              {email.labelIds?.filter(label => !['UNREAD', 'IMPORTANT', 'STARRED', 'HAS_ATTACHMENT'].includes(label)).map((label) => (
-                <Badge key={label} variant="outline" className="text-xs">
-                  {label}
+              {email.labels?.filter(label => !['UNREAD', 'IMPORTANT', 'STARRED', 'HAS_ATTACHMENT'].includes(label.name)).map((label) => (
+                <Badge key={label.id} variant="outline" className="text-xs">
+                  {label.name}
                 </Badge>
               ))}
             </div>

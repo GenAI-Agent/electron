@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Target, CheckCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import RulesPanel from './RulesPanel';
 import { ReactMarkdownCustom } from './ReactMarkdownCustom';
@@ -13,13 +13,22 @@ interface ChatMessage {
 }
 
 interface ResultPanelProps {
-  mode: 'result' | 'rules' | 'skills';
+  mode: 'result' | 'rules' | 'skills' | 'simulation';
   streamResponse?: string;
   currentRule?: string | null;
   usedTools?: string[];
   isLoading?: boolean;
   messages?: ChatMessage[];
   onRulesUpdate?: () => void;
+  simulationRecords?: Array<{
+    id: string;
+    title: string;
+    participants: { side1: string; side2: string };
+    date: string;
+    status: string;
+    result: { confidence: number };
+  }>;
+  onSimulationRecordSelect?: (record: any) => void;
 }
 
 const ResultPanel: React.FC<ResultPanelProps> = ({
@@ -29,7 +38,9 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   usedTools = [],
   isLoading = false,
   messages = [],
-  onRulesUpdate
+  onRulesUpdate,
+  simulationRecords = [],
+  onSimulationRecordSelect
 }) => {
   return (
     <div
@@ -106,6 +117,43 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 
       {mode === 'rules' && (
         <RulesPanel onRulesUpdate={onRulesUpdate} />
+      )}
+
+      {mode === 'simulation' && (
+        <div className="flex-1 overflow-auto p-2">
+          <div className="mb-3">
+            <h3 className="text-sm font-medium text-slate-700 mb-2">推演記錄</h3>
+            <p className="text-xs text-slate-500">點擊記錄查看詳細分析</p>
+          </div>
+
+          <div className="space-y-2">
+            {simulationRecords.map((record) => (
+              <div
+                key={record.id}
+                className="p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all duration-200"
+                onClick={() => onSimulationRecordSelect?.(record)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-slate-900 text-sm">{record.title}</h4>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium",
+                    record.status === 'completed' ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600"
+                  )}>
+                    {record.status === 'completed' ? '完成' : '進行中'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mb-2">{record.participants.side1} vs {record.participants.side2}</p>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>{record.date}</span>
+                  <span>信心度: {(record.result.confidence * 100).toFixed(0)}%</span>
+                </div>
+                <div className="mt-2 text-xs text-blue-600 font-medium">
+                  點擊查看詳細分析 →
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {mode === 'skills' && (
