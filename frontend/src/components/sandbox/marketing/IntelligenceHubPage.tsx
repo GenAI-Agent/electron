@@ -1303,7 +1303,7 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
         time: new Date().toTimeString().split(' ')[0],
         fullPath: `marketing-sandbox/intelligence_${dataType}.csv`
       };
-      
+
       let data: any[] = [];
       switch (dataType) {
         case 'countries':
@@ -1313,13 +1313,13 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
           data = mockSocialPosts;
           break;
       }
-      
+
       onOpenDataTab('intelligence', mockFile, data);
     }
   };
 
   return (
-    <div className={cn("h-full flex flex-col p-6 bg-gray-50", className)}>
+    <div className={cn("h-full flex flex-col p-6 pb-16 bg-gray-50", className)}>
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -1373,660 +1373,664 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
       <div className="flex-1 min-h-0">
         {activeTab === 'countries' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          {/* Country List - 左側滑動 */}
-          <div className="h-full overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">目標市場</h3>
-              <button
-                onClick={() => exportData('countries')}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                匯出數據
-              </button>
-            </div>
-
-            <div className="space-y-4 pr-2">
-              {mockCountryData.map((country) => (
-                <div
-                  key={country.countryCode}
-                  className={cn(
-                    "bg-white rounded-lg p-4 shadow-sm border cursor-pointer transition-colors",
-                    selectedCountry?.countryCode === country.countryCode
-                      ? "border-blue-500 bg-blue-50"
-                      : "hover:border-gray-300"
-                  )}
-                  onClick={() => setSelectedCountry(country)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <h4 className="font-semibold text-gray-900">{country.country}</h4>
-                    </div>
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      getCompetitionColor(country.competitionLevel)
-                    )}>
-                      {country.competitionLevel === 'low' ? '低競爭' :
-                       country.competitionLevel === 'medium' ? '中競爭' : '高競爭'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-gray-600">市場規模</p>
-                      <p className="font-medium">{(country.marketSize / 1000000).toFixed(1)}M</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">成長率</p>
-                      <p className="font-medium text-green-600">+{country.growthRate}%</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">旅遊需求</span>
-                      <span className="font-medium">{country.travelDemand}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${country.travelDemand}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Country Details */}
-          <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border">
-            {selectedCountry ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-gray-900">{selectedCountry.country} 市場分析</h3>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">社群情緒</span>
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-sm font-medium",
-                      selectedCountry.socialSentiment > 60 ? "bg-green-50 text-green-600" :
-                      selectedCountry.socialSentiment > 30 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
-                    )}>
-                      {selectedCountry.socialSentiment}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">關鍵洞察</h4>
-                    <ul className="space-y-2">
-                      {selectedCountry.keyInsights.map((insight, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start">
-                          <Eye className="w-3 h-3 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                          {insight}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">市場機會</h4>
-                    <ul className="space-y-2">
-                      {selectedCountry.opportunities.map((opportunity, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start">
-                          <TrendingUp className="w-3 h-3 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          {opportunity}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">潛在風險</h4>
-                    <ul className="space-y-2">
-                      {selectedCountry.risks.map((risk, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start">
-                          <AlertCircle className="w-3 h-3 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                          {risk}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{(selectedCountry.marketSize / 1000000).toFixed(1)}M</p>
-                      <p className="text-sm text-gray-600">市場規模</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">+{selectedCountry.growthRate}%</p>
-                      <p className="text-sm text-gray-600">年成長率</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-600">{selectedCountry.travelDemand}%</p>
-                      <p className="text-sm text-gray-600">旅遊需求</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-900">{selectedCountry.seasonality}</p>
-                      <p className="text-sm text-gray-600">季節特性</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>選擇一個國家查看詳細分析</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'social' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">社群媒體監控</h3>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => exportData('social')}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                匯出數據
-              </button>
-            </div>
-          </div>
-
-          {/* 平台選擇 */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <h4 className="font-medium text-gray-900 mb-3">監控平台</h4>
-            <div className="flex flex-wrap gap-3">
-              {[
-                { id: 'all', name: '全部平台', icon: '🌐' },
-                { id: 'twitter', name: 'Twitter', icon: '🐦' },
-                { id: 'threads', name: 'Threads', icon: '🧵' },
-                { id: 'ptt', name: 'PTT', icon: '💬' }
-              ].map((platform) => (
-                <button
-                  key={platform.id}
-                  onClick={() => setPlatformFilter(platform.id as any)}
-                  className={cn(
-                    "flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors",
-                    platformFilter === platform.id
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
-                  )}
-                >
-                  <span>{platform.icon}</span>
-                  <span className="text-sm font-medium">{platform.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredSocialPosts.map((post) => (
-              <div key={post.id} className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    {getPlatformIcon(post.platform)}
-                    <span className="font-medium text-gray-900">{post.author}</span>
-                    <span className="text-sm text-gray-500">
-                      {new Date(post.timestamp).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <span className={cn(
-                    "px-2 py-1 rounded-full text-xs font-medium border",
-                    getSentimentColor(post.sentiment)
-                  )}>
-                    {post.sentiment === 'positive' ? '正面' :
-                     post.sentiment === 'negative' ? '負面' : '中性'}
-                  </span>
-                </div>
-
-                <p className="text-gray-700 mb-4">{post.content}</p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <Heart className="w-4 h-4" />
-                      <span>{post.engagement.likes}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Share2 className="w-4 h-4" />
-                      <span>{post.engagement.shares}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <MessageSquare className="w-4 h-4" />
-                      <span>{post.engagement.comments}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">相關度</span>
-                    <span className="text-sm font-medium text-blue-600">{post.relevanceScore}%</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t">
-                  <div className="flex flex-wrap gap-1">
-                    {post.topics.map((topic, index) => (
-                      <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                        #{topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Complaints Data Tab */}
-      {activeTab === 'complaints' && (
-        <div className="space-y-6">
-          {/* Filter Controls */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">客訴原始數據</h3>
-              <div className="flex items-center space-x-4">
-                <div className="flex space-x-2">
-                  {(['all', 'high', 'medium', 'low'] as const).map((severity) => (
-                    <button
-                      key={severity}
-                      onClick={() => setComplaintFilter(severity)}
-                      className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                        complaintFilter === severity
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      )}
-                    >
-                      {severity === 'all' ? '全部' :
-                       severity === 'high' ? '高' :
-                       severity === 'medium' ? '中' : '低'}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => onOpenDataTab && onOpenDataTab('complaints', {
-                    filename: 'complaints_raw_data.csv',
-                    date: new Date().toISOString().split('T')[0],
-                    time: new Date().toTimeString().split(' ')[0],
-                    fullPath: 'marketing-sandbox/complaints.csv'
-                  }, mockComplaintData)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  匯出原始數據
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Complaints List */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <div className="space-y-4">
-              {mockComplaintData
-                .filter(complaint => complaintFilter === 'all' || complaint.severity === complaintFilter)
-                .map((complaint) => (
-                <div key={complaint.id} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-medium text-gray-900">#{complaint.id}</span>
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium",
-                        complaint.severity === 'high' ? "bg-red-50 text-red-600" :
-                        complaint.severity === 'medium' ? "bg-yellow-50 text-yellow-600" : "bg-green-50 text-green-600"
-                      )}>
-                        {complaint.severity === 'high' ? '高嚴重' :
-                         complaint.severity === 'medium' ? '中嚴重' : '低嚴重'}
-                      </span>
-                      <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded">
-                        {complaint.category}
-                      </span>
-                    </div>
-                    <div className="text-right text-sm text-gray-500">
-                      <p>{complaint.date}</p>
-                      <p>{complaint.route}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-800 mb-2">{complaint.description}</p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-600">
-                      <span>渠道: {complaint.channel}</span>
-                      <span>客戶類型: {complaint.customerType}</span>
-                      <span>處理時間: {complaint.resolutionTime}小時</span>
-                      <span>滿意度: {complaint.satisfaction}/5</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-white rounded border-l-4 border-green-400">
-                    <p className="text-sm text-gray-700">{complaint.resolution}</p>
-                    {complaint.followUp && (
-                      <p className="text-xs text-green-600 mt-1">✓ 需要後續追蹤</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Company Policies Tab */}
-      {activeTab === 'policies' && (
-        <div className="space-y-6">
-          {/* Service Standards Overview */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">服務標準監控</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {mockServiceStandards.map((standard, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{standard.service}</h4>
-                    <span className={cn(
-                      "text-xs px-2 py-1 rounded-full",
-                      standard.trend === 'improving' ? "bg-green-50 text-green-600" :
-                      standard.trend === 'declining' ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-600"
-                    )}>
-                      {standard.trend === 'improving' ? '↗ 改善' :
-                       standard.trend === 'declining' ? '↘ 下滑' : '→ 穩定'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{standard.standard}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">目標: {standard.target}%</span>
-                    <span className={cn(
-                      "font-bold",
-                      standard.current >= standard.target ? "text-green-600" : "text-red-600"
-                    )}>
-                      {standard.current}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Policies Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Policy List */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
+            {/* Country List - 左側滑動 */}
+            <div className="h-full overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">公司政策</h3>
+                <h3 className="text-lg font-semibold text-gray-900">目標市場</h3>
                 <button
-                  onClick={() => onOpenDataTab && onOpenDataTab('policies', {
-                    filename: 'company_policies.csv',
-                    date: new Date().toISOString().split('T')[0],
-                    time: new Date().toTimeString().split(' ')[0],
-                    fullPath: 'marketing-sandbox/policies.csv'
-                  }, mockCompanyPolicies)}
+                  onClick={() => exportData('countries')}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  匯出政策數據
+                  匯出數據
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {mockCompanyPolicies.map((policy) => (
+              <div className="space-y-4 pr-2">
+                {mockCountryData.map((country) => (
                   <div
-                    key={policy.id}
+                    key={country.countryCode}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-colors",
-                      selectedPolicy?.id === policy.id
+                      "bg-white rounded-lg p-4 shadow-sm border cursor-pointer transition-colors",
+                      selectedCountry?.countryCode === country.countryCode
                         ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "hover:border-gray-300"
                     )}
-                    onClick={() => setSelectedPolicy(policy)}
+                    onClick={() => setSelectedCountry(country)}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{policy.title}</h4>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <h4 className="font-semibold text-gray-900">{country.country}</h4>
+                      </div>
                       <span className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",
-                        policy.category === 'service' ? "bg-blue-50 text-blue-600" :
-                        policy.category === 'baggage' ? "bg-green-50 text-green-600" :
-                        policy.category === 'meal' ? "bg-yellow-50 text-yellow-600" :
-                        policy.category === 'membership' ? "bg-purple-50 text-purple-600" :
-                        policy.category === 'aircraft' ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-600"
+                        getCompetitionColor(country.competitionLevel)
                       )}>
-                        {policy.category}
+                        {country.competitionLevel === 'low' ? '低競爭' :
+                          country.competitionLevel === 'medium' ? '中競爭' : '高競爭'}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{policy.description}</p>
-                    <p className="text-xs text-gray-500">更新日期: {policy.lastUpdated}</p>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-gray-600">市場規模</p>
+                        <p className="font-medium">{(country.marketSize / 1000000).toFixed(1)}M</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">成長率</p>
+                        <p className="font-medium text-green-600">+{country.growthRate}%</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">旅遊需求</span>
+                        <span className="font-medium">{country.travelDemand}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{ width: `${country.travelDemand}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Policy Details */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">政策詳情</h3>
-
-              {selectedPolicy ? (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">{selectedPolicy.title}</h4>
-                    <p className="text-sm text-gray-600 mb-3">{selectedPolicy.description}</p>
-                  </div>
-
-                  <div>
-                    <h5 className="font-medium text-gray-900 mb-2">適用航線</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPolicy.applicableRoutes.map((route, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                          {route}
-                        </span>
-                      ))}
+            {/* Country Details */}
+            <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border">
+              {selectedCountry ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-gray-900">{selectedCountry.country} 市場分析</h3>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">社群情緒</span>
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-sm font-medium",
+                        selectedCountry.socialSentiment > 60 ? "bg-green-50 text-green-600" :
+                          selectedCountry.socialSentiment > 30 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
+                      )}>
+                        {selectedCountry.socialSentiment}%
+                      </span>
                     </div>
                   </div>
 
-                  {selectedPolicy.exceptions.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <h5 className="font-medium text-gray-900 mb-2">例外情況</h5>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        {selectedPolicy.exceptions.map((exception, index) => (
-                          <li key={index} className="flex items-center">
-                            <AlertCircle className="w-3 h-3 text-yellow-500 mr-2" />
-                            {exception}
+                      <h4 className="font-semibold text-gray-900 mb-3">關鍵洞察</h4>
+                      <ul className="space-y-2">
+                        {selectedCountry.keyInsights.map((insight, index) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start">
+                            <Eye className="w-3 h-3 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                            {insight}
                           </li>
                         ))}
                       </ul>
                     </div>
-                  )}
 
-                  {selectedPolicy.relatedPolicies.length > 0 && (
                     <div>
-                      <h5 className="font-medium text-gray-900 mb-2">相關政策</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedPolicy.relatedPolicies.map((relatedId, index) => (
-                          <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                            {relatedId}
-                          </span>
+                      <h4 className="font-semibold text-gray-900 mb-3">市場機會</h4>
+                      <ul className="space-y-2">
+                        {selectedCountry.opportunities.map((opportunity, index) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start">
+                            <TrendingUp className="w-3 h-3 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            {opportunity}
+                          </li>
                         ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">潛在風險</h4>
+                      <ul className="space-y-2">
+                        {selectedCountry.risks.map((risk, index) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start">
+                            <AlertCircle className="w-3 h-3 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                            {risk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">{(selectedCountry.marketSize / 1000000).toFixed(1)}M</p>
+                        <p className="text-sm text-gray-600">市場規模</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">+{selectedCountry.growthRate}%</p>
+                        <p className="text-sm text-gray-600">年成長率</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600">{selectedCountry.travelDemand}%</p>
+                        <p className="text-sm text-gray-600">旅遊需求</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-900">{selectedCountry.seasonality}</p>
+                        <p className="text-sm text-gray-600">季節特性</p>
                       </div>
                     </div>
-                  )}
-
-                  <div className="pt-3 border-t">
-                    <p className="text-xs text-gray-500">最後更新: {selectedPolicy.lastUpdated}</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>選擇一個政策查看詳情</p>
+                <div className="text-center py-12 text-gray-500">
+                  <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>選擇一個國家查看詳細分析</p>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Coupons and Activities Tab */}
-      {activeTab === 'coupons' && (
-        <div className="space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">進行中活動</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {mockCouponActivities.filter(c => c.status === 'active').length}
-                  </p>
-                </div>
-                <Calendar className="w-8 h-8 text-blue-500" />
+        {activeTab === 'social' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">社群媒體監控</h3>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => exportData('social')}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  匯出數據
+                </button>
               </div>
             </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">已結束活動</p>
-                  <p className="text-2xl font-bold text-gray-600">
-                    {mockCouponActivities.filter(c => c.status === 'ended').length}
-                  </p>
+
+            {/* 平台選擇與貼文區塊 */}
+            <div className="bg-white rounded-lg shadow-sm border h-[calc(100vh-320px)] flex flex-col">
+              {/* 固定的平台選擇區 */}
+              <div className="p-4 border-b sticky top-0 bg-white z-10">
+                <h4 className="font-medium text-gray-900 mb-3">監控平台</h4>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { id: 'all', name: '全部平台', icon: '🌐' },
+                    { id: 'twitter', name: 'Twitter', icon: '🐦' },
+                    { id: 'threads', name: 'Threads', icon: '🧵' },
+                    { id: 'ptt', name: 'PTT', icon: '💬' }
+                  ].map((platform) => (
+                    <button
+                      key={platform.id}
+                      onClick={() => setPlatformFilter(platform.id as any)}
+                      className={cn(
+                        "flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors",
+                        platformFilter === platform.id
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 hover:border-gray-300 text-gray-700"
+                      )}
+                    >
+                      <span>{platform.icon}</span>
+                      <span className="text-sm font-medium">{platform.name}</span>
+                    </button>
+                  ))}
                 </div>
-                <CheckCircle className="w-8 h-8 text-gray-500" />
               </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">總預算</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${(mockCouponActivities.reduce((sum, c) => sum + c.budget, 0) / 1000000).toFixed(1)}M
-                  </p>
+
+              {/* 可滾動的貼文區域 */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {filteredSocialPosts.map((post) => (
+                    <div key={post.id} className="bg-white rounded-lg p-6 shadow-sm border">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          {getPlatformIcon(post.platform)}
+                          <span className="font-medium text-gray-900">{post.author}</span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(post.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium border",
+                          getSentimentColor(post.sentiment)
+                        )}>
+                          {post.sentiment === 'positive' ? '正面' :
+                            post.sentiment === 'negative' ? '負面' : '中性'}
+                        </span>
+                      </div>
+
+                      <p className="text-gray-700 mb-4">{post.content}</p>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <Heart className="w-4 h-4" />
+                            <span>{post.engagement.likes}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Share2 className="w-4 h-4" />
+                            <span>{post.engagement.shares}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <MessageSquare className="w-4 h-4" />
+                            <span>{post.engagement.comments}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">相關度</span>
+                          <span className="text-sm font-medium text-blue-600">{post.relevanceScore}%</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex flex-wrap gap-1">
+                          {post.topics.map((topic, index) => (
+                            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                              #{topic}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">平均轉換率</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {((mockCouponActivities.filter(c => c.performance.conversionRate).reduce((sum, c) => sum + (c.performance.conversionRate || 0), 0) / mockCouponActivities.filter(c => c.performance.conversionRate).length) || 0).toFixed(1)}%
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-purple-500" />
               </div>
             </div>
           </div>
+        )}
 
-          {/* Activities List */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">優惠券及活動管理</h3>
-              <button
-                onClick={() => onOpenDataTab && onOpenDataTab('coupons', {
-                  filename: 'coupon_activities.csv',
-                  date: new Date().toISOString().split('T')[0],
-                  time: new Date().toTimeString().split(' ')[0],
-                  fullPath: 'marketing-sandbox/coupons.csv'
-                }, mockCouponActivities)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                匯出活動數據
-              </button>
+        {/* Complaints Data Tab */}
+        {activeTab === 'complaints' && (
+          <div className="space-y-6">
+            {/* Filter Controls */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">客訴原始數據</h3>
+                <div className="flex items-center space-x-4">
+                  <div className="flex space-x-2">
+                    {(['all', 'high', 'medium', 'low'] as const).map((severity) => (
+                      <button
+                        key={severity}
+                        onClick={() => setComplaintFilter(severity)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                          complaintFilter === severity
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        )}
+                      >
+                        {severity === 'all' ? '全部' :
+                          severity === 'high' ? '高' :
+                            severity === 'medium' ? '中' : '低'}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => onOpenDataTab && onOpenDataTab('complaints', {
+                      filename: 'complaints_raw_data.csv',
+                      date: new Date().toISOString().split('T')[0],
+                      time: new Date().toTimeString().split(' ')[0],
+                      fullPath: 'marketing-sandbox/complaints.csv'
+                    }, mockComplaintData)}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    匯出原始數據
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {mockCouponActivities.map((activity) => (
-                <div key={activity.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-gray-900">{activity.name}</h4>
-                        <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          activity.status === 'active' ? "bg-green-50 text-green-600" :
-                          activity.status === 'ended' ? "bg-gray-50 text-gray-600" :
-                          "bg-blue-50 text-blue-600"
-                        )}>
-                          {activity.status === 'active' ? '進行中' :
-                           activity.status === 'ended' ? '已結束' : '規劃中'}
-                        </span>
-                        <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          activity.type === 'coupon' ? "bg-blue-50 text-blue-600" :
-                          activity.type === 'promotion' ? "bg-purple-50 text-purple-600" :
-                          activity.type === 'campaign' ? "bg-orange-50 text-orange-600" :
-                          "bg-green-50 text-green-600"
-                        )}>
-                          {activity.type === 'coupon' ? '優惠券' :
-                           activity.type === 'promotion' ? '促銷活動' :
-                           activity.type === 'campaign' ? '專案活動' : '特別活動'}
-                        </span>
+            {/* Complaints List */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-400px)]">
+                {mockComplaintData
+                  .filter(complaint => complaintFilter === 'all' || complaint.severity === complaintFilter)
+                  .map((complaint) => (
+                    <div key={complaint.id} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-medium text-gray-900">#{complaint.id}</span>
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            complaint.severity === 'high' ? "bg-red-50 text-red-600" :
+                              complaint.severity === 'medium' ? "bg-yellow-50 text-yellow-600" : "bg-green-50 text-green-600"
+                          )}>
+                            {complaint.severity === 'high' ? '高嚴重' :
+                              complaint.severity === 'medium' ? '中嚴重' : '低嚴重'}
+                          </span>
+                          <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded">
+                            {complaint.category}
+                          </span>
+                        </div>
+                        <div className="text-right text-sm text-gray-500">
+                          <p>{complaint.date}</p>
+                          <p>{complaint.route}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{activity.startDate} - {activity.endDate}</span>
-                        <span>預算: ${(activity.budget / 10000).toFixed(0)}萬</span>
-                        <span>預期營收: ${(activity.expectedRevenue / 10000).toFixed(0)}萬</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Performance Metrics */}
-                  {activity.status === 'ended' && activity.actualRevenue && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded">
-                      <div>
-                        <p className="text-xs text-gray-600">實際營收</p>
-                        <p className={cn(
-                          "font-semibold",
-                          activity.actualRevenue >= activity.expectedRevenue ? "text-green-600" : "text-red-600"
-                        )}>
-                          ${(activity.actualRevenue / 10000).toFixed(0)}萬
-                        </p>
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-800 mb-2">{complaint.description}</p>
+                        <div className="flex items-center space-x-4 text-xs text-gray-600">
+                          <span>渠道: {complaint.channel}</span>
+                          <span>客戶類型: {complaint.customerType}</span>
+                          <span>處理時間: {complaint.resolutionTime}小時</span>
+                          <span>滿意度: {complaint.satisfaction}/5</span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-600">轉換率</p>
-                        <p className="font-semibold text-blue-600">
-                          {activity.performance.conversionRate?.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">平均訂單</p>
-                        <p className="font-semibold text-purple-600">
-                          ${activity.performance.averageOrderValue?.toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">新客戶</p>
-                        <p className="font-semibold text-green-600">
-                          {activity.performance.customerAcquisition?.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Analysis */}
-                  <div className="border-t pt-3">
-                    <h5 className="font-medium text-gray-900 mb-2">分析結果</h5>
-                    <div className="text-sm text-gray-600 mb-2">
-                      <strong>差異分析:</strong> {activity.analysis.varianceAnalysis}
+                      <div className="p-3 bg-white rounded border-l-4 border-green-400">
+                        <p className="text-sm text-gray-700">{complaint.resolution}</p>
+                        {complaint.followUp && (
+                          <p className="text-xs text-green-600 mt-1">✓ 需要後續追蹤</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {activity.analysis.recommendations.map((rec, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                          {rec}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Company Policies Tab */}
+        {activeTab === 'policies' && (
+          <div className="space-y-6">
+            {/* Service Standards Overview */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">服務標準監控</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {mockServiceStandards.map((standard, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">{standard.service}</h4>
+                      <span className={cn(
+                        "text-xs px-2 py-1 rounded-full",
+                        standard.trend === 'improving' ? "bg-green-50 text-green-600" :
+                          standard.trend === 'declining' ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-600"
+                      )}>
+                        {standard.trend === 'improving' ? '↗ 改善' :
+                          standard.trend === 'declining' ? '↘ 下滑' : '→ 穩定'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{standard.standard}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">目標: {standard.target}%</span>
+                      <span className={cn(
+                        "font-bold",
+                        standard.current >= standard.target ? "text-green-600" : "text-red-600"
+                      )}>
+                        {standard.current}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Policies Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Policy List */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">公司政策</h3>
+                  <button
+                    onClick={() => onOpenDataTab && onOpenDataTab('policies', {
+                      filename: 'company_policies.csv',
+                      date: new Date().toISOString().split('T')[0],
+                      time: new Date().toTimeString().split(' ')[0],
+                      fullPath: 'marketing-sandbox/policies.csv'
+                    }, mockCompanyPolicies)}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    匯出政策數據
+                  </button>
+                </div>
+
+                <div className="space-y-3 overflow-y-auto max-h-[calc(60vh-270px)]">
+                  {mockCompanyPolicies.map((policy) => (
+                    <div
+                      key={policy.id}
+                      className={cn(
+                        "p-3 rounded-lg border cursor-pointer transition-colors",
+                        selectedPolicy?.id === policy.id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      )}
+                      onClick={() => setSelectedPolicy(policy)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-900">{policy.title}</h4>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          policy.category === 'service' ? "bg-blue-50 text-blue-600" :
+                            policy.category === 'baggage' ? "bg-green-50 text-green-600" :
+                              policy.category === 'meal' ? "bg-yellow-50 text-yellow-600" :
+                                policy.category === 'membership' ? "bg-purple-50 text-purple-600" :
+                                  policy.category === 'aircraft' ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-600"
+                        )}>
+                          {policy.category}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{policy.description}</p>
+                      <p className="text-xs text-gray-500">更新日期: {policy.lastUpdated}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Policy Details */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">政策詳情</h3>
+
+                {selectedPolicy ? (
+                  <div className="space-y-4 overflow-y-auto max-h-[calc(60vh-270px)]">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">{selectedPolicy.title}</h4>
+                      <p className="text-sm text-gray-600 mb-3">{selectedPolicy.description}</p>
+                    </div>
+
+                    <div>
+                      <h5 className="font-medium text-gray-900 mb-2">適用航線</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedPolicy.applicableRoutes.map((route, index) => (
+                          <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                            {route}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {selectedPolicy.exceptions.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-2">例外情況</h5>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {selectedPolicy.exceptions.map((exception, index) => (
+                            <li key={index} className="flex items-center">
+                              <AlertCircle className="w-3 h-3 text-yellow-500 mr-2" />
+                              {exception}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedPolicy.relatedPolicies.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-2">相關政策</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedPolicy.relatedPolicies.map((relatedId, index) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                              {relatedId}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-3 border-t">
+                      <p className="text-xs text-gray-500">最後更新: {selectedPolicy.lastUpdated}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>選擇一個政策查看詳情</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Coupons and Activities Tab */}
+        {activeTab === 'coupons' && (
+          <div className="space-y-6">
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">進行中活動</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {mockCouponActivities.filter(c => c.status === 'active').length}
+                    </p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-blue-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">已結束活動</p>
+                    <p className="text-2xl font-bold text-gray-600">
+                      {mockCouponActivities.filter(c => c.status === 'ended').length}
+                    </p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-gray-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">總預算</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${(mockCouponActivities.reduce((sum, c) => sum + c.budget, 0) / 1000000).toFixed(1)}M
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">平均轉換率</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {((mockCouponActivities.filter(c => c.performance.conversionRate).reduce((sum, c) => sum + (c.performance.conversionRate || 0), 0) / mockCouponActivities.filter(c => c.performance.conversionRate).length) || 0).toFixed(1)}%
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Activities List */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">優惠券及活動管理</h3>
+                <button
+                  onClick={() => onOpenDataTab && onOpenDataTab('coupons', {
+                    filename: 'coupon_activities.csv',
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toTimeString().split(' ')[0],
+                    fullPath: 'marketing-sandbox/coupons.csv'
+                  }, mockCouponActivities)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  匯出活動數據
+                </button>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-480px)]">
+                {mockCouponActivities.map((activity) => (
+                  <div key={activity.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-gray-900">{activity.name}</h4>
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            activity.status === 'active' ? "bg-green-50 text-green-600" :
+                              activity.status === 'ended' ? "bg-gray-50 text-gray-600" :
+                                "bg-blue-50 text-blue-600"
+                          )}>
+                            {activity.status === 'active' ? '進行中' :
+                              activity.status === 'ended' ? '已結束' : '規劃中'}
+                          </span>
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            activity.type === 'coupon' ? "bg-blue-50 text-blue-600" :
+                              activity.type === 'promotion' ? "bg-purple-50 text-purple-600" :
+                                activity.type === 'campaign' ? "bg-orange-50 text-orange-600" :
+                                  "bg-green-50 text-green-600"
+                          )}>
+                            {activity.type === 'coupon' ? '優惠券' :
+                              activity.type === 'promotion' ? '促銷活動' :
+                                activity.type === 'campaign' ? '專案活動' : '特別活動'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>{activity.startDate} - {activity.endDate}</span>
+                          <span>預算: ${(activity.budget / 10000).toFixed(0)}萬</span>
+                          <span>預期營收: ${(activity.expectedRevenue / 10000).toFixed(0)}萬</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Performance Metrics */}
+                    {activity.status === 'ended' && activity.actualRevenue && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded">
+                        <div>
+                          <p className="text-xs text-gray-600">實際營收</p>
+                          <p className={cn(
+                            "font-semibold",
+                            activity.actualRevenue >= activity.expectedRevenue ? "text-green-600" : "text-red-600"
+                          )}>
+                            ${(activity.actualRevenue / 10000).toFixed(0)}萬
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">轉換率</p>
+                          <p className="font-semibold text-blue-600">
+                            {activity.performance.conversionRate?.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">平均訂單</p>
+                          <p className="font-semibold text-purple-600">
+                            ${activity.performance.averageOrderValue?.toLocaleString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">新客戶</p>
+                          <p className="font-semibold text-green-600">
+                            {activity.performance.customerAcquisition?.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Analysis */}
+                    <div className="border-t pt-3">
+                      <h5 className="font-medium text-gray-900 mb-2">分析結果</h5>
+                      <div className="text-sm text-gray-600 mb-2">
+                        <strong>差異分析:</strong> {activity.analysis.varianceAnalysis}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {activity.analysis.recommendations.map((rec, index) => (
+                          <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                            {rec}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

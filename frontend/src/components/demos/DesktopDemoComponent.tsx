@@ -89,7 +89,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
   return (
     <div className={cn("w-full h-full p-6", className)}>
       {/* Desktop Interface Mockup */}
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full min-h-[500px] flex flex-col">
         <div className="flex-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-xl border border-gray-300 overflow-hidden flex flex-col">
           {/* Desktop Header */}
           <div className="bg-primary text-white px-4 py-2 flex items-center gap-4">
@@ -137,7 +137,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
                 <Cpu className="w-4 h-4" />
                 AI 處理引擎
               </h4>
-              
+
               {/* Current Step Display */}
               <div className="flex-1 flex flex-col items-center justify-center">
                 <div className={cn(
@@ -158,7 +158,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
                 {/* Progress Bar */}
                 <div className="w-full max-w-xs mt-4">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
                       style={{ width: `${(processingFiles.length / mockFiles.length) * 100}%` }}
                     ></div>

@@ -111,17 +111,17 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
   }, [currentStep]);
 
   return (
-    <div className={cn("w-full h-full p-6", className)}>
+    <div className={cn("w-full h-full p-6 pb-10", className)}>
       <style>{animationStyles}</style>
       {/* AI Election Sandbox Interface */}
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-[600px] flex flex-col">
         <div className="flex-1 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-primary text-white px-6 py-4">
+          <div className="bg-primary text-white px-4 py-2">
             <div className="flex items-center gap-3">
-              <BarChart3 className="w-6 h-6" />
+              <BarChart3 className="size-5" />
               <div>
-                <h3 className="text-lg font-semibold">AI 選情沙盒</h3>
+                <h3 className="text-lg font-medium">Lens Sandbox</h3>
                 <p className="text-sm text-primary-foreground/80">智慧選情分析與策略模擬平台</p>
               </div>
             </div>
@@ -285,7 +285,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
                 </div>
 
                 {/* AI Analysis Animation */}
-                <div className="flex-1 space-y-3 overflow-y-auto">
+                <div className="space-y-3 overflow-y-auto">
                   {showAIAnalysis && (
                     <div className="space-y-3">
                       {/* Real-time Analysis */}
@@ -343,7 +343,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
                 </div>
 
                 {/* Input Area */}
-                <div className="mt-4 p-3 bg-white rounded-lg border border-gray-200">
+                <div className="mt-auto p-3 bg-white rounded-lg border border-gray-200">
                   <input
                     type="text"
                     placeholder="詢問AI助理..."

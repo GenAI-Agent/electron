@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  Plane, 
-  MapPin, 
-  TrendingUp, 
-  Clock, 
-  DollarSign, 
+import {
+  Plane,
+  MapPin,
+  TrendingUp,
+  Clock,
+  DollarSign,
   Users,
   AlertCircle,
   CheckCircle,
@@ -190,7 +190,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
         time: new Date().toTimeString().split(' ')[0],
         fullPath: `marketing-sandbox/action_plans_${dataType}.csv`
       };
-      
+
       onOpenDataTab('action-plans', mockFile, filteredPlans);
     }
   };
@@ -225,7 +225,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
   };
 
   return (
-    <div className={cn("h-full overflow-y-auto p-6 bg-gray-50", className)}>
+    <div className={cn("h-full overflow-y-auto p-6 pb-16 bg-gray-50", className)}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -261,7 +261,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
               <option value="operations">營運優化</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700">優先級:</label>
             <select
@@ -275,7 +275,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
               <option value="low">低</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700">排序:</label>
             <select

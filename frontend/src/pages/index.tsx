@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Monitor, Building, Brain, BarChart3, User, LogOut, MessageCircle, Hash, AtSign, Plane, ShoppingCart, Vote, Briefcase, HeartHandshake, TrendingUp, ArrowRight } from 'lucide-react';
+import { Globe, Monitor, Building, BarChart3, User, LogOut, MessageCircle, Hash, AtSign, Plane, ShoppingCart, Vote, Briefcase, TrendingUp, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import Header, { ViewMode } from '@/components/ui/header';
 import { LensOSLogo } from '@/components/animation/LensLogo';
@@ -17,6 +17,7 @@ import { ModernFeatureSection } from '@/components/ModernFeatureSection';
 import { BentoFeatureSection } from '@/components/BentoFeatureSection';
 import { LogoLoop } from '@/components/animation/LogoLoop';
 import LightRays from '@/components/animation/LightRay';
+import RotatingText from '@/components/animation/RotatingText';
 
 
 const HomePage: React.FC = () => {
@@ -84,10 +85,10 @@ const HomePage: React.FC = () => {
   const tagContent = [
     {
       title: '打開網頁',
-      tagText: 'Website',
+      tagText: 'Webpage',
       icon: Globe,
-      mainText: 'Open Website',
-      subText: '點開任意網站即可即時接入 AGI，立即生成 AI 協作 Agent 團隊',
+      mainText: 'Open Webpage',
+      subText: 'DM as Service - 輸入需求，AI 即時生成內容與頁面，零代碼全智能',
       gifUrl: '/placeholder-browser.gif',
       path: '/browser?url=https://www.google.com',
     },
@@ -114,7 +115,7 @@ const HomePage: React.FC = () => {
       tagText: 'Lens Sandbox',
       icon: BarChart3,
       mainText: 'Lens Sandbox',
-      subText: '賽局理論驅動智慧系統，模擬競爭場景、推演策略決策\n電商、行銷、選情或各種商業場景，綜觀全局、剖析獨特視角',
+      subText: '針對目標深度研究，Multi-Agent 模擬生成 Action Task\n從分析報告到執行方案，每個沙盒專注一個 Target',
       gifUrl: '/placeholder-sandbox.gif',
       path: '/sandbox',
     },
@@ -138,13 +139,13 @@ const HomePage: React.FC = () => {
           title: language === 'zh' ? '智能意圖識別' : 'Intelligent Intent Recognition',
           text: language === 'zh'
             ? '從模糊的描述中精準識別你的真正意圖，自動導航至正確的網站和功能。讓 AI 成為你的專屬助手。'
-            : 'Precisely identify your true intent from vague descriptions, automatically navigating to the correct websites and functions. Let AI become your personal assistant.'
+            : 'Precisely identify your true intent from vague descriptions, automatically navigating to the correct webpages and functions. Let AI become your personal assistant.'
         },
         {
           title: language === 'zh' ? '一鍵到底' : 'One-Click to Complete',
           text: language === 'zh'
             ? '從搜尋到執行，全程自動化。不再需要在多個網站間切換，不再需要記住複雜的操作流程。'
-            : 'From search to execution, fully automated. No more switching between multiple websites, no more remembering complex operation procedures.'
+            : 'From search to execution, fully automated. No more switching between multiple webpages, no more remembering complex operation procedures.'
         }
       ]
     },
@@ -269,16 +270,16 @@ const HomePage: React.FC = () => {
         </div>
       )
     },
-    {
-      node: (
-        <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-            <HeartHandshake className="w-5 h-5 text-gray-400" />
-          </div>
-          <span className="font-medium text-muted-foreground">醫療</span>
-        </div>
-      )
-    },
+    // {
+    //   node: (
+    //     <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
+    //       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+    //         <HeartHandshake className="w-5 h-5 text-gray-400" />
+    //       </div>
+    //       <span className="font-medium text-muted-foreground">醫療</span>
+    //     </div>
+    //   )
+    // },
     {
       node: (
         <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
@@ -382,35 +383,47 @@ const HomePage: React.FC = () => {
               <h1 className="text-2xl bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">LensOS</h1>
             </div>
           </div>
-          <div className="text-center mb-4 px-6 min-h-[250px]">
+          <div className="text-center mb-4 px-6 min-h-[200px]">
             <h1 className="text-4xl uppercase md:text-5xl font-serif text-foreground mb-6 leading-tight">
               Unlock AGI <br />for Everything You Own
             </h1>
 
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              免標註、免格式化，資料原樣也能推理
+              企業即時擁有 AGI - 免準備資料，直接啟用智能
             </p>
 
 
           </div>
         </div>
-        <div className="flex-1 flex z-10 max-w-[1400px] mx-auto items-center justify-center px-6 pb-10 w-full">
-          <div className="flex flex-col lg:flex-row gap-6 items-center w-full">
+        <div className='flex items-center w-full transition-all duration-300 mb-6 gap-2 mx-auto justify-center'>
+          <h2 className='text-4xl transition-all duration-300 md:text-5xl font-serif text-muted-foreground'>
+            OPEN
+          </h2>
+          <div className="text-left transition-all bg-primary/20 rounded-lg p-2 duration-300">
+            <RotatingText
+              texts={['Webpage', 'Desktop', 'SaaS', 'Sandbox']}
+              className="text-4xl flex flex-shrink-0 text-nowrap md:text-5xl font-serif text-primary"
+              rotationInterval={4000}
+              staggerDuration={0.05}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 flex z-10 max-w-[1400px] mx-auto items-start justify-center px-6 pb-10 w-full">
+          <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
             {/* Left Side - Demo Area */}
             <div className="w-full lg:w-2/3 order-2 lg:order-1">
-              <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-xl">
-                <div className="aspect-[16/10] relative">
-                  <div
-                    className={cn(
-                      "absolute inset-0 transition-opacity duration-300",
-                      isTransitioning ? "opacity-0" : "opacity-100"
-                    )}
-                  >
-                    {selectedTag === 0 && <BrowserDemoComponent />}
-                    {selectedTag === 1 && <DesktopDemoComponent />}
-                    {selectedTag === 2 && <EnterpriseDemoComponent />}
-                    {selectedTag === 3 && <SandboxDemoComponent />}
-                  </div>
+              <div className="relative w-full h-full bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-xl">
+                <div
+                  className={cn(
+                    "transition-opacity duration-300",
+                    isTransitioning ? "opacity-0" : "opacity-100"
+                  )}
+                >
+                  {selectedTag === 0 && <BrowserDemoComponent />}
+                  {selectedTag === 1 && <DesktopDemoComponent />}
+                  {selectedTag === 2 && <EnterpriseDemoComponent />}
+                  {selectedTag === 3 && <SandboxDemoComponent />}
                 </div>
               </div>
             </div>
@@ -419,7 +432,7 @@ const HomePage: React.FC = () => {
             <div className="w-full lg:w-1/3 order-1 lg:order-2">
               {/* Options Panel with Border */}
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Choose your workspace</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">AGI teams</h3>
 
                 {/* Option List */}
                 <div className="space-y-2">
@@ -471,15 +484,14 @@ const HomePage: React.FC = () => {
                     className="flex-1 flex items-center justify-center gap-2"
                   >
                     <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
-                      {t.explore} {tagContent[selectedTag].tagText}
+                      {`${tagContent[selectedTag].tagText} AI`}
                     </span>
                     <ArrowRight className="w-4 h-4" />
 
                   </RainbowButton>
-
                   <button
-                    onClick={() => router.push('/contact')}
-                    className="flex-1 px-4 py-3 bg-background border-2 border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
+                    onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
+                    className="flex-1 px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
                   >
                     {t.requestDemo}
                   </button>
@@ -511,6 +523,7 @@ const HomePage: React.FC = () => {
       {features.map((feature, featureIndex) => {
         // 第一個 section 使用 ModernFeatureSection，其餘使用 BentoFeatureSection
         const FeatureComponent = featureIndex === 0 ? ModernFeatureSection : BentoFeatureSection;
+        const reverse = featureIndex === 1;
 
         return (
           <FeatureComponent
@@ -520,10 +533,11 @@ const HomePage: React.FC = () => {
             description={feature.description}
             points={feature.points}
             index={featureIndex}
+            reverse={reverse}
             cta={
               featureIndex === 0 ? {
                 text: t.seeOurProduct,
-                onClick: () => router.push('/browser?url=https://www.ask-lens.ai/about-us')
+                onClick: () => router.push('/browser?url=https://www.ask-lens.ai/products')
               } : featureIndex === 1 ? {
                 text: t.tryOurPlatform,
                 onClick: () => router.push('/sandbox')

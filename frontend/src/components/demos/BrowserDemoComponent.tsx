@@ -52,7 +52,7 @@ export const BrowserDemoComponent: React.FC<BrowserDemoComponentProps> = ({ clas
   return (
     <div className={cn("w-full h-full p-6", className)}>
       {/* Browser Window Mockup */}
-      <div className="w-full h-full flex flex-col bg-white rounded-lg shadow-xl border border-gray-200">
+      <div className="w-full h-full min-h-[500px] flex flex-col">
         {/* Browser Header */}
         <div className="flex items-center px-4 py-3 bg-primary rounded-t-lg border-b border-gray-200">
           <div className="flex gap-2 mr-4">
@@ -111,14 +111,12 @@ export const BrowserDemoComponent: React.FC<BrowserDemoComponentProps> = ({ clas
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Feature Pills */}
-      <div className="flex flex-wrap gap-2 mt-4 justify-center">
-        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">智能識別</span>
-        <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">自動操作</span>
-        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">數據提取</span>
-        <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">一鍵完成</span>
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
+          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">智能識別</span>
+          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">自動操作</span>
+          <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">數據提取</span>
+          <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">一鍵完成</span>
+        </div>
       </div>
     </div>
   );

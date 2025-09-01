@@ -17,6 +17,7 @@ interface BentoFeatureSectionProps {
     text: string;
     onClick: () => void;
   };
+  reverse?: boolean;
 }
 
 export const BentoFeatureSection: React.FC<BentoFeatureSectionProps> = ({
@@ -25,22 +26,23 @@ export const BentoFeatureSection: React.FC<BentoFeatureSectionProps> = ({
   description,
   points,
   index,
-  cta
+  cta,
+  reverse
 }) => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const isDark = index % 2 === 1;
 
   return (
     <section className={cn(
-      "relative py-24 lg:py-32 overflow-hidden",
-      isDark && "bg-muted/30"
+      "relative py-16 overflow-hidden",
+      isDark && "bg-muted/30",
     )}>
       {/* Background Effects */}
       <div className="absolute inset-0 -z-10">
         {/* Mesh Gradient */}
         <div className={cn(
           "absolute inset-0",
-          isDark 
+          isDark
             ? "bg-[radial-gradient(at_top_left,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"
             : "bg-[radial-gradient(at_bottom_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"
         )} />
@@ -50,7 +52,7 @@ export const BentoFeatureSection: React.FC<BentoFeatureSectionProps> = ({
         {/* Bento Grid Layout */}
         <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Main Content Card */}
-          <div className="lg:col-span-7 group">
+          <div className={cn("lg:col-span-7 group order-1", reverse && "order-2")}>
             <div className="relative h-full bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl p-8 lg:p-12 transition-all duration-500 hover:border-primary/30 hover:shadow-2xl">
               {/* Decorative Elements */}
               <div className="absolute top-8 right-8">
@@ -101,7 +103,7 @@ export const BentoFeatureSection: React.FC<BentoFeatureSectionProps> = ({
           </div>
 
           {/* Feature Points Grid */}
-          <div className="lg:col-span-5 grid grid-rows-3 gap-6">
+          <div className={cn("lg:col-span-5 grid grid-rows-3 gap-6 order-2", reverse && "order-1")}>
             {points.map((point, idx) => (
               <div
                 key={idx}

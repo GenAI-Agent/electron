@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   TrendingDown,
-  Users, 
-  DollarSign, 
+  Users,
+  DollarSign,
   Plane,
   Globe,
   AlertCircle,
@@ -149,9 +149,9 @@ const mockAlerts: AlertItem[] = [
   }
 ];
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ 
-  className, 
-  onOpenDataTab 
+export const DashboardPage: React.FC<DashboardPageProps> = ({
+  className,
+  onOpenDataTab
 }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<'24h' | '7d' | '30d'>('30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -183,7 +183,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   };
 
   return (
-    <div className={cn("h-full overflow-y-auto p-6 bg-gray-50", className)}>
+    <div className={cn("h-full overflow-y-auto p-6 pb-16 bg-gray-50", className)}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -192,7 +192,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <p className="text-gray-600 mt-1">即時監控關鍵營運指標與市場動態</p>
           </div>
           <div className="flex items-center space-x-3">
-            <select 
+            <select
               value={selectedTimeRange}
               onChange={(e) => setSelectedTimeRange(e.target.value as any)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
@@ -298,7 +298,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <span className={cn(
                         "font-medium",
                         route.loadFactor >= 80 ? "text-green-600" :
-                        route.loadFactor >= 70 ? "text-yellow-600" : "text-red-600"
+                          route.loadFactor >= 70 ? "text-yellow-600" : "text-red-600"
                       )}>
                         {route.loadFactor}%
                       </span>
@@ -307,7 +307,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           className={cn(
                             "h-2 rounded-full",
                             route.loadFactor >= 80 ? "bg-green-500" :
-                            route.loadFactor >= 70 ? "bg-yellow-500" : "bg-red-500"
+                              route.loadFactor >= 70 ? "bg-yellow-500" : "bg-red-500"
                           )}
                           style={{ width: `${route.loadFactor}%` }}
                         />
@@ -318,7 +318,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     <span className={cn(
                       "font-medium",
                       route.onTime >= 90 ? "text-green-600" :
-                      route.onTime >= 85 ? "text-yellow-600" : "text-red-600"
+                        route.onTime >= 85 ? "text-yellow-600" : "text-red-600"
                     )}>
                       {route.onTime}%
                     </span>
@@ -343,20 +343,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     <span className={cn(
                       "px-2 py-1 rounded-full text-xs font-medium",
                       route.competition === 'high' ? "bg-red-100 text-red-700" :
-                      route.competition === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                        route.competition === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
                     )}>
                       {route.competition === 'high' ? '激烈' :
-                       route.competition === 'medium' ? '中等' : '溫和'}
+                        route.competition === 'medium' ? '中等' : '溫和'}
                     </span>
                   </td>
                   <td className="py-3 px-4">
                     <span className={cn(
                       "px-2 py-1 rounded-full text-xs font-medium",
                       route.status === 'good' ? "bg-green-100 text-green-700" :
-                      route.status === 'warning' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                        route.status === 'warning' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
                     )}>
                       {route.status === 'good' ? '良好' :
-                       route.status === 'warning' ? '注意' : '警告'}
+                        route.status === 'warning' ? '注意' : '警告'}
                     </span>
                   </td>
                 </tr>
@@ -376,11 +376,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 "px-2 py-1 rounded-full text-xs font-medium border",
                 getStatusColor(kpi.status)
               )}>
-                {kpi.status === 'good' ? '良好' : 
-                 kpi.status === 'warning' ? '注意' : '警告'}
+                {kpi.status === 'good' ? '良好' :
+                  kpi.status === 'warning' ? '注意' : '警告'}
               </span>
             </div>
-            
+
             <div className="flex items-end justify-between">
               <div>
                 <div className="flex items-baseline space-x-2">
@@ -403,22 +403,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </span>
                 </div>
               </div>
-              
+
               <div className="text-right">
                 <div className="text-xs text-gray-500 mb-1">目標: {kpi.target}{kpi.unit}</div>
                 <div className="w-16 h-2 bg-gray-200 rounded-full">
-                  <div 
+                  <div
                     className={cn(
                       "h-2 rounded-full",
                       kpi.status === 'good' ? "bg-green-500" :
-                      kpi.status === 'warning' ? "bg-yellow-500" : "bg-red-500"
+                        kpi.status === 'warning' ? "bg-yellow-500" : "bg-red-500"
                     )}
                     style={{ width: `${Math.min((kpi.value / kpi.target) * 100, 100)}%` }}
                   />
                 </div>
               </div>
             </div>
-            
+
             <p className="text-xs text-gray-600 mt-3">{kpi.description}</p>
           </div>
         ))}
@@ -472,10 +472,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <span className={cn(
                   "px-2 py-1 rounded-full text-xs font-medium",
                   item.severity === 'high' ? "bg-red-100 text-red-700" :
-                  item.severity === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                    item.severity === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
                 )}>
                   {item.severity === 'high' ? '高風險' :
-                   item.severity === 'medium' ? '中風險' : '低風險'}
+                    item.severity === 'medium' ? '中風險' : '低風險'}
                 </span>
               </div>
             ))}
@@ -606,10 +606,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <span className={cn(
                   "px-2 py-1 rounded-full text-xs font-medium",
                   alert.type === 'opportunity' ? "bg-green-100 text-green-700" :
-                  alert.type === 'risk' ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                    alert.type === 'risk' ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
                 )}>
                   {alert.type === 'opportunity' ? '機會' :
-                   alert.type === 'risk' ? '風險' : '待辦'}
+                    alert.type === 'risk' ? '風險' : '待辦'}
                 </span>
               </div>
             </div>

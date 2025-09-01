@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  Target, 
-  TrendingUp, 
-  DollarSign, 
-  Users, 
-  Award, 
-  Handshake,
+import {
+  Target,
+  TrendingUp,
+  DollarSign,
+  Users,
+  Award,
   BarChart3,
   Eye,
   Star,
@@ -17,7 +16,8 @@ import {
   Coffee,
   Car,
   Building,
-  Zap
+  Zap,
+  HeartHandshake
 } from 'lucide-react';
 
 interface CompetitorPageProps {
@@ -338,7 +338,7 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
       case '文創':
         return <Building className="w-4 h-4" />;
       default:
-        return <Handshake className="w-4 h-4" />;
+        return <HeartHandshake className="w-4 h-4" />;
     }
   };
 
@@ -350,7 +350,7 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
         time: new Date().toTimeString().split(' ')[0],
         fullPath: `marketing-sandbox/competitor_${dataType}.csv`
       };
-      
+
       let data: any[] = [];
       switch (dataType) {
         case 'overview':
@@ -363,13 +363,13 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
           data = mockLoyaltyPrograms;
           break;
       }
-      
+
       onOpenDataTab('competitor', mockFile, data);
     }
   };
 
   return (
-    <div className={cn("h-full overflow-y-auto p-6 bg-gray-50", className)}>
+    <div className={cn("h-full p-6 pb-16 bg-gray-50", className)}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -406,9 +406,9 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
 
       {/* Content based on active tab */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
           {/* Competitor List */}
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-280px)] py-2 pr-1">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">主要競爭者</h3>
               <button
@@ -418,14 +418,14 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
                 匯出數據
               </button>
             </div>
-            
+
             {mockCompetitors.map((competitor) => (
               <div
                 key={competitor.id}
                 className={cn(
                   "bg-white rounded-lg p-4 shadow-sm border cursor-pointer transition-colors",
-                  selectedCompetitor?.id === competitor.id 
-                    ? "border-blue-500 bg-blue-50" 
+                  selectedCompetitor?.id === competitor.id
+                    ? "border-blue-500 bg-blue-50"
                     : "hover:border-gray-300"
                 )}
                 onClick={() => setSelectedCompetitor(competitor)}
@@ -440,23 +440,23 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
                     getTypeColor(competitor.type)
                   )}>
                     {competitor.type === 'full-service' ? '全服務' :
-                     competitor.type === 'low-cost' ? '低成本' : '區域型'}
+                      competitor.type === 'low-cost' ? '低成本' : '區域型'}
                   </span>
                 </div>
-                
+
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">市占率</span>
                     <span className="font-medium">{competitor.marketShare}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
                       style={{ width: `${competitor.marketShare}%` }}
                     />
                   </div>
                 </div>
-                
+
                 <div className="text-sm">
                   <p className="text-gray-600 mb-1">主要航線</p>
                   <div className="flex flex-wrap gap-1">
@@ -479,7 +479,7 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
           {/* Competitor Details */}
           <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border">
             {selectedCompetitor ? (
-              <div className="space-y-6">
+              <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-280px)]">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold text-gray-900">{selectedCompetitor.name}</h3>
                   <div className="text-right">
@@ -593,7 +593,7 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[calc(100vh-330px)] pr-1 py-2">
             {mockMarketingStrategies.map((strategy, index) => (
               <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
@@ -674,7 +674,7 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[calc(100vh-330px)] pr-1 py-2">
             {mockLoyaltyPrograms.map((program, index) => (
               <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
@@ -752,9 +752,9 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
 
       {/* Comparison Tab - 華航與競爭對手比較 */}
       {activeTab === 'comparison' && (
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-280px)] pr-1 py-2">
           {/* 市場地位比較 */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
+          <div className="bg-white rounded-lg p-6 pb-16 shadow-sm border">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">市場地位比較</h3>
             <div className="space-y-4">
               {/* 華航 */}
@@ -816,10 +816,10 @@ export const CompetitorPage: React.FC<CompetitorPageProps> = ({
                       <span className={cn(
                         "px-2 py-1 text-xs rounded-full font-medium",
                         competitor.type === 'full-service' ? "bg-purple-100 text-purple-700" :
-                        competitor.type === 'low-cost' ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                          competitor.type === 'low-cost' ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                       )}>
                         {competitor.type === 'full-service' ? '全服務' :
-                         competitor.type === 'low-cost' ? '低成本' : '區域型'}
+                          competitor.type === 'low-cost' ? '低成本' : '區域型'}
                       </span>
                     </div>
                     <div className="text-right">

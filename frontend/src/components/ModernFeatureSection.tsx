@@ -54,18 +54,18 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
   }, []);
 
   return (
-    <section 
+    <section
       ref={sectionRef}
-      className="relative py-32 overflow-hidden"
+      className="relative py-16 overflow-hidden"
     >
       {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
-        
+
         {/* Floating Orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        
+
         {/* Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
       </div>
@@ -84,11 +84,11 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
               </div>
             </div>
           </div>
-          
+
           <h2 className="text-5xl lg:text-6xl font-bold text-foreground">
             {title}
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             {description}
           </p>
@@ -109,7 +109,7 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
             >
               {/* Card Glow Effect */}
               <div className="absolute -inset-px bg-gradient-to-r from-primary/50 to-primary/30 rounded-3xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
+
               {/* Card Content */}
               <div className="relative h-full bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl p-8 hover:border-primary/30 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
                 {/* Step Number */}
@@ -121,7 +121,7 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   </div>
                 </div>
-                
+
                 {/* Text Content */}
                 <div className="space-y-3">
                   <h3 className="text-xl font-semibold text-foreground">
@@ -145,7 +145,7 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
             "text-center transition-all duration-1000",
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
-          style={{ transitionDelay: '900ms' }}
+            style={{ transitionDelay: '900ms' }}
           >
             <button
               onClick={cta.onClick}
@@ -153,14 +153,14 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
             >
               {/* Button Glow */}
               <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
+
               {/* Button */}
               <div className="relative flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-primary to-primary/90 rounded-2xl text-primary-foreground font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <span className="text-lg">{cta.text}</span>
-                <svg 
-                  className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

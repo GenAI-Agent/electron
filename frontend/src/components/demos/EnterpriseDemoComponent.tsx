@@ -94,15 +94,14 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
   return (
     <div className={cn("w-full h-full p-6", className)}>
       {/* Enterprise Dashboard Mockup */}
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full min-h-[500px] flex flex-col">
         <div className="flex-1 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Dashboard Header */}
-          <div className="bg-primary text-white px-6 py-4">
+          <div className="bg-primary text-white px-4 py-2 ">
             <div className="flex items-center gap-3">
-              <Building className="w-6 h-6" />
+              <Building className="w-5 h-5" />
               <div>
-                <h3 className="text-lg font-semibold">企業智能集成平台</h3>
-                <p className="text-sm text-primary-foreground/80">LensOS Enterprise Suite</p>
+                <h3 className="text-sm font-medium">LensOS Enterprise SaaS</h3>
               </div>
             </div>
           </div>
@@ -134,7 +133,7 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
                       </div>
                       {getStatusIcon(system.status)}
                     </div>
-                    
+
                     {/* Data Flow Animation */}
                     {connectedSystems.includes(index) && dataFlowActive && (
                       <div className="absolute -right-1 top-1/2 transform -translate-y-1/2">
@@ -153,7 +152,7 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
                 <div className="w-20 h-20 bg-white rounded-full shadow-lg border-4 border-blue-500 flex items-center justify-center mb-6">
                   <Database className="w-8 h-8 text-blue-600" />
                 </div>
-                
+
                 {/* Animated Rings */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className={cn(

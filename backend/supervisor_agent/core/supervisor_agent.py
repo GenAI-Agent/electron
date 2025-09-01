@@ -16,14 +16,13 @@ from typing import List, Optional, Dict, Any, Annotated, Literal
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
 
-# from langchain.callbacks.tracers import LangChainTracer
+from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.prebuilt.tool_node import ToolNode as BaseToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_core.tools import tool
 from langchain_openai import AzureChatOpenAI
 import tiktoken
 
@@ -121,6 +120,7 @@ class ParallelToolNode(BaseToolNode):
             print(f"❌ 異常信息: {str(e)}")
             print(f"❌ 異常類型: {type(e).__name__}")
             import traceback
+
             print(f"❌ 完整堆疊: {traceback.format_exc()}")
             print(f"❌ ========================\n")
 
@@ -204,11 +204,12 @@ class ParallelToolNode(BaseToolNode):
                     logger.error(f"❌ 工具執行異常 {i}: {msg}")
                     print(f"❌ 工具執行異常 {i}: {msg}")
                     import traceback
+
                     print(f"❌ 異常堆疊: {traceback.format_exc()}")
 
             # 🔍 檢查所有 tool_call_id 是否正確
             for msg in valid_messages:
-                if not hasattr(msg, 'tool_call_id') or not msg.tool_call_id:
+                if not hasattr(msg, "tool_call_id") or not msg.tool_call_id:
                     logger.error(f"❌ ToolMessage 缺少 tool_call_id: {msg}")
                     print(f"❌ ToolMessage 缺少 tool_call_id: {msg}")
 
@@ -235,7 +236,7 @@ class SupervisorAgent:
         self.rules_dir = rules_dir
         # 設置stream回調函數
         self.stream_callback = stream_callback
-        # self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
+        self.tracer = LangChainTracer(project_name="BI-supervisor-agent")
         # 初始化 LLM
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -1004,7 +1005,9 @@ class SupervisorAgent:
             total_rows = files_summary.get("summary", {}).get("total_rows", 0)
 
             # 構建平台信息
-            platform_info = f"{' vs '.join(platform_types)}" if platform_types else "多個平台"
+            platform_info = (
+                f"{' vs '.join(platform_types)}" if platform_types else "多個平台"
+            )
 
             # 提取檔案詳細信息
             file_details = []
@@ -1014,7 +1017,9 @@ class SupervisorAgent:
                     platform_type = result.get("platform_type", "未知平台")
                     rows = result.get("total_rows", 0)
                     columns = result.get("columns", [])
-                    file_details.append(f"  - {platform_name} ({platform_type}): {rows} 行, {len(columns)} 欄位")
+                    file_details.append(
+                        f"  - {platform_name} ({platform_type}): {rows} 行, {len(columns)} 欄位"
+                    )
 
             data_summary = f"""
                 🔄 多檔案分析模式已啟動，數據已準備完成:
@@ -1297,10 +1302,18 @@ class SupervisorAgent:
         logger.info(f"  - context: {context_str}")
 
         # 檢查 context 中是否有錯誤
-        if context and context.get("context_data") and context["context_data"].get("error"):
-            print(f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}")
+        if (
+            context
+            and context.get("context_data")
+            and context["context_data"].get("error")
+        ):
+            print(
+                f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}"
+            )
             print(f"❌ 完整錯誤 context: {context['context_data']}")
-            logger.error(f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}")
+            logger.error(
+                f"❌ SupervisorAgent 收到錯誤的 context: {context['context_data']['error']}"
+            )
             logger.error(f"❌ 完整錯誤 context: {context['context_data']}")
 
         # 檢查是否有可用的檔案路徑和數據
@@ -1313,7 +1326,9 @@ class SupervisorAgent:
                 print(f"📊 分析上下文: {context_data.get('analysis_context', '')}")
                 if context_data.get("files_summary"):
                     print(f"📋 檔案摘要已準備完成")
-                    logger.info(f"✅ 多檔案分析模式：{context_data.get('total_files', 0)} 個檔案，平台：{context_data.get('platforms', [])}")
+                    logger.info(
+                        f"✅ 多檔案分析模式：{context_data.get('total_files', 0)} 個檔案，平台：{context_data.get('platforms', [])}"
+                    )
                 else:
                     print(f"⚠️ 多檔案分析模式但缺少摘要數據")
                     logger.warning(f"⚠️ 多檔案分析模式但缺少摘要數據")
@@ -1324,11 +1339,17 @@ class SupervisorAgent:
                 print(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
                 logger.info(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
             else:
-                print(f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}")
-                logger.warning(f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}")
+                print(
+                    f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}"
+                )
+                logger.warning(
+                    f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}"
+                )
 
         print(f"🔧 可用工具數量: {len(available_tools) if available_tools else 0}")
-        logger.info(f"🔧 可用工具數量: {len(available_tools) if available_tools else 0}")
+        logger.info(
+            f"🔧 可用工具數量: {len(available_tools) if available_tools else 0}"
+        )
         if available_tools:
             tool_names = [tool.name for tool in available_tools]
             print(f"🔧 可用工具列表: {tool_names}")
@@ -1370,13 +1391,15 @@ class SupervisorAgent:
         config = {
             "configurable": {"thread_id": str(uuid.uuid4())},
             "recursion_limit": 50,  # 增加遞歸限制到 50
-            # "callbacks": [self.tracer],  # 註解掉 LangSmith tracer
+            "callbacks": [self.tracer],  # 註解掉 LangSmith tracer
         }
 
         # 執行 graph
         start_time = time.time()
         print(f"🚀 開始執行 Agent Graph...")
-        print(f"📋 初始狀態: query='{parsed_query}', context keys={list(context.keys()) if context else []}")
+        print(
+            f"📋 初始狀態: query='{parsed_query}', context keys={list(context.keys()) if context else []}"
+        )
 
         # TODO: 這是為什麼 流式回覆接不到ToolMessage
         result = await self.current_graph.ainvoke(initial_state, config=config)
@@ -1409,7 +1432,7 @@ class SupervisorAgent:
                 print(f"🔧 工具消息內容前500字符: {msg.content[:500]}")
             elif isinstance(msg, AIMessage):
                 print(f"🤖 AI 消息內容前200字符: {msg.content[:200]}")
-            elif hasattr(msg, 'content'):
+            elif hasattr(msg, "content"):
                 print(f"📄 消息內容前200字符: {str(msg.content)[:200]}")
 
         print(f"🔧 總共使用的工具: {tools_used}")
