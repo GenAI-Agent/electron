@@ -1,27 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
 import {
   Calendar,
   Clock,
   TrendingUp,
-  AlertTriangle,
   Target,
   BarChart3,
   Play,
-  Pause,
-  RotateCcw,
-  Settings,
-  ChevronRight,
-  Plus,
   X,
-  Users,
-  DollarSign,
-  FileText,
-  Swords,
   Zap,
-  Upload,
-  CheckCircle
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
+import HistorySidebar from '@/components/ui/HistorySidebar';
 
 interface StrategySimulationPageProps {
   className?: string;
@@ -369,7 +360,6 @@ const mockSimulationRecords: SimulationRecord[] = [
 export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
   className,
   onOpenDataTab,
-  simulationRecords = mockSimulationRecords,
   onRecordSelect
 }) => {
   const [activeView, setActiveView] = useState<'setup' | 'battle' | 'results'>('setup');
@@ -414,7 +404,7 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
         time: new Date().toTimeString().split(' ')[0],
         fullPath: `marketing-sandbox/simulation_${dataType}.csv`
       };
-      
+
       let data: any[] = [];
       switch (dataType) {
         case 'setup':
@@ -424,34 +414,31 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
           data = mockSimulationRecords;
           break;
       }
-      
+
       onOpenDataTab('simulation', mockFile, data);
     }
   };
 
   return (
-    <div className={cn("h-full overflow-y-auto p-6 bg-gray-50", className)}>
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">策略推演</h1>
-            <p className="text-gray-600 mt-1">多策略對戰分析與市場情境模擬</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => exportData('records')}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              匯出推演記錄
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className={cn("h-full flex overflow-hidden pb-14", className)}>
+      {/* Left Icon Sidebar */}
+      <HistorySidebar
+        items={mockSimulationRecords.map((record) => ({
+          id: record.id,
+          title: record.title,
+          date: record.date,
+          duration: record.duration,
+          status: record.status,
+          description: `勝出策略: ${record.detailedResults?.overview.winnerStrategy || '未知'}`,
+          metadata: `${record.participants.side1} vs ${record.participants.side2}`,
+          isActive: selectedRecord?.id === record.id,
+          onClick: () => setSelectedRecord(record)
+        }))}
+        onAddNew={() => { }}
+        title="推演歷史"
+      />
       {selectedRecord ? (
-        // 查看推演記錄詳情 - 完整版本
-        <div className="h-full flex flex-col">
+        <div className="h-full w-full flex flex-col">
           {/* Header */}
           <div className="p-6 border-b border-gray-200 bg-white">
             <div className="flex items-center justify-between">
@@ -519,7 +506,7 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                       <div className="flex justify-between">
                         <span className="text-blue-700">勝出輪數:</span>
                         <span className="font-medium text-blue-900">
-                          {selectedRecord.detailedResults.roundResults.filter(r => r.winner === 'side1').length} / {selectedRecord.detailedResults.totalRounds}
+                          {selectedRecord.detailedResults.roundResults.filter(r => r.winner === 'side1').length} / {selectedRecord.detailedResults.overview.totalRounds}
                         </span>
                       </div>
                     </div>
@@ -536,7 +523,7 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                       <div className="flex justify-between">
                         <span className="text-red-700">勝出輪數:</span>
                         <span className="font-medium text-red-900">
-                          {selectedRecord.detailedResults.roundResults.filter(r => r.winner === 'side2').length} / {selectedRecord.detailedResults.totalRounds}
+                          {selectedRecord.detailedResults.roundResults.filter(r => r.winner === 'side2').length} / {selectedRecord.detailedResults.overview.totalRounds}
                         </span>
                       </div>
                     </div>
@@ -566,10 +553,10 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                         <span className={cn(
                           "px-2 py-1 rounded-full text-xs font-medium",
                           selectedRecord.detailedResults.overview.riskLevel === 'high' ? "bg-red-100 text-red-700" :
-                          selectedRecord.detailedResults.overview.riskLevel === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                            selectedRecord.detailedResults.overview.riskLevel === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
                         )}>
                           {selectedRecord.detailedResults.overview.riskLevel === 'high' ? '高風險' :
-                           selectedRecord.detailedResults.overview.riskLevel === 'medium' ? '中風險' : '低風險'}
+                            selectedRecord.detailedResults.overview.riskLevel === 'medium' ? '中風險' : '低風險'}
                         </span>
                       </div>
                     </div>
@@ -675,23 +662,23 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                     {selectedRecord.detailedResults.actionRecommendations
                       .filter(rec => rec.category === 'immediate')
                       .map((rec, idx) => (
-                      <div key={idx} className="p-4 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-start justify-between mb-2">
-                          <h5 className="font-medium text-red-900">{rec.title}</h5>
-                          <span className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium",
-                            rec.priority === 'high' ? "bg-red-100 text-red-700" :
-                            rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
-                          )}>
-                            {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
-                          </span>
+                        <div key={idx} className="p-4 bg-red-50 rounded-lg border border-red-200">
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium text-red-900">{rec.title}</h5>
+                            <span className={cn(
+                              "px-2 py-1 rounded-full text-xs font-medium",
+                              rec.priority === 'high' ? "bg-red-100 text-red-700" :
+                                rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                            )}>
+                              {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-red-800 mb-3">{rec.description}</p>
+                          <div className="text-xs text-red-700">
+                            <strong>預期影響:</strong> {rec.expectedImpact}
+                          </div>
                         </div>
-                        <p className="text-sm text-red-800 mb-3">{rec.description}</p>
-                        <div className="text-xs text-red-700">
-                          <strong>預期影響:</strong> {rec.expectedImpact}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
 
@@ -705,23 +692,23 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                     {selectedRecord.detailedResults.actionRecommendations
                       .filter(rec => rec.category === 'short-term')
                       .map((rec, idx) => (
-                      <div key={idx} className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                        <div className="flex items-start justify-between mb-2">
-                          <h5 className="font-medium text-orange-900">{rec.title}</h5>
-                          <span className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium",
-                            rec.priority === 'high' ? "bg-red-100 text-red-700" :
-                            rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
-                          )}>
-                            {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
-                          </span>
+                        <div key={idx} className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium text-orange-900">{rec.title}</h5>
+                            <span className={cn(
+                              "px-2 py-1 rounded-full text-xs font-medium",
+                              rec.priority === 'high' ? "bg-red-100 text-red-700" :
+                                rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                            )}>
+                              {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-orange-800 mb-3">{rec.description}</p>
+                          <div className="text-xs text-orange-700">
+                            <strong>預期影響:</strong> {rec.expectedImpact}
+                          </div>
                         </div>
-                        <p className="text-sm text-orange-800 mb-3">{rec.description}</p>
-                        <div className="text-xs text-orange-700">
-                          <strong>預期影響:</strong> {rec.expectedImpact}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
 
@@ -735,23 +722,23 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                     {selectedRecord.detailedResults.actionRecommendations
                       .filter(rec => rec.category === 'long-term')
                       .map((rec, idx) => (
-                      <div key={idx} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-start justify-between mb-2">
-                          <h5 className="font-medium text-blue-900">{rec.title}</h5>
-                          <span className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium",
-                            rec.priority === 'high' ? "bg-red-100 text-red-700" :
-                            rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
-                          )}>
-                            {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
-                          </span>
+                        <div key={idx} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium text-blue-900">{rec.title}</h5>
+                            <span className={cn(
+                              "px-2 py-1 rounded-full text-xs font-medium",
+                              rec.priority === 'high' ? "bg-red-100 text-red-700" :
+                                rec.priority === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                            )}>
+                              {rec.priority === 'high' ? '高優先' : rec.priority === 'medium' ? '中優先' : '低優先'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-blue-800 mb-3">{rec.description}</p>
+                          <div className="text-xs text-blue-700">
+                            <strong>預期影響:</strong> {rec.expectedImpact}
+                          </div>
                         </div>
-                        <p className="text-sm text-blue-800 mb-3">{rec.description}</p>
-                        <div className="text-xs text-blue-700">
-                          <strong>預期影響:</strong> {rec.expectedImpact}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>
@@ -775,11 +762,11 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                             <div className={cn(
                               "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0",
                               event.impact === 'positive' ? "bg-green-100 text-green-600" :
-                              event.impact === 'negative' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"
+                                event.impact === 'negative' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"
                             )}>
                               {event.impact === 'positive' ? <TrendingUp className="w-5 h-5" /> :
-                               event.impact === 'negative' ? <TrendingUp className="w-5 h-5 rotate-180" /> :
-                               <Calendar className="w-5 h-5" />}
+                                event.impact === 'negative' ? <TrendingUp className="w-5 h-5 rotate-180" /> :
+                                  <Calendar className="w-5 h-5" />}
                             </div>
 
                             <div className="flex-1 min-w-0">
@@ -792,10 +779,10 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                                   <span className={cn(
                                     "px-2 py-1 rounded-full text-xs font-medium",
                                     event.impact === 'positive' ? "bg-green-100 text-green-700" :
-                                    event.impact === 'negative' ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
+                                      event.impact === 'negative' ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
                                   )}>
                                     {event.impact === 'positive' ? '正面影響' :
-                                     event.impact === 'negative' ? '負面影響' : '中性影響'}
+                                      event.impact === 'negative' ? '負面影響' : '中性影響'}
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-700">{event.description}</p>
@@ -812,229 +799,238 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
           </div>
         </div>
       ) : activeView === 'setup' ? (
-        // 推演設定頁面
-        <div className="space-y-6">
-          {/* 基本設定 */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">推演基本設定</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={cn("h-full overflow-y-auto p-6 w-full bg-gray-50", className)}>
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                <input
-                  type="date"
-                  value={simulationSetup.startDate}
-                  onChange={(e) => setSimulationSetup(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                <input
-                  type="date"
-                  value={simulationSetup.endDate}
-                  onChange={(e) => setSimulationSetup(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">總預算 (NT$)</label>
-                <input
-                  type="number"
-                  value={simulationSetup.budget}
-                  onChange={(e) => setSimulationSetup(prev => ({ ...prev, budget: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">推演次數</label>
-                <select
-                  value={simulationSetup.simulationRounds}
-                  onChange={(e) => setSimulationSetup(prev => ({ ...prev, simulationRounds: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                >
-                  <option value={1}>1次</option>
-                  <option value={3}>3次</option>
-                  <option value={5}>5次</option>
-                  <option value={10}>10次</option>
-                </select>
+                <h1 className="text-2xl font-bold text-gray-900">策略推演</h1>
+                <p className="text-gray-600 mt-1">多策略對戰分析與市場情境模擬</p>
               </div>
             </div>
           </div>
-
-          {/* 市場環境設定 */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">市場環境設定</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">競爭對手</label>
-                <div className="space-y-2">
-                  {['長榮航空', '星宇航空', '台灣虎航', '酷航'].map((competitor) => (
-                    <label key={competitor} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={simulationSetup.competitors.includes(competitor)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSimulationSetup(prev => ({ 
-                              ...prev, 
-                              competitors: [...prev.competitors, competitor] 
-                            }));
-                          } else {
-                            setSimulationSetup(prev => ({ 
-                              ...prev, 
-                              competitors: prev.competitors.filter(c => c !== competitor) 
-                            }));
-                          }
-                        }}
-                        className="mr-2"
-                      />
-                      <span className="text-sm text-gray-700">{competitor}</span>
-                    </label>
-                  ))}
+          <div className="space-y-6">
+            {/* 基本設定 */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">推演基本設定</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                  <input
+                    type="date"
+                    value={simulationSetup.startDate}
+                    onChange={(e) => setSimulationSetup(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                  <input
+                    type="date"
+                    value={simulationSetup.endDate}
+                    onChange={(e) => setSimulationSetup(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">總預算 (NT$)</label>
+                  <input
+                    type="number"
+                    value={simulationSetup.budget}
+                    onChange={(e) => setSimulationSetup(prev => ({ ...prev, budget: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">推演次數</label>
+                  <select
+                    value={simulationSetup.simulationRounds}
+                    onChange={(e) => setSimulationSetup(prev => ({ ...prev, simulationRounds: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  >
+                    <option value={1}>1次</option>
+                    <option value={3}>3次</option>
+                    <option value={5}>5次</option>
+                    <option value={10}>10次</option>
+                  </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">市場狀況</label>
-                <select
-                  value={simulationSetup.marketConditions}
-                  onChange={(e) => setSimulationSetup(prev => ({ ...prev, marketConditions: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                >
-                  <option value="recession">經濟衰退</option>
-                  <option value="normal">正常狀況</option>
-                  <option value="recovery">復甦期</option>
-                  <option value="boom">經濟繁榮</option>
-                </select>
+            </div>
+
+            {/* 市場環境設定 */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">市場環境設定</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">競爭對手</label>
+                  <div className="space-y-2">
+                    {['長榮航空', '星宇航空', '台灣虎航', '酷航'].map((competitor) => (
+                      <label key={competitor} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={simulationSetup.competitors.includes(competitor)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSimulationSetup(prev => ({
+                                ...prev,
+                                competitors: [...prev.competitors, competitor]
+                              }));
+                            } else {
+                              setSimulationSetup(prev => ({
+                                ...prev,
+                                competitors: prev.competitors.filter(c => c !== competitor)
+                              }));
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-700">{competitor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">市場狀況</label>
+                  <select
+                    value={simulationSetup.marketConditions}
+                    onChange={(e) => setSimulationSetup(prev => ({ ...prev, marketConditions: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="recession">經濟衰退</option>
+                    <option value="normal">正常狀況</option>
+                    <option value="recovery">復甦期</option>
+                    <option value="boom">經濟繁榮</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* 重大事件設定 */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">重大事件設定</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['春節連假', '清明連假', '端午連假', '中秋連假', '雙十連假', '跨年連假', '暑假旺季', '開學季'].map((event) => (
-                <label key={event} className="flex items-center">
+            {/* 重大事件設定 */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">重大事件設定</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {['春節連假', '清明連假', '端午連假', '中秋連假', '雙十連假', '跨年連假', '暑假旺季', '開學季'].map((event) => (
+                  <label key={event} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={simulationSetup.majorEvents.includes(event)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSimulationSetup(prev => ({
+                            ...prev,
+                            majorEvents: [...prev.majorEvents, event]
+                          }));
+                        } else {
+                          setSimulationSetup(prev => ({
+                            ...prev,
+                            majorEvents: prev.majorEvents.filter(ev => ev !== event)
+                          }));
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">{event}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 策略設定 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 策略A */}
+              <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">策略方案 A</h3>
+                <div className="space-y-4">
                   <input
-                    type="checkbox"
-                    checked={simulationSetup.majorEvents.includes(event)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSimulationSetup(prev => ({ 
-                          ...prev, 
-                          majorEvents: [...prev.majorEvents, event] 
-                        }));
-                      } else {
-                        setSimulationSetup(prev => ({ 
-                          ...prev, 
-                          majorEvents: prev.majorEvents.filter(ev => ev !== event) 
-                        }));
-                      }
-                    }}
-                    className="mr-2"
+                    type="text"
+                    placeholder="策略名稱"
+                    value={simulationSetup.strategy1.name}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy1: { ...prev.strategy1, name: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
                   />
-                  <span className="text-sm text-gray-700">{event}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+                  <textarea
+                    placeholder="策略描述..."
+                    value={simulationSetup.strategy1.description}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy1: { ...prev.strategy1, description: e.target.value }
+                    }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="預算分配"
+                    value={simulationSetup.strategy1.budget}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy1: { ...prev.strategy1, budget: parseInt(e.target.value) }
+                    }))}
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
 
-          {/* 策略設定 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 策略A */}
-            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-lg border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">策略方案 A</h3>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="策略名稱"
-                  value={simulationSetup.strategy1.name}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy1: { ...prev.strategy1, name: e.target.value } 
-                  }))}
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-                <textarea
-                  placeholder="策略描述..."
-                  value={simulationSetup.strategy1.description}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy1: { ...prev.strategy1, description: e.target.value } 
-                  }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
-                />
-                <input
-                  type="number"
-                  placeholder="預算分配"
-                  value={simulationSetup.strategy1.budget}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy1: { ...prev.strategy1, budget: parseInt(e.target.value) } 
-                  }))}
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
+              {/* 策略B */}
+              <div className="bg-gradient-to-br from-red-50 to-white p-6 rounded-lg border border-red-200">
+                <h3 className="text-lg font-semibold text-red-900 mb-4">策略方案 B</h3>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="策略名稱"
+                    value={simulationSetup.strategy2.name}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy2: { ...prev.strategy2, name: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500"
+                  />
+                  <textarea
+                    placeholder="策略描述..."
+                    value={simulationSetup.strategy2.description}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy2: { ...prev.strategy2, description: e.target.value }
+                    }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500 resize-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="預算分配"
+                    value={simulationSetup.strategy2.budget}
+                    onChange={(e) => setSimulationSetup(prev => ({
+                      ...prev,
+                      strategy2: { ...prev.strategy2, budget: parseInt(e.target.value) }
+                    }))}
+                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* 策略B */}
-            <div className="bg-gradient-to-br from-red-50 to-white p-6 rounded-lg border border-red-200">
-              <h3 className="text-lg font-semibold text-red-900 mb-4">策略方案 B</h3>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="策略名稱"
-                  value={simulationSetup.strategy2.name}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy2: { ...prev.strategy2, name: e.target.value } 
-                  }))}
-                  className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500"
-                />
-                <textarea
-                  placeholder="策略描述..."
-                  value={simulationSetup.strategy2.description}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy2: { ...prev.strategy2, description: e.target.value } 
-                  }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500 resize-none"
-                />
-                <input
-                  type="number"
-                  placeholder="預算分配"
-                  value={simulationSetup.strategy2.budget}
-                  onChange={(e) => setSimulationSetup(prev => ({ 
-                    ...prev, 
-                    strategy2: { ...prev.strategy2, budget: parseInt(e.target.value) } 
-                  }))}
-                  className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:border-red-500"
-                />
-              </div>
+            {/* 開始推演按鈕 */}
+            <div className="text-center">
+              <button
+                onClick={handleStartSimulation}
+                disabled={!simulationSetup.strategy1.name || !simulationSetup.strategy2.name}
+                className={cn(
+                  "px-8 py-3 rounded-lg font-semibold text-white transition-colors",
+                  simulationSetup.strategy1.name && simulationSetup.strategy2.name
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : "bg-gray-400 cursor-not-allowed"
+                )}
+              >
+                <Play className="w-5 h-5 inline mr-2" />
+                開始策略推演
+              </button>
             </div>
-          </div>
-
-          {/* 開始推演按鈕 */}
-          <div className="text-center">
-            <button
-              onClick={handleStartSimulation}
-              disabled={!simulationSetup.strategy1.name || !simulationSetup.strategy2.name}
-              className={cn(
-                "px-8 py-3 rounded-lg font-semibold text-white transition-colors",
-                simulationSetup.strategy1.name && simulationSetup.strategy2.name
-                  ? "bg-orange-500 hover:bg-orange-600"
-                  : "bg-gray-400 cursor-not-allowed"
-              )}
-            >
-              <Play className="w-5 h-5 inline mr-2" />
-              開始策略推演
-            </button>
           </div>
         </div>
       ) : (
-        // 推演進行中或結果頁面
         <div className="text-center py-12">
           <div className="mb-6">
             {isSimulating ? (
@@ -1059,8 +1055,6 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
           </div>
         </div>
       )}
-
-
     </div>
   );
 };

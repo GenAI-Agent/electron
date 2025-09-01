@@ -113,9 +113,9 @@ export default function MarketingSandboxPage() {
   // Handle opening new marketing data tab
   const handleOpenMarketingDataTab = async (source: MarketingDataSource, file: MarketingDataFile, providedData?: any[]) => {
     const data = providedData || await loadMarketingData(file.filename);
-    
+
     const isAnalytics = file.filename.includes('_analytics');
-    
+
     const newTab: MarketingDataTab = {
       id: `${source}_${file.filename}_${Date.now()}`,
       title: isAnalytics ? `${source.toUpperCase()} 分析報告` : `${source.toUpperCase()} ${file.date}`,
@@ -218,7 +218,6 @@ export default function MarketingSandboxPage() {
         return <StrategySimulationPage
           className="h-full"
           onOpenDataTab={handleOpenMarketingDataTab as any}
-          simulationRecords={mockSimulationRecords}
           onRecordSelect={setSelectedSimulationRecord}
         />;
       case 'action':
@@ -235,7 +234,7 @@ export default function MarketingSandboxPage() {
   return (
     <div className="h-screen w-screen flex flex-col pt-10 bg-background relative overflow-hidden">
       <Header
-        title="AI行銷沙盒"
+        title="Lens Sandbox - Marketing"
         showUrlInput={false}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -355,8 +354,6 @@ export default function MarketingSandboxPage() {
                   return `../data/marketing-sandbox/${filename.endsWith('.csv') ? filename : filename + '.csv'}`;
                 })
               }}
-              simulationRecords={activeTab === 'strategy' ? mockSimulationRecords : undefined}
-              onSimulationRecordSelect={handleSimulationRecordSelect}
             />
           </div>
         )}

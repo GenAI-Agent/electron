@@ -212,7 +212,9 @@ input:focus,
 textarea:focus {
   outline: none;
 }
-
+button{
+  cursor: pointer;
+}
 /* Prevent text selection on UI elements */
 .no-select {
   -webkit-user-select: none;

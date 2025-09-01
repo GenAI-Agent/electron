@@ -40,15 +40,6 @@ interface AgentPanelProps {
     }>;
     filePaths: string[];
   };
-  simulationRecords?: Array<{
-    id: string;
-    title: string;
-    participants: { side1: string; side2: string };
-    date: string;
-    status: string;
-    result: { confidence: number };
-  }>;
-  onSimulationRecordSelect?: (record: any) => void;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -58,8 +49,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   onTopHeightChange,
   onDragStateChange,
   sandboxContext,
-  simulationRecords,
-  onSimulationRecordSelect,
 }) => {
   const router = useRouter();
   const [input, setInput] = useState('');
@@ -142,7 +131,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           // 根據規則名稱推斷分類
           let category = '一般';
           const ruleName = rule.name.toLowerCase();
-          
+
           if (ruleName.includes('gmail') || ruleName.includes('mail') || ruleName.includes('email')) {
             category = '郵件';
           } else if (ruleName.includes('browser') || ruleName.includes('web') || ruleName.includes('page')) {
@@ -154,13 +143,13 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           } else if (ruleName.includes('api') || ruleName.includes('integration')) {
             category = '整合';
           }
-          
+
           return {
             name: rule.name,
             category: rule.category || category
           };
         });
-        
+
         setAvailableRules(rulesWithCategories);
         console.log('🔧 載入規則列表:', rulesWithCategories);
       }
@@ -620,12 +609,12 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         let matches = availableRules.filter(rule =>
           rule.name.toLowerCase().includes(query)
         );
-        
+
         // 如果有選擇分類，進一步過濾
         if (selectedCategory) {
           matches = matches.filter(rule => rule.category === selectedCategory);
         }
-        
+
         setRuleMatches(matches);
       }
 
@@ -709,20 +698,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
             </button>
-            {simulationRecords && simulationRecords.length > 0 && (
-              <button
-                onClick={() => setPanelMode('simulation')}
-                className={cn(
-                  "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
-                  panelMode === 'simulation'
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-                title="推演記錄"
-              >
-                <Swords className="w-3.5 h-3.5" />
-              </button>
-            )}
             <button
               onClick={() => setPanelMode('rules')}
               className={cn(
@@ -756,8 +731,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           isLoading={isLoading}
           messages={messages}
           onRulesUpdate={loadAvailableRules}
-          simulationRecords={simulationRecords}
-          onSimulationRecordSelect={onSimulationRecordSelect}
         />
       </div>
 
@@ -892,7 +865,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
                     ))}
                   </div>
                 </div>
-                
+
                 {/* 規則列表 */}
                 {ruleMatches.length > 0 ? (
                   <>

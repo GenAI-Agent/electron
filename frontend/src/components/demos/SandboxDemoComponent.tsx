@@ -111,11 +111,11 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
   }, [currentStep]);
 
   return (
-    <div className={cn("relative w-full h-full flex items-center justify-center", className)}>
+    <div className={cn("w-full h-full p-6", className)}>
       <style>{animationStyles}</style>
-      <div className="w-full max-w-6xl">
-        {/* AI Election Sandbox Interface */}
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+      {/* AI Election Sandbox Interface */}
+      <div className="w-full h-full flex flex-col">
+        <div className="flex-1 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-primary text-white px-6 py-4">
             <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
             </div>
           </div>
 
-          <div className="flex h-96">
+          <div className="flex flex-1">
             {/* Left Panel - Intelligence Page Mockup */}
             <div className="flex-1 bg-gray-50 border-r border-gray-200">
               {(activeTabDemo === 'intelligence' || currentStep < 3) && (
@@ -408,7 +408,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
         </div>
 
         {/* Feature Tags */}
-        <div className="flex flex-wrap gap-2 mt-6 justify-center">
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">智庫整合</span>
           <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">即時分析</span>
           <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">策略模擬</span>

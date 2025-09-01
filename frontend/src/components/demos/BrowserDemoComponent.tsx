@@ -50,9 +50,9 @@ export const BrowserDemoComponent: React.FC<BrowserDemoComponentProps> = ({ clas
   }, []);
 
   return (
-    <div className={cn("relative w-full h-full flex flex-col items-center justify-center", className)}>
+    <div className={cn("w-full h-full p-6", className)}>
       {/* Browser Window Mockup */}
-      <div className="w-full max-w-2xl bg-white rounded-t-lg shadow-2xl border border-gray-200">
+      <div className="w-full h-full flex flex-col bg-white rounded-lg shadow-xl border border-gray-200">
         {/* Browser Header */}
         <div className="flex items-center px-4 py-3 bg-primary rounded-t-lg border-b border-gray-200">
           <div className="flex gap-2 mr-4">
@@ -67,7 +67,7 @@ export const BrowserDemoComponent: React.FC<BrowserDemoComponentProps> = ({ clas
         </div>
 
         {/* Browser Content */}
-        <div className="relative h-64 bg-gradient-to-br from-blue-50 to-purple-50 overflow-hidden">
+        <div className="relative flex-1 bg-gradient-to-br from-blue-50 to-purple-50 overflow-hidden">
           {/* Demo Step Animation */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className={cn(
@@ -114,7 +114,7 @@ export const BrowserDemoComponent: React.FC<BrowserDemoComponentProps> = ({ clas
       </div>
 
       {/* Feature Pills */}
-      <div className="flex flex-wrap gap-2 mt-6 justify-center max-w-2xl">
+      <div className="flex flex-wrap gap-2 mt-4 justify-center">
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">智能識別</span>
         <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">自動操作</span>
         <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">數據提取</span>

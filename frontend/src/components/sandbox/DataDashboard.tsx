@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import SocialMediaAnalytics from '@/components/sandbox/SocialMediaAnalytics';
-import { DataTab } from '@/pages/sandbox-election';
+import { DataTab } from '@/pages/election/sandbox-election';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -346,7 +346,7 @@ export const DataDashboard: React.FC<DataDashboardProps> = ({
                             beginAtZero: true,
                             max: Math.max(metrics.engagement.high, metrics.engagement.medium, metrics.engagement.low) + 10,
                             ticks: {
-                              callback: function(value) {
+                              callback: function (value) {
                                 return value + '%';
                               },
                             },

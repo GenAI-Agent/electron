@@ -92,10 +92,10 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
   };
 
   return (
-    <div className={cn("relative w-full h-full flex items-center justify-center", className)}>
-      <div className="w-full max-w-5xl">
-        {/* Enterprise Dashboard Mockup */}
-        <div className="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+    <div className={cn("w-full h-full p-6", className)}>
+      {/* Enterprise Dashboard Mockup */}
+      <div className="w-full h-full flex flex-col">
+        <div className="flex-1 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Dashboard Header */}
           <div className="bg-primary text-white px-6 py-4">
             <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
             </div>
           </div>
 
-          <div className="grid grid-cols-3 h-96">
+          <div className="grid grid-cols-3 flex-1">
             {/* Left Panel - System Integration */}
             <div className="bg-gray-50 border-r border-gray-200 p-4">
               <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -243,7 +243,7 @@ export const EnterpriseDemoComponent: React.FC<EnterpriseDemoComponentProps> = (
         </div>
 
         {/* Feature Tags */}
-        <div className="flex flex-wrap gap-2 mt-6 justify-center">
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">系統集成</span>
           <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">實時同步</span>
           <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">業務規則</span>

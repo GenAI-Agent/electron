@@ -2,7 +2,7 @@ export interface Translations {
   // Auth
   lensAuth: string;
   logout: string;
-
+  requestDemo: string;
   // Hero Section
   browserAutomation: {
     title: string;
@@ -97,6 +97,7 @@ export const translations: Record<"zh" | "en", Translations> = {
   zh: {
     lensAuth: "Lens 登錄",
     logout: "登出",
+    requestDemo: "申請 Demo",
 
     browserAutomation: {
       title: "瀏覽器自動化",
@@ -194,6 +195,7 @@ export const translations: Record<"zh" | "en", Translations> = {
   en: {
     lensAuth: "Lens Auth",
     logout: "Logout",
+    requestDemo: "Request Demo",
 
     browserAutomation: {
       title: "Browser Automation",

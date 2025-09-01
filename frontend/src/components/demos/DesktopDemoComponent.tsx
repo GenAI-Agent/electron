@@ -87,10 +87,10 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
   };
 
   return (
-    <div className={cn("relative w-full h-full flex items-center justify-center", className)}>
-      <div className="w-full max-w-4xl">
-        {/* Desktop Interface Mockup */}
-        <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-2xl border border-gray-300 overflow-hidden">
+    <div className={cn("w-full h-full p-6", className)}>
+      {/* Desktop Interface Mockup */}
+      <div className="w-full h-full flex flex-col">
+        <div className="flex-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-xl border border-gray-300 overflow-hidden flex flex-col">
           {/* Desktop Header */}
           <div className="bg-primary text-white px-4 py-2 flex items-center gap-4">
             <Monitor className="w-5 h-5" />
@@ -101,7 +101,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
             </div>
           </div>
 
-          <div className="grid grid-cols-2 h-80">
+          <div className="grid grid-cols-2 flex-1">
             {/* Left Panel - File System */}
             <div className="bg-white border-r border-gray-200 p-4">
               <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -181,7 +181,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
         </div>
 
         {/* Feature Tags */}
-        <div className="flex flex-wrap gap-2 mt-6 justify-center">
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">本地檔案</span>
           <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">批量處理</span>
           <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">自動化</span>

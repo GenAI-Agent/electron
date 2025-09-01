@@ -649,7 +649,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({
                               </div>
                               <div className="mb-2">
                                 <h5 className="font-medium text-sm text-foreground mb-1">民眾陳述</h5>
-                                <p className="text-xs text-gray-700 bg-gray-50 rounded p-2 italic mb-2">"{ petition.user_quote}"</p>
+                                <p className="text-xs text-gray-700 bg-gray-50 rounded p-2 italic mb-2">"{petition.user_quote}"</p>
                                 <h6 className="font-medium text-xs text-blue-700 mb-1">問題分析</h6>
                                 <p className="text-xs text-muted-foreground line-clamp-2">{petition.issue_analysis}</p>
                               </div>

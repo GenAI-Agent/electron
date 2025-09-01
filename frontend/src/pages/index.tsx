@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Monitor, Building, Brain, BarChart3, ArrowRight, Shield, Zap, Settings, User, LogOut } from 'lucide-react';
+import { Globe, Monitor, Building, Brain, BarChart3, User, LogOut, MessageCircle, Hash, AtSign, Plane, ShoppingCart, Vote, Briefcase, HeartHandshake, TrendingUp, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import Header, { ViewMode } from '@/components/ui/header';
-import { RainbowButton } from '@/components/RainbowButton';
-import { LensOSLogo } from '@/components/LensLogo';
+import { LensOSLogo } from '@/components/animation/LensLogo';
 import { cn } from '@/utils/cn';
-import TrueFocus from '@/components/TrueFocus';
-import LightRays from '@/components/LightRay';
+import { RainbowButton } from '@/components/animation/RainbowButton';
 import AuthManager, { AuthStatus } from '@/utils/authManager';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguageStore } from '@/stores/languageStore';
@@ -15,6 +13,10 @@ import { BrowserDemoComponent } from '@/components/demos/BrowserDemoComponent';
 import { DesktopDemoComponent } from '@/components/demos/DesktopDemoComponent';
 import { EnterpriseDemoComponent } from '@/components/demos/EnterpriseDemoComponent';
 import { SandboxDemoComponent } from '@/components/demos/SandboxDemoComponent';
+import { ModernFeatureSection } from '@/components/ModernFeatureSection';
+import { BentoFeatureSection } from '@/components/BentoFeatureSection';
+import { LogoLoop } from '@/components/animation/LogoLoop';
+import LightRays from '@/components/animation/LightRay';
 
 
 const HomePage: React.FC = () => {
@@ -120,63 +122,174 @@ const HomePage: React.FC = () => {
 
   const features = [
     {
-      icon: Shield,
-      title: t.features.customerExperience.title,
-      description: t.features.customerExperience.description,
+      icon: MessageCircle,
+      title: language === 'zh' ? 'DM as Service' : 'DM as Service',
+      description: language === 'zh'
+        ? '像使用任何通訊軟體一樣，只要 DM Supervisor Agent，Agent 就會幫你 Take Actions。比如 DM 「華航旅遊規劃」，Agent 就會在華航 domain 下搜尋規劃並直接找到訂票頁面。'
+        : 'Just like using any messaging app, simply DM the Supervisor Agent and it will Take Actions for you. For example, DM \"China Airlines travel planning\" and the Agent will search and plan within the China Airlines domain, directly finding the booking page.',
       points: [
         {
-          title: t.features.customerExperience.points.engage.title,
-          text: t.features.customerExperience.points.engage.text
+          title: language === 'zh' ? '自然對話介面' : 'Natural Conversation Interface',
+          text: language === 'zh'
+            ? '無需學習複雜指令，就像跟朋友對話一樣輕鬆。只要說出你的需求，Agent 自動理解並執行。'
+            : 'No need to learn complex commands, as easy as chatting with a friend. Just express your needs, and the Agent automatically understands and executes.'
         },
         {
-          title: t.features.customerExperience.points.support.title,
-          text: t.features.customerExperience.points.support.text
+          title: language === 'zh' ? '智能意圖識別' : 'Intelligent Intent Recognition',
+          text: language === 'zh'
+            ? '從模糊的描述中精準識別你的真正意圖，自動導航至正確的網站和功能。讓 AI 成為你的專屬助手。'
+            : 'Precisely identify your true intent from vague descriptions, automatically navigating to the correct websites and functions. Let AI become your personal assistant.'
         },
         {
-          title: t.features.customerExperience.points.adapt.title,
-          text: t.features.customerExperience.points.adapt.text
+          title: language === 'zh' ? '一鍵到底' : 'One-Click to Complete',
+          text: language === 'zh'
+            ? '從搜尋到執行，全程自動化。不再需要在多個網站間切換，不再需要記住複雜的操作流程。'
+            : 'From search to execution, fully automated. No more switching between multiple websites, no more remembering complex operation procedures.'
         }
       ]
     },
     {
-      icon: Zap,
-      title: t.features.makeAiYourOwn.title,
-      description: t.features.makeAiYourOwn.description,
+      icon: Hash,
+      title: language === 'zh' ? 'Slash for Talent (/)' : 'Slash for Talent (/)',
+      description: language === 'zh'
+        ? '輸入 / 即可啟動各種 Talent 功能。每個 Talent 都是一個專業能力，就像你的專家團隊一樣，隨時可供呼叫。這就是我們的 Rules 精神。'
+        : 'Type / to activate various Talent functions. Each Talent is a professional capability, like your expert team, always available on demand. This is the essence of our Rules system.',
       points: [
         {
-          title: t.features.makeAiYourOwn.points.ground.title,
-          text: t.features.makeAiYourOwn.points.ground.text
+          title: language === 'zh' ? '專業 Talent 庫' : 'Professional Talent Library',
+          text: language === 'zh'
+            ? '從資料分析、內容生成到自動化流程，每個 Talent 都是領域專家級的能力。不需訓練，直接使用。'
+            : 'From data analysis and content generation to automation workflows, each Talent is domain-expert level capability. No training required, use immediately.'
         },
         {
-          title: t.features.makeAiYourOwn.points.solve.title,
-          text: t.features.makeAiYourOwn.points.solve.text
+          title: language === 'zh' ? '快速功能啟動' : 'Quick Function Activation',
+          text: language === 'zh'
+            ? '像使用 Slack 指令一樣簡單，/ + 功能名稱即可啟動。直覺的介面，零學習成本。'
+            : 'Simple as using Slack commands, / + function name to activate. Intuitive interface with zero learning curve.'
         },
         {
-          title: t.features.makeAiYourOwn.points.takeAction.title,
-          text: t.features.makeAiYourOwn.points.takeAction.text
+          title: language === 'zh' ? '客製化 Talent' : 'Customizable Talents',
+          text: language === 'zh'
+            ? '根據企業需求定製專屬 Talent，從通用能力到行業專精，無限擴展可能。'
+            : 'Customize exclusive Talents based on enterprise needs, from general capabilities to industry specialization, unlimited expansion possibilities.'
         }
       ]
     },
     {
-      icon: Settings,
-      title: t.features.rulesSystem.title,
-      description: t.features.rulesSystem.description,
+      icon: AtSign,
+      title: language === 'zh' ? 'AT for Connect (@)' : 'AT for Connect (@)',
+      description: language === 'zh'
+        ? '只要輸入 @ 就可以與任何網頁資料做 Connect。無需 API 整合，無需權限申請，直接連接任何系統，讓所有資訊成為 AI 的 Context。'
+        : 'Simply type @ to Connect with any webpage data. No API integration, no permission requests needed, directly connect to any system and make all information AI Context.',
       points: [
         {
-          title: t.features.rulesSystem.points.visualBuilder.title,
-          text: t.features.rulesSystem.points.visualBuilder.text
+          title: language === 'zh' ? '無需 API 整合' : 'No API Integration Required',
+          text: language === 'zh'
+            ? '省去複雜的 API 整合流程，直接讀取網頁內容。從 Excel 到 CRM，從 ERP 到社群媒體，一次連接所有。'
+            : 'Skip complex API integration processes, directly read webpage content. From Excel to CRM, from ERP to social media, connect everything at once.'
         },
         {
-          title: t.features.rulesSystem.points.realTime.title,
-          text: t.features.rulesSystem.points.realTime.text
+          title: language === 'zh' ? '即時資料同步' : 'Real-time Data Sync',
+          text: language === 'zh'
+            ? '資料更新即時同步，無需擔心資訊時效性。AI 始終使用最新、最準確的資料進行判斷。'
+            : 'Data updates sync in real-time, no need to worry about information timeliness. AI always uses the latest and most accurate data for decisions.'
         },
         {
-          title: t.features.rulesSystem.points.compliance.title,
-          text: t.features.rulesSystem.points.compliance.text
+          title: language === 'zh' ? '全域情境感知' : 'Global Context Awareness',
+          text: language === 'zh'
+            ? '打破系統間的壁壘，讓 AI 擁有全域視野。一個 Agent，理解所有系統，做出更智能的決策。'
+            : 'Break down barriers between systems, give AI a global perspective. One Agent understands all systems, making smarter decisions.'
         }
       ]
     }
   ];
+
+  const scaniorLogos = [
+    {
+      node: (
+        <button
+          onClick={() => router.push('/cal')}
+          className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-background to-background/95 backdrop-blur-sm border border-border/40 hover:border-border hover:shadow-lg transition-all duration-500 ease-out cursor-pointer overflow-hidden"
+        >
+          {/* Subtle hover glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          {/* Icon container */}
+          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shadow-sm">
+            <Plane className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
+          </div>
+
+          {/* Text */}
+          <span className="relative font-medium text-foreground">華航</span>
+
+          {/* Hover indicator line */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </button>
+      )
+    },
+    {
+      node: (
+        <button
+          onClick={() => router.push('/election')}
+          className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-background to-background/95 backdrop-blur-sm border border-border/40 hover:border-border hover:shadow-lg transition-all duration-500 ease-out cursor-pointer overflow-hidden"
+        >
+          {/* Subtle hover glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          {/* Icon container */}
+          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center shadow-sm">
+            <Vote className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+          </div>
+
+          {/* Text */}
+          <span className="relative font-medium text-foreground">選舉</span>
+
+          {/* Hover indicator line */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </button>
+      )
+    },
+    {
+      node: (
+        <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5 text-gray-400" />
+          </div>
+          <span className="font-medium text-muted-foreground">電商</span>
+        </div>
+      )
+    },
+    {
+      node: (
+        <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <Briefcase className="w-5 h-5 text-gray-400" />
+          </div>
+          <span className="font-medium text-muted-foreground">企業</span>
+        </div>
+      )
+    },
+    {
+      node: (
+        <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <HeartHandshake className="w-5 h-5 text-gray-400" />
+          </div>
+          <span className="font-medium text-muted-foreground">醫療</span>
+        </div>
+      )
+    },
+    {
+      node: (
+        <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm border border-dashed border-border/40 opacity-50 cursor-not-allowed">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-gray-400" />
+          </div>
+          <span className="font-medium text-muted-foreground">金融</span>
+        </div>
+      )
+    }
+  ]
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background overflow-y-auto overflow-x-hidden">
@@ -245,9 +358,8 @@ const HomePage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden">
-        {/* Background Light Rays */}
-        <div className="absolute top-10 inset-0 w-full h-full">
+      <section className="relative min-h-screen flex flex-col pt-20">
+        <div className="absolute top-10 inset-0 w-full z-1 h-full">
           <LightRays
             raysOrigin="top-center"
             raysColor="#000000"
@@ -261,7 +373,6 @@ const HomePage: React.FC = () => {
             distortion={0.2}
           />
         </div>
-
         {/* Content overlay */}
         <div className="relative z-10 flex flex-col items-center justify-center w-full">
           {/* LensOS Logo and Text */}
@@ -275,195 +386,152 @@ const HomePage: React.FC = () => {
             <h1 className="text-4xl uppercase md:text-5xl font-serif text-foreground mb-6 leading-tight">
               Unlock AGI <br />for Everything You Own
             </h1>
-            {/* <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Unstructured? Unfiltered? Still Understood.
-            </p>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Don’t Clean Your Data — Let AGI Do the Work.
-            </p>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              AI That Reads What You Have — Not What You Curate.
-            </p> */}
+
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               免標註、免格式化，資料原樣也能推理
             </p>
-            {/* <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              企業資料資料不上妝，不再等待才有價值
-            </p> */}
 
 
           </div>
-          {/* Main Text with Fade Animation */}
-          <div className="text-center mb-4 px-6">
-            <div className="relative flex flex-col justify-center">
-              <div
-                className={cn(
-                  "transition-opacity duration-300 flex flex-col justify-center",
-                  isTransitioning ? "opacity-0" : "opacity-100"
-                )}
-              >
-                <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2 leading-tight">
-                  {tagContent[selectedTag].mainText}
-                </h1>
-                <p className="text-lg text-muted-foreground whitespace-pre-line max-w-3xl mx-auto leading-relaxed">
-                  {tagContent[selectedTag].subText}
-                </p>
-              </div>
-            </div>
-          </div>
-          {/* CTA Button */}
-          <RainbowButton
-            onClick={() => router.push(tagContent[selectedTag].path)}
-            className="mb-12"
-          >
-            <span className="flex items-center gap-2">
-              {t.explore} {tagContent[selectedTag].tagText}
-              <ArrowRight className="w-4 h-4" />
-            </span>
-          </RainbowButton>
-
-          {/* Tag Selection with TrueFocus */}
-          <div className="mb-16 px-6">
-            <TrueFocus
-              sentence={tagContent.map(item => item.tagText).join('|')}
-              manualMode={true}
-              blurAmount={2}
-              borderColor="#a788f2"
-              glowColor="rgba(37, 99, 235, 0.6)"
-              animationDuration={0.4}
-              selectedIndex={selectedTag}
-              onWordSelect={handleTagChange}
-            />
-          </div>
-
-          {/* Demo Area */}
-          <div className="w-full max-w-6xl mx-auto px-6 mb-28">
-            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden shadow-xl">
-              <div
-                className={cn(
-                  "absolute inset-0 transition-opacity duration-300",
-                  isTransitioning ? "opacity-0" : "opacity-100"
-                )}
-              >
-                {selectedTag === 0 && <BrowserDemoComponent />}
-                {selectedTag === 1 && <DesktopDemoComponent />}
-                {selectedTag === 2 && <EnterpriseDemoComponent />}
-                {selectedTag === 3 && <SandboxDemoComponent />}
-              </div>
-            </div>
-          </div>
-
-
-          {/* Scroll Indicator */}
-          <div className="absolute bottom-8 animate-bounce z-20">
-            <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center">
-              <div className="w-1 h-3 bg-muted-foreground/30 rounded-full mt-2" />
-            </div>
-          </div>
-
-        </div> {/* End of content overlay */}
-      </section>
-
-      {/* Feature Sections */}
-      {features.map((feature, featureIndex) => (
-        <section key={featureIndex} className={cn(
-          "py-12 px-6 h-full",
-          featureIndex % 2 === 0 ? "bg-background" : "bg-muted/30"
-        )}>
-          <div className="container mx-auto max-w-7xl h-full">
-            <div className={cn(
-              "grid lg:grid-cols-2 gap-16 items-start",
-              featureIndex % 2 === 1 && "lg:grid-cols-2"
-            )}>
-              {/* Content Section */}
-              <div className={cn(
-                "space-y-8",
-                featureIndex % 2 === 1 && "lg:order-2"
-              )}>
-                <div>
-                  <div className="inline-flex p-3 rounded-lg bg-primary/10 mb-6">
-                    {React.createElement(feature.icon, { className: "w-8 h-8 text-primary" })}
+        </div>
+        <div className="flex-1 flex z-10 max-w-[1400px] mx-auto items-center justify-center px-6 pb-10 w-full">
+          <div className="flex flex-col lg:flex-row gap-6 items-center w-full">
+            {/* Left Side - Demo Area */}
+            <div className="w-full lg:w-2/3 order-2 lg:order-1">
+              <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-xl">
+                <div className="aspect-[16/10] relative">
+                  <div
+                    className={cn(
+                      "absolute inset-0 transition-opacity duration-300",
+                      isTransitioning ? "opacity-0" : "opacity-100"
+                    )}
+                  >
+                    {selectedTag === 0 && <BrowserDemoComponent />}
+                    {selectedTag === 1 && <DesktopDemoComponent />}
+                    {selectedTag === 2 && <EnterpriseDemoComponent />}
+                    {selectedTag === 3 && <SandboxDemoComponent />}
                   </div>
-                  <h2 className="text-4xl font-bold text-foreground mb-4">{feature.title}</h2>
-                  <p className="text-xl text-muted-foreground">
-                    {feature.description}
-                  </p>
                 </div>
-                {/* Action Button */}
-                {featureIndex === 0 && (
-                  <div>
-                    <button
-                      onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      {t.seeOurProduct}
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-
-                {featureIndex === 1 && (
-                  <div>
-                    <button
-                      onClick={() => router.push('/sandbox')}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      {t.tryOurPlatform}
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
               </div>
+            </div>
 
-              {/* Accordion Cards Section */}
-              <div className={cn(
-                "space-y-4",
-                featureIndex % 2 === 1 && "lg:order-1"
-              )}>
-                {feature.points.map((point, pointIndex) => {
-                  const [isOpen, setIsOpen] = React.useState(false);
+            {/* Right Side - Content and Options */}
+            <div className="w-full lg:w-1/3 order-1 lg:order-2">
+              {/* Options Panel with Border */}
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Choose your workspace</h3>
 
-                  return (
-                    <div key={pointIndex} className="group bg-card rounded-lg border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
-                      <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="w-full flex items-center justify-between p-6 text-left transition-all duration-200"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                            {pointIndex + 1}
-                          </div>
-                          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {point.title}
-                          </h3>
-                        </div>
+                {/* Option List */}
+                <div className="space-y-2">
+                  {tagContent.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleTagChange(index)}
+                      className={cn(
+                        "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
+                        selectedTag === index
+                          ? "bg-primary/10 border-primary shadow-md"
+                          : "bg-background/50 border-transparent hover:bg-muted/50 hover:border-border"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
                         <div className={cn(
-                          "w-5 h-5 text-muted-foreground transition-transform duration-300",
-                          isOpen && "rotate-180"
+                          "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                          selectedTag === index
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
                         )}>
-                          <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                          </svg>
+                          <item.icon className="w-5 h-5" />
                         </div>
-                      </button>
-                      <div className={cn(
-                        "overflow-hidden transition-all duration-300 ease-out",
-                        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                      )}>
-                        <div className="px-6 pb-6 pt-2">
-                          <p className="text-muted-foreground leading-relaxed ml-12">
-                            {point.text}
+                        <div className="flex-1">
+                          <h4 className={cn(
+                            "font-medium transition-colors",
+                            selectedTag === index ? "text-primary" : "text-foreground"
+                          )}>
+                            {item.tagText}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.subText}
                           </p>
                         </div>
+                        {selectedTag === index && (
+                          <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    </button>
+                  ))}
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="mt-6 flex gap-3">
+                  <RainbowButton
+                    onClick={() => router.push(tagContent[selectedTag].path)}
+                    className="flex-1 flex items-center justify-center gap-2"
+                  >
+                    <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
+                      {t.explore} {tagContent[selectedTag].tagText}
+                    </span>
+                    <ArrowRight className="w-4 h-4" />
+
+                  </RainbowButton>
+
+                  <button
+                    onClick={() => router.push('/contact')}
+                    className="flex-1 px-4 py-3 bg-background border-2 border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
+                  >
+                    {t.requestDemo}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </section>
-      ))}
+        </div>
+
+        {/* Company Carousel Section */}
+        <div className="border-t border-border/50 bg-muted/30">
+          <div className="py-12">
+            <p className="text-center text-xs tracking-widest text-muted-foreground/60 mb-6">
+              查看實際案例
+            </p>
+            <LogoLoop
+              logos={scaniorLogos}
+              speed={30}
+              logoHeight={32}
+              gap={32}
+              fadeOut={true}
+              className="text-muted-foreground max-w-[1000px] mx-auto"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Sections - 混合設計 */}
+      {features.map((feature, featureIndex) => {
+        // 第一個 section 使用 ModernFeatureSection，其餘使用 BentoFeatureSection
+        const FeatureComponent = featureIndex === 0 ? ModernFeatureSection : BentoFeatureSection;
+
+        return (
+          <FeatureComponent
+            key={featureIndex}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+            points={feature.points}
+            index={featureIndex}
+            cta={
+              featureIndex === 0 ? {
+                text: t.seeOurProduct,
+                onClick: () => router.push('/browser?url=https://www.ask-lens.ai/about-us')
+              } : featureIndex === 1 ? {
+                text: t.tryOurPlatform,
+                onClick: () => router.push('/sandbox')
+              } : undefined
+            }
+          />
+        );
+      })}
     </div>
   );
 };
