@@ -106,7 +106,7 @@ const SandboxOverviewPage: React.FC = () => {
             <Card
               key={scenario.id}
               className={cn(
-                "p-6 cursor-pointer transition-all duration-200 relative overflow-hidden group",
+                "p-6 cursor-pointer transition-all duration-200 relative overflow-hidden group flex flex-col",
                 scenario.status === 'available'
                   ? "hover:shadow-lg hover:scale-105 border-primary/20 hover:border-primary/40"
                   : "opacity-75 hover:shadow-md border-muted/40",
@@ -141,7 +141,7 @@ const SandboxOverviewPage: React.FC = () => {
               </div>
 
               {/* Content */}
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1 flex flex-col mb-4">
                 <h3 className="text-xl font-semibold text-foreground">
                   {scenario.title}
                 </h3>
@@ -151,7 +151,7 @@ const SandboxOverviewPage: React.FC = () => {
                 </p>
 
                 {/* Examples */}
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     應用場景
                   </h4>
@@ -169,7 +169,7 @@ const SandboxOverviewPage: React.FC = () => {
               </div>
 
               {/* Action Button */}
-              <div className="mt-4">
+              <div className="mt-auto">
                 <Button
                   variant={scenario.status === 'available' ? "default" : "secondary"}
                   size="sm"

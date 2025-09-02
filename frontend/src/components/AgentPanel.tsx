@@ -753,14 +753,14 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       ></div>
 
       {/* Bottom Panel (Input) - 動態高度但底部固定的输入区域 */}
-      <div className="flex flex-col min-h-[200px] p-4 pb-8 relative z-[2] bg-card border-t border-border overflow-visible">
+      <div className="flex flex-col min-h-[100px] p-4 pb-8 relative z-[2] bg-card border-t border-border overflow-visible">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col relative flex-1"
         >
           <div className="relative flex-1 flex flex-col min-h-0">
             {/* 外层输入框容器 - 包含文字区域和图标，看起来像一个完整的输入框 */}
-            <div className="flex-1 relative border border-border bg-background flex flex-col min-h-[120px]">
+            <div className="flex-1 relative border border-border bg-background flex flex-col min-h-[100px]">
               {/* 文字输入区域容器 - 限制文字显示区域，为底部图标预留空间 */}
               <div className="flex-1 relative overflow-hidden mb-12 min-h-0">
                 <textarea
@@ -907,8 +907,6 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
             )}
           </div>
         </form>
-
-
       </div>
     </div>
   );
