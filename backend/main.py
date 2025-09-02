@@ -20,6 +20,7 @@ sys.path.insert(0, str(project_root / "backend" / "src"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 import json
 
 from api.routers import agent, rules, file_processor, task_memory, sandbox, calendar
@@ -46,12 +47,49 @@ class UTF8JSONResponse(JSONResponse):
         ).encode("utf-8")
 
 
+# 全局 agent 實例
+agent_instance = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """應用生命週期管理"""
+    global agent_instance
+    
+    # 啟動時執行
+    logger.info("🚀 啟動 Supervisor Agent API 服務...")
+    
+    try:
+        # 初始化 Agent
+        rules_dir = Path(__file__).parent.parent / "data" / "rules"
+        from supervisor_agent.core.supervisor_agent import SupervisorAgent
+        
+        agent_instance = SupervisorAgent(str(rules_dir))
+        
+        # 將 agent 實例存儲到應用狀態和路由
+        app.state.agent = agent_instance
+        from api.routers.agent import set_agent
+        
+        set_agent(agent_instance)
+        
+        logger.info("✅ Supervisor Agent 初始化完成")
+    
+    except Exception as e:
+        logger.error(f"❌ 啟動失敗: {e}")
+    
+    yield
+    
+    # 關閉時執行
+    logger.info("👋 關閉 Supervisor Agent API 服務...")
+
+
 # 創建 FastAPI 應用
 app = FastAPI(
     title="Supervisor Agent API",
     description="基於 LangGraph 的智能助手",
     version="1.0.0",
     default_response_class=UTF8JSONResponse,
+    lifespan=lifespan,
 )
 
 # 添加 CORS 中間件
@@ -62,35 +100,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 全局 agent 實例
-agent_instance = None
-
-
-@app.on_event("startup")
-async def startup_event():
-    """應用啟動事件"""
-    global agent_instance
-
-    logger.info("🚀 啟動 Supervisor Agent API 服務...")
-
-    try:
-        # 初始化 Agent
-        rules_dir = Path(__file__).parent.parent / "data" / "rules"
-        from supervisor_agent.core.supervisor_agent import SupervisorAgent
-
-        agent_instance = SupervisorAgent(str(rules_dir))
-
-        # 將 agent 實例存儲到應用狀態和路由
-        app.state.agent = agent_instance
-        from api.routers.agent import set_agent
-
-        set_agent(agent_instance)
-
-        logger.info("✅ Supervisor Agent 初始化完成")
-
-    except Exception as e:
-        logger.error(f"❌ 啟動失敗: {e}")
 
 
 # 註冊路由

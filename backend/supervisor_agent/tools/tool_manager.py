@@ -15,6 +15,7 @@ from supervisor_agent.tools.langchain_browser_tools import (
     cleanup_all_tools,
     BaseBrowserTool,
 )
+from supervisor_agent.tools.webpage_tool import webpage_tools
 from supervisor_agent.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -74,6 +75,14 @@ class ToolManager:
                     logger.info(f"✅ 載入默認工具: {tool_name}")
             except Exception as e:
                 logger.error(f"❌ 載入默認工具失敗 {tool_name}: {e}")
+
+        # 添加網頁分析工具
+        for tool in webpage_tools:
+            try:
+                self.default_tools[tool.name] = tool
+                logger.info(f"✅ 載入網頁工具: {tool.name}")
+            except Exception as e:
+                logger.error(f"❌ 載入網頁工具失敗: {e}")
 
         logger.info(f"🎯 默認工具載入完成: {len(self.default_tools)} 個")
 

@@ -98,12 +98,12 @@ const ChinaAirlinesPage: React.FC = () => {
   const chinaAirlinesContent = [
     {
       title: '華航官網',
-      tagText: 'Website',
+      tagText: 'Webpage',
       icon: Globe,
       mainText: '即刻接入華航生態',
       subText: '無需 API 整合，LensOS 直接理解華航官網所有內容。透過自然語言對話，Supervisor Agent 即時幫您查詢航班、規劃行程、比較價格，甚至完成訂票。萬物皆 Context，華航的一切資訊都是您的 AI 助手。',
       demoContent: {
-        type: 'website',
+        type: 'webpage',
         data: {
           sections: ['即時航班查詢', '智能行程規劃', '一鍵比價訂票', 'VIP 會員服務'],
           aiCapabilities: [

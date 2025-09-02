@@ -238,8 +238,8 @@ const HomePage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
           {/* Icon container */}
-          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center shadow-sm">
-            <Vote className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-zinc-50 to-zinc-100 flex items-center justify-center shadow-sm">
+            <Vote className="w-5 h-5 text-zinc-600 group-hover:scale-110 transition-transform duration-300" />
           </div>
 
           {/* Text */}

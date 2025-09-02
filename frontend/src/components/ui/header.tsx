@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({
       style={{ WebkitAppRegion: 'drag' }}
     >
       {/* Left section - Navigation */}
-      <div className="flex items-center gap-4 flex-1">
+      <div className="flex items-center gap-4 ">
         {/* Parallelogram Traffic Lights */}
         <div
           className="flex items-center gap-1.5"
@@ -152,16 +152,15 @@ const Header: React.FC<HeaderProps> = ({
           </form>
         ) : (
           <div
-            onClick={handleUrlInputClick}
             className={cn(
-              "h-10 flex items-center justify-center text-foreground text-sm px-4 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 relative",
+              "h-10 flex items-center justify-center text-foreground text-sm overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 relative",
               showUrlInput ? "cursor-pointer" : "cursor-default"
             )}
           >
 
             {/* Left Double Arrows - Back Navigation */}
             <button
-              className="absolute left-2 flex items-center hover:opacity-70 transition-opacity"
+              className="absolute left-0 flex z-20 items-center hover:opacity-70 transition-opacity"
               onClick={() => router.back()}
               title="上一頁"
               style={{ WebkitAppRegion: 'no-drag' }}
@@ -194,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Title Text */}
-            <span className="mx-12">
+            <span onClick={handleUrlInputClick} className="mx-10 px-2 cursor-pointer">
               {showUrlInput ? urlInput || title : title}
             </span>
           </div>

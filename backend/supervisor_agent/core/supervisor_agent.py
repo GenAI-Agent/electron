@@ -7,7 +7,6 @@ Supervisor Agent - Gmail 自動化處理監督者
 from __future__ import annotations
 import logging
 import asyncio
-import json
 import time
 import uuid
 import os
@@ -19,7 +18,6 @@ from dotenv import load_dotenv
 from langchain.callbacks.tracers import LangChainTracer
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.prebuilt.tool_node import ToolNode as BaseToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
@@ -29,6 +27,17 @@ import tiktoken
 # 工具將在查詢時動態導入
 
 from ..utils.logger import get_logger
+from .context_builder import build_context_query
+from ..prompts import (
+    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_SYSTEM_PROMPT_RULE,
+    RESPONSE_GENERATOR_WITH_RULE,
+    RESPONSE_GENERATOR_DEFAULT,
+    RESPONSE_FINAL_INSTRUCTION,
+    EVALUATION_TOO_MANY_TOOLS,
+    EVALUATION_WITH_PAGE_CONTENT,
+    EVALUATION_NEED_MORE_TOOLS,
+)
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -223,8 +232,6 @@ class ParallelToolNode(BaseToolNode):
 
 
 # ----------------------- Supervisor Agent ----------------------- #
-
-
 class SupervisorAgent:
     """Gmail 自動化處理監督者 Agent"""
 
@@ -779,15 +786,15 @@ class SupervisorAgent:
             if tool_count >= 12:
                 logger.info(f"🛑 已執行 {tool_count} 個工具，停止並生成回答")
                 # 直接生成回答，不再調用工具
-                final_prompt = f"""基於已執行的工具結果，請直接回答用戶的問題：
-
-                    用戶請求: {query}
-
-                    已執行的工具結果:
-                    {chr(10).join([f"- {msg.name}: {msg.content[:300]}..." for msg in recent_tool_messages])}
-
-                    請基於這些信息提供完整的回答，不要再調用任何工具。
-                """
+                tool_results = chr(10).join(
+                    [
+                        f"- {msg.name}: {msg.content[:300]}..."
+                        for msg in recent_tool_messages
+                    ]
+                )
+                final_prompt = EVALUATION_TOO_MANY_TOOLS.format(
+                    query=query, tool_results=tool_results
+                )
 
                 llm_messages = [
                     SystemMessage(
@@ -809,29 +816,27 @@ class SupervisorAgent:
                 if page_content_found:
                     logger.info("✅ 已獲得有效的頁面內容，準備生成回答")
                     # 有了頁面內容，應該可以回答了
-                    evaluation_prompt = f"""你已經成功獲取了頁面內容。請基於以下信息直接回答用戶的問題：
-
-                        用戶請求: {query}
-
-                        頁面內容:
-                        {chr(10).join([f"- {msg.name}: {msg.content[:500]}..." for msg in recent_tool_messages if msg.name == "browser_get_page_data_tool"])}
-
-                        請提供完整的回答，不需要再調用其他工具。
-                    """
+                    page_content = chr(10).join(
+                        [
+                            f"- {msg.name}: {msg.content[:500]}..."
+                            for msg in recent_tool_messages
+                            if msg.name == "browser_get_page_data_tool"
+                        ]
+                    )
+                    evaluation_prompt = EVALUATION_WITH_PAGE_CONTENT.format(
+                        query=query, page_content=page_content
+                    )
                 else:
                     # 沒有獲得有效內容，可能需要重試
-                    evaluation_prompt = f"""基於以下工具執行結果，請分析是否需要調用更多工具來完成用戶的請求：
-                        用戶原始請求: {query}
-
-                        最近的工具執行結果:
-                        {chr(10).join([f"- {msg.name}: {msg.content[:200]}..." for msg in recent_tool_messages])}
-
-                        請決定：
-                        1. 如果需要更多工具來完成任務，請調用相應的工具
-                        2. 如果已經有足夠的信息，請直接回答用戶
-
-                        注意：避免重複調用相同的工具，除非有新的參數或需求。
-                    """
+                    recent_tools = chr(10).join(
+                        [
+                            f"- {msg.name}: {msg.content[:200]}..."
+                            for msg in recent_tool_messages
+                        ]
+                    )
+                    evaluation_prompt = EVALUATION_NEED_MORE_TOOLS.format(
+                        query=query, recent_tools=recent_tools
+                    )
 
                 llm_messages = [
                     SystemMessage(content=self._get_system_prompt(rule_id, context)),
@@ -924,225 +929,41 @@ class SupervisorAgent:
 
         taiwan_tz = pytz.timezone("Asia/Taipei")
         current_time = datetime.now(taiwan_tz).strftime("%Y-%m-%d %H:%M:%S (台灣時間)")
+
+        # 決定要使用的規則數據 #TODO: 根據 type 去用預設規則
+        rule_data_content = DEFAULT_SYSTEM_PROMPT_RULE  # 預設規則
+
         if rule_id:
             # 載入規則提示
             rule_data = self.find_rule_by_name(rule_id)
             if rule_data and rule_data.get("prompt"):
                 logger.info(f"📋 使用規則提示: {rule_data.get('name', rule_id)}")
+                rule_data_content = rule_data["prompt"]
 
-                rule_prompt = rule_data["prompt"]
-
-                # 從 context 中獲取 file_path
-                file_path = "未提供"
+                # 從 context 中獲取 file_path 並替換占位符
                 if context and isinstance(context, dict):
                     context_data = context.get("context_data", {})
                     if isinstance(context_data, dict):
                         file_path = context_data.get("file_path", "未提供")
+                        # 如果規則中有占位符，進行替換
+                        rule_data_content = rule_data_content.replace(
+                            "{file_path}", str(file_path)
+                        )
+                        rule_data_content = rule_data_content.replace(
+                            "{current_time}", current_time
+                        )
 
-                # 替換占位符
-                rule_prompt = rule_prompt.replace("{file_path}", str(file_path))
-                rule_prompt = rule_prompt.replace("{current_time}", current_time)
-
-                return rule_prompt
-
-        # 預設提示
-        return f"""你是一個智能數據分析助手。當前時間: {current_time}
-
-🎯 **核心任務**：主動進行分析，而不只是提供建議
-
-📊 **數據分析優先原則**：
-當用戶提到統計、分析、計算、過濾等需求時，請立即執行實際的數據分析：
-
-1. **過濾數據**：使用 filter_data_tool 過濾出符合條件的數據
-   - 例如：過濾特定部門、日期範圍、金額範圍等
-   - 設置 save_filtered_data=True 保存過濾結果
-
-2. **分組分析**：使用 group_by_analysis_tool 進行統計計算
-   - 支持操作：sum(總和)、mean(平均)、count(計數)、max(最大)、min(最小)
-   - 例如：按部門分組計算支出總額
-
-3. **組合分析**：使用 filter_and_analyze_tool 一步完成過濾和分析
-
-🚀 **執行策略**：
-- 看到"統計XX部門支出"→立即過濾該部門數據並計算總額
-- 看到"分析XX趨勢"→過濾相關數據並進行分組分析
-- 看到"計算平均值"→使用group_by_analysis_tool執行mean操作
-- 不要只提供建議，要直接執行分析並給出具體結果
-
-請根據用戶需求智能地選擇和使用工具來完成任務。"""
+        # 使用 DEFAULT_SYSTEM_PROMPT 作為基礎模板，將規則數據填入
+        return DEFAULT_SYSTEM_PROMPT.format(
+            current_time=current_time, rule_data=rule_data_content
+        )
 
     def _build_context_query(
         self, query: str, context: Dict[str, Any], has_rule: bool = False
     ) -> str:
         """構建包含 context 信息的用戶查詢"""
-
-        # 提取關鍵信息
-        context_data = context.get("context_data", {})
-        file_path = context_data.get("file_path", "未知文件")
-        data_info = context_data.get("data_info", {})
-        file_summary = context_data.get("file_summary", {})
-        page_data = context_data.get("page", {})
-        mails = context_data.get("mails", [])
-
-        # 檢查是否為多檔案分析模式
-        is_multi_file = context_data.get("mode") == "multi_file_analysis"
-        files_summary = context_data.get("files_summary", {})
-        platforms = context_data.get("platforms", [])
-        platform_types = context_data.get("platform_types", [])
-        analysis_context = context_data.get("analysis_context", "")
-
-        # 檢查是否為 Gmail 數據
-        email_address = context_data.get("email_address", "")
-        gmail_metadata = context_data.get("gmail_metadata", {})
-        original_query = context_data.get("original_query", "")
-
-        # 構建簡潔的數據摘要
-        data_summary = ""
-
-        # 🎯 多檔案分析模式摘要
-        if is_multi_file and files_summary:
-            total_files = context_data.get("total_files", 0)
-            total_rows = files_summary.get("summary", {}).get("total_rows", 0)
-
-            # 構建平台信息
-            platform_info = (
-                f"{' vs '.join(platform_types)}" if platform_types else "多個平台"
-            )
-
-            # 提取檔案詳細信息
-            file_details = []
-            for result in files_summary.get("results", []):
-                if result.get("success"):
-                    platform_name = result.get("platform_name", "Unknown")
-                    platform_type = result.get("platform_type", "未知平台")
-                    rows = result.get("total_rows", 0)
-                    columns = result.get("columns", [])
-                    file_details.append(
-                        f"  - {platform_name} ({platform_type}): {rows} 行, {len(columns)} 欄位"
-                    )
-
-            data_summary = f"""
-                🔄 多檔案分析模式已啟動，數據已準備完成:
-                - 分析目標: {analysis_context}
-                - 檔案數量: {total_files} 個
-                - 平台類型: {platform_info}
-                - 總數據量: {total_rows} 行
-
-                檔案詳情:
-{chr(10).join(file_details)}
-
-                🎯 多檔案分析可用工具：
-
-                **可用檔案路徑**: {json.dumps(context_data.get('file_paths', []))}
-
-                **可用工具**：
-                1. **multi_file_analyzer_tool** - 對完整數據進行綜合分析
-                   - 適用於：平台整體比較、趨勢分析、統計摘要等
-                   - 參數：file_paths, analysis_type, analysis_question
-
-                2. **multi_file_filter_tool** - 先過濾特定條件的數據再分析
-                   - 適用於：需要特定條件篩選的分析
-                   - 參數：file_paths, filter_condition (具體條件如"年齡>30"、"地區=台北市")
-
-                **請根據用戶問題自行判斷**：
-                - 需要完整數據分析 → 直接使用 multi_file_analyzer_tool
-                - 需要特定條件篩選 → 先用 multi_file_filter_tool，再用 multi_file_analyzer_tool
-                - 可以組合使用多個工具來完成複雜分析
-            """
-        # Gmail 數據摘要（優先使用 file_summary）
-        elif file_summary and file_summary.get("file_type") == "gmail_csv":
-            total_emails = file_summary.get("total_emails", 0)
-            unread_emails = file_summary.get("unread_emails", 0)
-            top_senders = file_summary.get("top_senders", [])
-
-            data_summary = f"""
-                📧 Gmail 郵件數據已載入並準備分析:
-                - 郵件帳戶: {email_address}
-                - 郵件數量: {total_emails} 封
-                - 未讀郵件: {unread_emails} 封
-                - 數據文件: {file_path}
-                - 主要發件人: {', '.join([f"{sender}({count}封)" for sender, count in top_senders[:3]])}
-                - 原始查詢: {original_query}
-                - 文件摘要: {file_summary.get('summary', '')}
-            """
-        # Gmail 數據摘要（回退到 gmail_metadata）
-        elif email_address and gmail_metadata:
-            total_emails = gmail_metadata.get("total_emails", 0)
-            data_summary = f"""
-                📧 Gmail 郵件數據已載入並準備分析:
-                - 郵件帳戶: {email_address}
-                - 郵件數量: {total_emails} 封
-                - 數據文件: {file_path}
-                - 原始查詢: {original_query}
-                - 成功批次: {gmail_metadata.get('successful_batches', 0)}
-                - 失敗批次: {gmail_metadata.get('failed_batches', 0)}
-            """
-        # 一般數據文件摘要（優先使用 file_summary）
-        elif file_summary:
-            total_rows = file_summary.get(
-                "total_emails", file_summary.get("total_rows", 0)
-            )
-            columns = file_summary.get("columns", [])
-            summary_text = file_summary.get("summary", "")
-
-            data_summary = f"""
-                📊 數據文件已載入並準備分析:
-                - 文件路徑: {file_path}
-                - 數據摘要: {summary_text}
-                - 數據量: {total_rows} 行
-                - 欄位: {', '.join(columns[:10])}{'...' if len(columns) > 10 else ''}
-            """
-        # 一般數據文件摘要（回退到 data_info）
-        elif data_info:
-            total_rows = data_info.get("total_rows", 0)
-            columns = data_info.get("columns", [])
-            numeric_columns = data_info.get("numeric_columns", [])
-            categorical_columns = data_info.get("categorical_columns", [])
-
-            data_summary = f"""
-                📊 數據文件已載入並準備分析:
-                - 文件路徑: {file_path}
-                - 數據行數: {total_rows} 行
-                - 總欄位數: {len(columns)} 個
-                - 數值欄位: {', '.join(numeric_columns[:10])}{'...' if len(numeric_columns) > 10 else ''}
-                - 分類欄位: {', '.join(categorical_columns[:10])}{'...' if len(categorical_columns) > 10 else ''}
-            """
-
-        if has_rule:
-            instruction = f"""
-                {data_summary}
-                此為我的頁面資料 {context_data}
-                請根據我的需求，以及你的規則（System Prompt），幫助我解決問題
-                我的需求: "{query}"，如果是空字串，請根據你的規則（System Prompt），幫助我解決問題
-            """
-
-        elif mails:
-            instruction = f"""
-                郵件已準備完成，請根據你的專業規則和步驟直接開始進行完整的分析。
-                請你詳細分析郵件的內容。
-
-                郵件: {mails}
-
-                用戶需求: "{query}"
-            """
-
-        else:
-            instruction = f"""{data_summary}
-
-🎯 **立即執行數據分析**：
-根據用戶需求，請直接使用以下工具進行實際分析：
-
-1. 如果需要過濾數據：使用 filter_data_tool
-2. 如果需要統計計算：使用 group_by_analysis_tool
-3. 如果需要組合操作：使用 filter_and_analyze_tool
-
-⚠️ **重要**：不要只提供建議或說明，請立即執行實際的數據分析並提供具體結果。
-
-用戶需求: "{query}"
-
-請立即開始分析並執行相應的工具。"""
-
-        return instruction
+        # 使用 context_builder 中的函數
+        return build_context_query(query, context, has_rule)
 
     def find_rule_by_name(self, rule_name: str) -> Optional[Dict[str, Any]]:
         """根據 rule name 查找規則 - 簡單直接的方法"""
@@ -1194,66 +1015,17 @@ class SupervisorAgent:
 
             if rule_prompt:
                 # 使用 rule 中的 prompt，並添加基本的回答生成指導
-                system_prompt = f"""{rule_prompt}
-
-=== 回答生成指導 ===
-請根據上述規則和工具執行結果為用戶生成回答。
-
-基本要求：
-1. 回答要具體且有用
-2. 如果有數據，請提供具體數字
-3. 如果有錯誤，請說明原因並提供解決建議
-4. 保持專業且友好的語調
-5. 嚴格遵循上述規則中的 output_format 要求
-
-請根據工具執行結果和上述規則要求生成最終回答。"""
+                system_prompt = RESPONSE_GENERATOR_WITH_RULE.format(
+                    rule_prompt=rule_prompt
+                )
             else:
                 # 沒有 rule prompt，使用預設的系統提示
-                system_prompt = """你是一個專業的助手，請根據工具執行結果為用戶生成簡潔明瞭的回答。
-
-要求：
-1. 回答要具體且有用
-2. 如果有數據，請提供具體數字
-3. 如果有錯誤，請說明原因並提供解決建議
-4. 保持專業且友好的語調
-5. 用繁體中文回答
-
-📊 **特別注意 - 數據分析回答格式**：
-當回答涉及數據分析結果時，請按以下格式提供豐富的內容：
-
-## 📈 分析結果
-
-### 🎯 核心發現
-[直接回答用戶問題的主要數字和結論]
-
-### 📊 詳細數據
-
-| 項目 | 數值 | 佔比 |
-|------|------|------|
-| ... | ... | ... |
-
-### 💡 重點整理 範例
-- 重點1：[具體發現]
-- 重點2：[異常或特殊情況]
-- 重點3：[其他延伸資訊，或是用戶可能想要知道的內容]
-
-### 📋 補充說明 範例
-- 數據來源：[說明數據範圍]
-- 統計方法：[說明使用的分析方法]
-- 相關建議：[基於數據的建議，或是用戶可能想要知道的內容]
-
-不要只給一個單薄的數字或是文字回覆，要提供完整的分析報告。"""
+                system_prompt = RESPONSE_GENERATOR_DEFAULT
 
             response_messages = [SystemMessage(content=system_prompt)]
             response_messages.extend(messages)
 
-            final_instruction = f"""用戶問題：{query}
-
-請根據上述工具執行結果生成最終回答。
-
-⚠️ 如果涉及數據分析，請務必使用上述指定的格式：
-- 包含核心發現、詳細數據表格、重點整理、補充說明
-- 不要只給一個簡單的數字答案"""
+            final_instruction = RESPONSE_FINAL_INSTRUCTION.format(query=query)
 
             response_messages.append(HumanMessage(content=final_instruction))
             final_response = await self.llm.ainvoke(response_messages)
@@ -1288,7 +1060,7 @@ class SupervisorAgent:
         print(f"🔍 詳細參數:")
         print(f"  - query: {query}")
         print(f"  - rule_id: {rule_id}")
-        print(f"  - context: {context}")
+        print(f"  - context type: {context.get('type', {})}")
 
         logger.info(f"🚀 開始處理查詢: {query}")
         logger.info(f"🔍 詳細參數:")
@@ -1338,6 +1110,9 @@ class SupervisorAgent:
             elif context_data.get("file_paths"):
                 print(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
                 logger.info(f"✅ 檢測到多檔案路徑: {context_data['file_paths']}")
+            elif context_data.get("url"):
+                print(f"✅ 檢測到頁面: {context_data['url']}")
+                logger.info(f"✅ 檢測到頁面: {context_data['url']}")
             else:
                 print(
                     f"⚠️ 沒有檢測到檔案路徑，context_data keys: {list(context_data.keys())}"

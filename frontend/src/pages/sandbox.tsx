@@ -27,8 +27,17 @@ const SandboxOverviewPage: React.FC = () => {
       description: '政治選舉數據分析、民調追蹤、輿情監控和競選策略模擬',
       icon: <Vote className="w-8 h-8" />,
       status: 'available',
-      route: '/sandbox-election',
+      route: '/election',
       examples: ['社群媒體輿情分析', '民調數據追蹤', '候選人聲量監控', '選情預測模擬']
+    },
+    {
+      id: 'marketing',
+      title: '行銷策略優化',
+      description: '數位行銷效果追蹤、廣告投放優化、用戶轉換分析和ROI監控',
+      icon: <TrendingUp className="w-8 h-8" />,
+      status: 'available',
+      route: '/cal',
+      examples: ['用戶行為分析', '策略時間推演', '競爭者情報', '航線市場機會', '會員忠誠計畫']
     },
     {
       id: 'ecommerce',
@@ -37,15 +46,6 @@ const SandboxOverviewPage: React.FC = () => {
       icon: <ShoppingCart className="w-8 h-8" />,
       status: 'coming-soon',
       examples: ['消費者購買行為分析', '產品銷售趨勢預測', '競品價格監控', '庫存優化建議']
-    },
-    {
-      id: 'marketing',
-      title: '行銷策略優化',
-      description: '數位行銷效果追蹤、廣告投放優化、用戶轉換分析和ROI監控',
-      icon: <TrendingUp className="w-8 h-8" />,
-      status: 'available',
-      route: '/sandbox-marketing',
-      examples: ['用戶行為分析', '策略時間推演', '競爭者情報', '航線市場機會', '會員忠誠計畫']
     },
     {
       id: 'enterprise',

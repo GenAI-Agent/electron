@@ -88,6 +88,7 @@ def compress_tool_result(tool_result: dict, max_data_items: int = 5) -> dict:
 
     return compressed
 
+
 def _determine_request_type(context_data: dict) -> str:
     """
     判斷請求類型
@@ -105,8 +106,8 @@ def _determine_request_type(context_data: dict) -> str:
 
     # 詳細記錄判斷過程
     print(f"🔍 _determine_request_type 判斷過程:")
-    print(f"  - context_data: {context_data}")
-    print(f"  - context_data keys: {list(context_data.keys()) if context_data else 'None'}")
+    # print(f"  - context_data: {context_data}")
+    # print(f"  - context_data keys: {list(context_data.keys()) if context_data else 'None'}")
     print(f"  - type: {type}")
 
     logger.info(f"🔍 判斷請求類型:")
@@ -235,12 +236,14 @@ async def generate_stream_response(
             logger.info(f"  - keys: {list(context_data.keys())}")
             logger.info(f"  - type: {context_data.get('type')}")
 
-            if context_data.get('type') == 'multi_file':
-                files = context_data.get('files', [])
+            if context_data.get("type") == "multi_file":
+                files = context_data.get("files", [])
                 logger.info(f"  - 多檔案數量: {len(files)}")
                 for i, file_info in enumerate(files):
-                    logger.info(f"    檔案 {i+1}: {file_info.get('filename')} ({len(file_info.get('data', []))} 行)")
-            elif context_data.get('type') == 'file':
+                    logger.info(
+                        f"    檔案 {i+1}: {file_info.get('filename')} ({len(file_info.get('data', []))} 行)"
+                    )
+            elif context_data.get("type") == "file":
                 logger.info(f"  - 單檔案路徑: {context_data.get('file_path')}")
         else:
             logger.info(f"📋 Context Data: None")
@@ -255,7 +258,9 @@ async def generate_stream_response(
             available_tools = get_langchain_local_file_tools()
 
             # 🔄 **處理單檔案或多檔案**
-            if context_data and (context_data.get("file_path") or context_data.get("file_paths")):
+            if context_data and (
+                context_data.get("file_path") or context_data.get("file_paths")
+            ):
                 # 支持單檔案路徑
                 if context_data.get("file_path"):
                     file_path = context_data.get("file_path")
@@ -287,7 +292,10 @@ async def generate_stream_response(
                         # 導入原始函數而不是工具對象
                         import sys
                         import os
-                        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+                        sys.path.append(
+                            os.path.join(os.path.dirname(__file__), "..", "..")
+                        )
 
                         # 🔧 使用與 local file 相同的數據分析工具進行摘要化處理
                         from src.tools.data_analysis_tools import data_analysis_tools
@@ -346,11 +354,15 @@ async def generate_stream_response(
                                 print(f"🏷️ 識別平台: {platform_name} ({platform_type})")
 
                                 # 使用 data_analysis_tools 獲取檔案摘要（與 local file 相同的方式）
-                                data_info_result = await data_analysis_tools.get_data_info(
-                                    file_path, session_id
+                                data_info_result = (
+                                    await data_analysis_tools.get_data_info(
+                                        file_path, session_id
+                                    )
                                 )
 
-                                if isinstance(data_info_result, dict) and data_info_result.get("success", True):
+                                if isinstance(
+                                    data_info_result, dict
+                                ) and data_info_result.get("success", True):
                                     # 添加平台識別信息
                                     enhanced_result = {
                                         "filename": file_path,
@@ -358,11 +370,19 @@ async def generate_stream_response(
                                         "platform_type": platform_type,
                                         "success": True,
                                         "data_summary": data_info_result,  # 摘要化的數據信息
-                                        "sample_data": data_info_result.get("sample_data", [])[:1],  # 只保留1行樣本用於格式參考
-                                        "total_rows": data_info_result.get("total_rows", 0),
-                                        "columns": data_info_result.get("columns", [])
+                                        "sample_data": data_info_result.get(
+                                            "sample_data", []
+                                        )[
+                                            :1
+                                        ],  # 只保留1行樣本用於格式參考
+                                        "total_rows": data_info_result.get(
+                                            "total_rows", 0
+                                        ),
+                                        "columns": data_info_result.get("columns", []),
                                     }
-                                    print(f"✅ 成功處理摘要: {file_path} ({platform_name}, {data_info_result.get('total_rows', 0)} 行)")
+                                    print(
+                                        f"✅ 成功處理摘要: {file_path} ({platform_name}, {data_info_result.get('total_rows', 0)} 行)"
+                                    )
                                     return enhanced_result
                                 else:
                                     print(f"❌ 摘要處理失敗: {file_path}")
@@ -371,7 +391,7 @@ async def generate_stream_response(
                                         "platform_name": platform_name,
                                         "platform_type": platform_type,
                                         "success": False,
-                                        "error": "數據摘要處理失敗"
+                                        "error": "數據摘要處理失敗",
                                     }
 
                             except Exception as e:
@@ -379,27 +399,43 @@ async def generate_stream_response(
                                 return {
                                     "filename": file_path,
                                     "success": False,
-                                    "error": str(e)
+                                    "error": str(e),
                                 }
 
                         # 並行處理所有檔案
-                        results = await asyncio.gather(*[process_single_file(fp) for fp in file_paths])
+                        results = await asyncio.gather(
+                            *[process_single_file(fp) for fp in file_paths]
+                        )
                         successful_files = [r for r in results if r.get("success")]
 
-                        print(f"📊 摘要處理完成: {len(successful_files)}/{len(file_paths)} 成功")
+                        print(
+                            f"📊 摘要處理完成: {len(successful_files)}/{len(file_paths)} 成功"
+                        )
 
                         # 構建多檔案摘要統計
-                        platforms = list(set(r.get("platform_name", "Unknown") for r in successful_files))
-                        platform_types = list(set(r.get("platform_type", "未知平台") for r in successful_files))
+                        platforms = list(
+                            set(
+                                r.get("platform_name", "Unknown")
+                                for r in successful_files
+                            )
+                        )
+                        platform_types = list(
+                            set(
+                                r.get("platform_type", "未知平台")
+                                for r in successful_files
+                            )
+                        )
 
                         summary = {
                             "total_files": len(file_paths),
                             "successful_reads": len(successful_files),
                             "failed_reads": len(file_paths) - len(successful_files),
-                            "total_rows": sum(r.get("total_rows", 0) for r in successful_files),
+                            "total_rows": sum(
+                                r.get("total_rows", 0) for r in successful_files
+                            ),
                             "platforms": platforms,
                             "platform_types": platform_types,
-                            "analysis_context": f"比較分析 {' vs '.join(platform_types)} 的數據差異"
+                            "analysis_context": f"比較分析 {' vs '.join(platform_types)} 的數據差異",
                         }
 
                         print(f"📋 識別的平台: {platforms}")
@@ -410,7 +446,7 @@ async def generate_stream_response(
                             "success": True,
                             "results": results,
                             "summary": summary,
-                            "session_id": session_id
+                            "session_id": session_id,
                         }
 
                         # 🔧 安全的 JSON 序列化檢查
@@ -437,7 +473,9 @@ async def generate_stream_response(
                             reader_result = json.dumps(reader_data, ensure_ascii=False)
                             print(f"✅ 清理後 JSON 序列化成功")
 
-                        print(f"📥 multi_file_reader_tool 結果: {reader_result[:500]}...")
+                        print(
+                            f"📥 multi_file_reader_tool 結果: {reader_result[:500]}..."
+                        )
 
                         # 解析結果
                         reader_data = json.loads(reader_result)
@@ -452,10 +490,14 @@ async def generate_stream_response(
                                 "platforms": summary["platforms"],
                                 "platform_types": summary["platform_types"],
                                 "analysis_context": summary["analysis_context"],
-                                "message": f"已成功分析 {len(successful_files)} 個檔案的摘要：{', '.join(summary['platforms'])}"
+                                "message": f"已成功分析 {len(successful_files)} 個檔案的摘要：{', '.join(summary['platforms'])}",
                             }
-                            print(f"✅ 多檔案摘要分析完成：{summary['analysis_context']}")
-                            logger.info(f"✅ 多檔案摘要分析完成：{summary['analysis_context']}")
+                            print(
+                                f"✅ 多檔案摘要分析完成：{summary['analysis_context']}"
+                            )
+                            logger.info(
+                                f"✅ 多檔案摘要分析完成：{summary['analysis_context']}"
+                            )
                         else:
                             # 讀取失敗
                             error_msg = reader_data.get("error", "多檔案讀取失敗")
@@ -475,7 +517,9 @@ async def generate_stream_response(
                     # 如果是相對路徑（如 sandbox/xxx.csv），轉換為絕對路徑
                     if file_path.startswith("sandbox/"):
                         # 獲取項目根目錄：backend/api/routers/agent.py -> backend/api/routers -> backend/api -> backend -> project_root
-                        current_dir = Path(__file__).parent.parent.parent.parent  # 正確的路徑層級
+                        current_dir = Path(
+                            __file__
+                        ).parent.parent.parent.parent  # 正確的路徑層級
                         absolute_file_path = current_dir / "data" / file_path
                         logger.info(f"🔧 路徑轉換: {file_path} -> {absolute_file_path}")
                         print(f"🔧 路徑轉換: {file_path} -> {absolute_file_path}")
@@ -484,19 +528,23 @@ async def generate_stream_response(
                     # 繼續單檔案處理邏輯...
 
                     # 檢查是否為合併資料集的虛擬路徑
-                    if file_path.endswith('combined_datasets'):
+                    if file_path.endswith("combined_datasets"):
                         logger.info(f"🔄 處理合併資料集: {file_path}")
                         # 對於合併資料集，直接使用context_data中的資料
-                        if context_data and 'file_summary' in context_data:
+                        if context_data and "file_summary" in context_data:
                             final_context = {
                                 "file_path": file_path,
-                                "data_info": context_data['file_summary'],
-                                "is_combined_dataset": True
+                                "data_info": context_data["file_summary"],
+                                "is_combined_dataset": True,
                             }
-                            logger.info(f"✅ 成功處理合併資料集，包含 {len(context_data['file_summary'].get('segments', []))} 個資料集")
+                            logger.info(
+                                f"✅ 成功處理合併資料集，包含 {len(context_data['file_summary'].get('segments', []))} 個資料集"
+                            )
                         else:
                             logger.error(f"❌ 合併資料集缺少必要的上下文資料")
-                            final_context = {"error": f"合併資料集缺少上下文資料: {file_path}"}
+                            final_context = {
+                                "error": f"合併資料集缺少上下文資料: {file_path}"
+                            }
                     # 檢查實體文件是否存在
                     elif not Path(file_path).exists():
                         logger.error(f"❌ 文件不存在: {file_path}")
@@ -551,7 +599,9 @@ async def generate_stream_response(
                 logger.error(f"❌ 完整的 context_data: {context_data}")
 
                 # 🚫 直接返回錯誤，不讓 Agent 繼續執行
-                error_message = "請先在 AI Sandbox 頁面選擇要分析的資料集，然後再提出分析問題。"
+                error_message = (
+                    "請先在 AI Sandbox 頁面選擇要分析的資料集，然後再提出分析問題。"
+                )
 
                 # 直接返回錯誤響應，不調用 Agent
                 yield f"data: {json.dumps({'type': 'error', 'message': error_message}, ensure_ascii=False)}\n\n"
@@ -580,7 +630,7 @@ async def generate_stream_response(
                 access_token=access_token,
                 email_address=email_address,
                 total_emails=500,
-                session_id=session_id
+                session_id=session_id,
             )
 
             if not gmail_result.get("success"):
@@ -604,8 +654,8 @@ async def generate_stream_response(
                 "gmail_metadata": {
                     "total_emails": gmail_result.get("total_emails"),
                     "successful_batches": gmail_result.get("successful_batches"),
-                    "failed_batches": gmail_result.get("failed_batches")
-                }
+                    "failed_batches": gmail_result.get("failed_batches"),
+                },
             }
             request_type = "file"
 
@@ -626,7 +676,9 @@ async def generate_stream_response(
                 data_info_result = await data_analysis_tools.get_data_info(
                     csv_path, session_id
                 )
-                logger.info(f"📊 get_data_info_tool 執行結果: {str(data_info_result)[:500]}...")
+                logger.info(
+                    f"📊 get_data_info_tool 執行結果: {str(data_info_result)[:500]}..."
+                )
 
                 # 構建 final_context，和 local file 模式完全一樣
                 final_context = {
@@ -638,8 +690,8 @@ async def generate_stream_response(
                     "gmail_metadata": {
                         "total_emails": gmail_result.get("total_emails"),
                         "successful_batches": gmail_result.get("successful_batches"),
-                        "failed_batches": gmail_result.get("failed_batches")
-                    }
+                        "failed_batches": gmail_result.get("failed_batches"),
+                    },
                 }
 
                 # 使用 local file 工具集
@@ -686,12 +738,12 @@ async def generate_stream_response(
                     continue
 
                 # 檢查檔案是否存在，處理相對路徑
-                if file_path.startswith('../'):
+                if file_path.startswith("../"):
                     # 相對於 backend/ 的路徑
                     full_path = Path(file_path)
-                elif file_path.startswith('data/'):
+                elif file_path.startswith("data/"):
                     # 相對於項目根目錄的路徑
-                    full_path = Path('..') / file_path
+                    full_path = Path("..") / file_path
                 else:
                     # 絕對路徑或其他情況
                     full_path = Path(file_path)
@@ -704,7 +756,7 @@ async def generate_stream_response(
 
                 try:
                     # 讀取完整的 CSV 檔案
-                    df = pd.read_csv(full_path, encoding='utf-8-sig')
+                    df = pd.read_csv(full_path, encoding="utf-8-sig")
 
                     print(f"✅ 成功讀取檔案: {full_path}")
                     print(f"   - 來源: {source}")
@@ -715,15 +767,19 @@ async def generate_stream_response(
                     print(f"   - 前3行資料:")
                     print(df.head(3).to_string())
 
-                    created_files.append({
-                        "source": source,
-                        "filename": filename,
-                        "file_path": str(full_path),
-                        "row_count": len(df),
-                        "columns": list(df.columns)
-                    })
+                    created_files.append(
+                        {
+                            "source": source,
+                            "filename": filename,
+                            "file_path": str(full_path),
+                            "row_count": len(df),
+                            "columns": list(df.columns),
+                        }
+                    )
 
-                    logger.info(f"✅ 讀取檔案: {full_path} ({len(df)} 行, {len(df.columns)} 列)")
+                    logger.info(
+                        f"✅ 讀取檔案: {full_path} ({len(df)} 行, {len(df.columns)} 列)"
+                    )
                     logger.info(f"   欄位: {list(df.columns)}")
 
                 except Exception as e:
@@ -739,7 +795,7 @@ async def generate_stream_response(
                 "type": "multi_file",
                 "files": created_files,
                 "total_files": len(created_files),
-                "session_id": session_id
+                "session_id": session_id,
             }
 
             # 使用 local file 工具集
@@ -748,7 +804,9 @@ async def generate_stream_response(
             logger.info(f"✅ 多檔案模式設置完成:")
             logger.info(f"  - 建立檔案數量: {len(created_files)}")
             for file_info in created_files:
-                logger.info(f"  - {file_info['source']}: {file_info['file_path']} ({file_info['row_count']} 行)")
+                logger.info(
+                    f"  - {file_info['source']}: {file_info['file_path']} ({file_info['row_count']} 行)"
+                )
 
         elif request_type == "web":
             logger.info("🌐 WEB 模式 - 使用 Web Tools")
@@ -956,7 +1014,7 @@ async def stream_chat(request: StreamRequest):
                 print(f"    {key}: {type(value)} = {value}")
 
                 # 🔍 特別檢查 files 和 file_paths
-                if key in ['files', 'file_paths', 'file_summary'] and value:
+                if key in ["files", "file_paths", "file_summary"] and value:
                     print(f"    📁 {key} 詳細內容:")
                     if isinstance(value, list):
                         for i, item in enumerate(value):
@@ -967,10 +1025,12 @@ async def stream_chat(request: StreamRequest):
                     elif isinstance(value, dict):
                         for sub_key, sub_value in value.items():
                             print(f"      {sub_key}: {type(sub_value)} = {sub_value}")
-                            if sub_key == 'data_schema' and isinstance(sub_value, dict):
+                            if sub_key == "data_schema" and isinstance(sub_value, dict):
                                 print(f"        data_schema 內容:")
                                 for schema_key, schema_value in sub_value.items():
-                                    print(f"          {schema_key}: {type(schema_value)} = {schema_value}")
+                                    print(
+                                        f"          {schema_key}: {type(schema_value)} = {schema_value}"
+                                    )
         else:
             print("⚠️ context_data 為空或 None")
 

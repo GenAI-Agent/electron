@@ -196,13 +196,12 @@ export const translations: Record<"zh" | "en", Translations> = {
     lensAuth: "Lens Auth",
     logout: "Logout",
     requestDemo: "Request Demo",
-
     browserAutomation: {
       title: "Browser Automation",
       tagText: "Browser",
       mainText: "Empower Your Browser with AI",
       subText:
-        "Transform any website into an AI-powered workspace. Our intelligent agents understand, analyze, and automate web interactions seamlessly.",
+        "Transform any webpage into an AI-powered workspace. Our intelligent agents understand, analyze, and automate web interactions seamlessly.",
     },
     desktopIntelligence: {
       title: "Desktop Intelligence",
