@@ -5,7 +5,7 @@ import ResultPanel from './ResultPanel';
 import { sessionManager, FileContext } from '@/utils/sessionManager';
 import { cn } from '@/utils/cn';
 import { getOAuthTokens, isGmailPage } from '@/utils/PageDataExtractor';
-
+import { LensOSLogo } from './animation/LensLogo';
 type PanelMode = 'result' | 'rules' | 'skills' | 'simulation';
 
 interface StreamMessage {
@@ -84,9 +84,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   // 內部百分比狀態（可被 props 初始化）
-  const [heightPct, setHeightPct] = useState(65);  // 預設上面 65%，下面輸入框 35%
-  useEffect(() => { setHeightPct(clamp(topHeight || 65, 45, 70)); }, [topHeight]);
-
+  const [heightPct, setHeightPct] = useState(70);  // 預設上面對話區 70%，下面輸入框 30%
   // 檢測當前模式和文件上下文
   useEffect(() => {
     const updateContext = () => {
@@ -671,242 +669,292 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
     <div
       ref={containerRef}
       data-agent-panel
-      className="w-full h-full bg-card grid relative shadow-lg border-l border-border"
-      style={{ gridTemplateRows: `${heightPct}% 8px 1fr` }}
+      className="w-full h-full bg-background relative"
     >
-      {/* Top Panel */}
-      <div className="relative min-h-[120px] overflow-hidden z-[1] bg-card/95">
-        <div className="flex justify-between items-center p-4">
-          <button
-            onClick={handleRefreshSession}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-foreground"
-            title="新建 Session"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Toggle - 右上角 */}
-          <div className="flex gap-1 z-10">
-            <button
-              onClick={() => setPanelMode('result')}
-              className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
-                panelMode === 'result'
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              <FileText className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setPanelMode('rules')}
-              className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
-                panelMode === 'rules'
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              <Puzzle className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setPanelMode('skills')}
-              className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200",
-                panelMode === 'skills'
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              <Brain className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        <ResultPanel
-          mode={panelMode}
-          streamResponse={streamResponse}
-          currentRule={currentRule}
-          usedTools={usedTools}
-          isLoading={isLoading}
-          messages={messages}
-          onRulesUpdate={loadAvailableRules}
-        />
-      </div>
-
-      {/* Resizer */}
-      <div
-        role="separator"
-        aria-orientation="horizontal"
-        className="drag-handle drag-handle-vertical h-2 w-full cursor-row-resize flex items-center justify-center relative z-[1000] select-none hover:bg-accent transition-colors before:content-[''] before:absolute before:left-4 before:right-4 before:top-1/2 before:h-[2px] before:bg-border before:-translate-y-1/2 before:pointer-events-none"
-        style={{ WebkitAppRegion: 'no-drag' }}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          startDrag(e.clientY);
-        }}
-        onTouchStart={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          startDrag(e.touches[0].clientY);
-        }}
-      ></div>
-
-      {/* Bottom Panel (Input) - 動態高度但底部固定的输入区域 */}
-      <div className="flex flex-col min-h-[100px] p-4 pb-8 relative z-[2] bg-card border-t border-border overflow-visible">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col relative flex-1"
-        >
-          <div className="relative flex-1 flex flex-col min-h-0">
-            {/* 外层输入框容器 - 包含文字区域和图标，看起来像一个完整的输入框 */}
-            <div className="flex-1 relative border border-border bg-background flex flex-col min-h-[100px]">
-              {/* 文字输入区域容器 - 限制文字显示区域，为底部图标预留空间 */}
-              <div className="flex-1 relative overflow-hidden mb-12 min-h-0">
-                <textarea
-                  className="w-full h-full bg-transparent focus:outline-none pt-3 pl-4 pr-4 pb-3 text-base leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground"
-                  placeholder="輸入文字開始對話..."
-                  value={input}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    // 處理自動完成的鍵盤事件
-                    handleKeyDown(e);
-
-                    if (e.key === 'Enter' && !e.shiftKey && !isComposing && !showRuleAutocomplete) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  onCompositionStart={() => setIsComposing(true)}
-                  onCompositionEnd={() => setIsComposing(false)}
-                  autoFocus
-                  onClick={(e) => {
-                    e.currentTarget.focus();
-                  }}
-                  style={{
-                    fontSize: '14px',
-                    cursor: 'text',
-                    minHeight: '60px'
-                  }}
-                />
-              </div>
+      {/* Floating Header - Completely detached from panel layout */}
+      <div className="absolute top-0 left-0 right-0 z-[100] p-2">
+        <div className="neomorphism-floating-header h-fit p-2 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LensOSLogo size={32} className="z-20" />
+              <h1 className="text-base text-foreground">
+                Open Agent
+              </h1>
             </div>
-            {/* 發送按鈕 - 调整位置 */}
-            {/* Bottom action buttons row */}
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              {/* Left side icons */}
-              <div className="flex gap-1">
-                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
-                  <Paperclip className="w-4 h-4" />
+
+            <div className="flex items-center gap-3">
+              {/* Mode Toggle - Enhanced version for floating header */}
+              <div className="neomorphism-inset rounded-full p-1 flex gap-1">
+                <button
+                  onClick={() => setPanelMode('result')}
+                  className={cn(
+                    "size-7 flex items-center justify-center rounded-full transition-all duration-200",
+                    panelMode === 'result'
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "text-muted-foreground hover:text-foreground hover:neomorphism-raised-sm"
+                  )}
+                  title="結果面板"
+                >
+                  <FileText className="size-3.5" />
                 </button>
-                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
-                  <Image className="w-4 h-4" />
+                <button
+                  onClick={() => setPanelMode('rules')}
+                  className={cn(
+                    "size-7 flex items-center justify-center rounded-full transition-all duration-200",
+                    panelMode === 'rules'
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "text-muted-foreground hover:text-foreground hover:neomorphism-raised-sm"
+                  )}
+                  title="規則管理"
+                >
+                  <Puzzle className="size-3.5" />
                 </button>
-                <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
-                  <Headphones className="w-4 h-4" />
+                <button
+                  onClick={() => setPanelMode('skills')}
+                  className={cn(
+                    "size-7 flex items-center justify-center rounded-full transition-all duration-200",
+                    panelMode === 'skills'
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "text-muted-foreground hover:text-foreground hover:neomorphism-raised-sm"
+                  )}
+                  title="技能面板"
+                >
+                  <Brain className="size-3.5" />
                 </button>
               </div>
 
-              {/* Right side send button */}
               <button
-                type="submit"
-                disabled={!input.trim() || isLoading || isComposing}
-                className={cn(
-                  "w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200",
-                  input.trim() && !isLoading && !isComposing
-                    ? "text-foreground hover:bg-accent"
-                    : "text-muted-foreground",
-                  "disabled:text-muted-foreground"
-                )}
+                onClick={handleRefreshSession}
+                className="neomorphism-button size-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200 group"
+                title="新建 Session"
               >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
+                <Edit className="size-3.5 group-hover:rotate-12 transition-transform duration-200" />
               </button>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Rule Autocomplete 下拉列表 */}
-            {showRuleAutocomplete && (ruleMatches.length > 0 || availableRules.length > 0) && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg z-[2000] max-h-48 overflow-y-auto">
-                {/* 分類選項 */}
-                <div className="sticky top-0 bg-card border-b border-border p-2">
-                  <div className="flex flex-wrap gap-1">
-                    <button
-                      className={cn(
-                        "px-2 py-1 text-xs rounded-md transition-colors",
-                        selectedCategory === null
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                      )}
-                      onClick={() => {
-                        setSelectedCategory(null);
-                        handleInputChange(input);
-                      }}
-                    >
-                      全部
-                    </button>
-                    {Array.from(new Set(availableRules.map(r => r.category))).map(category => (
+      {/* Main Content Grid - with proper spacing for floating header */}
+      <div
+        className="w-full h-full grid relative"
+        style={{ gridTemplateRows: `${heightPct}% 8px 1fr` }}
+      >
+        {/* Top Panel */}
+        <div className="relative min-h-[120px] pt-[52px] overflow-hidden z-[1] bg-background">
+          <ResultPanel
+            mode={panelMode}
+            streamResponse={streamResponse}
+            currentRule={currentRule}
+            usedTools={usedTools}
+            isLoading={isLoading}
+            messages={messages}
+            onRulesUpdate={loadAvailableRules}
+          />
+        </div>
+
+        {/* Resizer */}
+        <div
+          role="separator"
+          aria-orientation="horizontal"
+          className={cn("h-2 w-full",
+            (showRuleAutocomplete && (ruleMatches.length > 0 || availableRules.length > 0))
+              ? "bg-transparent pointer-events-none"
+              : "drag-handle drag-handle-vertical cursor-row-resize flex items-center justify-center relative z-50 select-none hover:bg-accent transition-colors before:content-[''] before:absolute before:left-4 before:right-4 before:top-1/2 before:h-[2px] before:bg-border before:-translate-y-1/2 before:pointer-events-none"
+          )
+          }
+          style={{ WebkitAppRegion: 'no-drag' }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startDrag(e.clientY);
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startDrag(e.touches[0].clientY);
+          }}
+        />
+
+        {/* Bottom Panel (Input) - Neumorphism style input area */}
+        <div className="flex flex-col min-h-[100px] p-2 relative z-[2] bg-background overflow-visible">
+          {/* Quick Rules Selection - Only show when no conversation history and panelMode is result */}
+          {panelMode === 'result' && input.trim() === '' && (
+            <div className="mb-2">
+              <div className="flex flex-wrap gap-2 justify-start">
+                {availableRules.slice(0, 3).map((rule, index) => (
+                  <button
+                    key={rule.name}
+                    onClick={() => {
+                      setInput(`/${rule.name} `);
+                      const textarea = document.querySelector('textarea');
+                      if (textarea) {
+                        textarea.focus();
+                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                      }
+                    }}
+                    className="neomorphism-button px-3 py-1.5 rounded-full text-xs text-foreground hover:text-primary transition-colors"
+                  >
+                    {rule.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col relative flex-1"
+          >
+            <div className="relative flex-1 flex flex-col min-h-0">
+              {/* Neumorphism input container */}
+              <div className="flex-1 relative neomorphism-inset rounded-xl flex flex-col min-h-[100px]">
+                {/* Text input area */}
+                <div className="flex-1 relative overflow-hidden mb-12 min-h-0">
+                  <textarea
+                    className="w-full h-full bg-transparent focus:outline-none pt-4 pl-4 pr-4 pb-3 text-base leading-3relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground/70"
+                    placeholder="DM Open Agent 以開始服務..."
+                    value={input}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      // 處理自動完成的鍵盤事件
+                      handleKeyDown(e);
+
+                      if (e.key === 'Enter' && !e.shiftKey && !isComposing && !showRuleAutocomplete) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    autoFocus
+                    onClick={(e) => {
+                      e.currentTarget.focus();
+                    }}
+                    style={{
+                      fontSize: '14px',
+                      cursor: 'text',
+                      minHeight: '60px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Bottom action buttons row - Neumorphism style */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                {/* Left side icons */}
+                <div className="flex gap-2">
+                  <button className="neomorphism-button size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-colors">
+                    <Paperclip className="size-4" />
+                  </button>
+                  <button className="neomorphism-button size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-colors">
+                    <Image className="size-4" />
+                  </button>
+                  <button className="neomorphism-button size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-colors">
+                    <Headphones className="size-4" />
+                  </button>
+                </div>
+
+                {/* Right side send button */}
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isLoading || isComposing}
+                  className={cn(
+                    "neomorphism-button size-8 flex items-center justify-center rounded-full transition-all duration-200",
+                    input.trim() && !isLoading && !isComposing
+                      ? "text-primary shadow-lg"
+                      : "text-muted-foreground",
+                    "disabled:text-muted-foreground disabled:opacity-50"
+                  )}
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Rule Autocomplete 下拉列表 - Neumorphism style */}
+              {showRuleAutocomplete && (ruleMatches.length > 0 || availableRules.length > 0) && (
+                <div className="absolute bottom-full border border-primary/30 left-0 right-0 mb-2 neomorphism-card rounded-xl z-[2000] max-h-48 overflow-y-auto">
+                  {/* 分類選項 */}
+                  <div className="sticky top-0 bg-background border-b border-border/30 p-3 rounded-t-xl">
+                    <div className="flex flex-wrap gap-1">
                       <button
-                        key={category}
                         className={cn(
-                          "px-2 py-1 text-xs rounded-md transition-colors",
-                          selectedCategory === category
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          "px-3 py-1 text-xs rounded-full transition-colors",
+                          selectedCategory === null
+                            ? "neomorphism-inset bg-primary text-primary-foreground"
+                            : "neomorphism-button text-muted-foreground hover:text-foreground"
                         )}
                         onClick={() => {
-                          setSelectedCategory(category || null);
+                          setSelectedCategory(null);
                           handleInputChange(input);
                         }}
                       >
-                        {category}
+                        全部
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 規則列表 */}
-                {ruleMatches.length > 0 ? (
-                  <>
-                    {ruleMatches.map((rule, index) => (
-                      <div
-                        key={rule.name}
-                        className={cn(
-                          "px-3 py-2 text-sm cursor-pointer border-b border-border last:border-b-0",
-                          index === selectedRuleIndex
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                        )}
-                        onClick={() => selectRule(rule)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center flex-1">
-                            <span className="text-primary mr-2">/</span>
-                            <span className="font-medium">{rule.name}</span>
-                          </div>
-                          {rule.category && (
-                            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded ml-2">
-                              {rule.category}
-                            </span>
+                      {Array.from(new Set(availableRules.map(r => r.category))).map(category => (
+                        <button
+                          key={category}
+                          className={cn(
+                            "px-3 py-1 text-xs rounded-full transition-colors",
+                            selectedCategory === category
+                              ? "neomorphism-inset bg-primary text-primary-foreground"
+                              : "neomorphism-button text-muted-foreground hover:text-foreground"
                           )}
-                        </div>
-                      </div>
-                    ))}
-                    <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/50 border-t border-border">
-                      使用 ↑↓ 選擇，Tab 或 Enter 確認，Esc 取消
+                          onClick={() => {
+                            setSelectedCategory(category || null);
+                            handleInputChange(input);
+                          }}
+                        >
+                          {category}
+                        </button>
+                      ))}
                     </div>
-                  </>
-                ) : (
-                  <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                    {selectedCategory ? `「${selectedCategory}」分類下沒有符合的規則` : '沒有符合的規則'}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </form>
+
+                  {/* 規則列表 */}
+                  {ruleMatches.length > 0 ? (
+                    <>
+                      {ruleMatches.map((rule, index) => (
+                        <div
+                          key={rule.name}
+                          className={cn(
+                            "mx-2 mb-1 px-3 py-2 text-sm cursor-pointer rounded-lg transition-all duration-200",
+                            index === selectedRuleIndex
+                              ? "neomorphism-inset bg-primary/10 text-primary"
+                              : "text-foreground hover:neomorphism-raised-sm"
+                          )}
+                          onClick={() => selectRule(rule)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center flex-1">
+                              <span className="text-primary mr-2 font-mono">/</span>
+                              <span className="font-medium">{rule.name}</span>
+                            </div>
+                            {rule.category && (
+                              <span className="text-xs neomorphism-inset-sm text-muted-foreground px-2 py-0.5 rounded-full ml-2">
+                                {rule.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="px-3 py-2 text-xs text-muted-foreground bg-background/80 rounded-b-xl text-center border-t border-border/30">
+                        使用 ↑↓ 選擇，Tab 或 Enter 確認，Esc 取消
+                      </div>
+                    </>
+                  ) : (
+                    <div className="px-3 py-4 text-sm text-muted-foreground text-center rounded-b-xl">
+                      {selectedCategory ? `「${selectedCategory}」分類下沒有符合的規則` : '沒有符合的規則'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

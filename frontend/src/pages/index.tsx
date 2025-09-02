@@ -9,16 +9,12 @@ import AuthManager, { AuthStatus } from '@/utils/authManager';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguageStore } from '@/stores/languageStore';
 import { translations } from '@/translations';
-import { BrowserDemoComponent } from '@/components/demos/BrowserDemoComponent';
-import { DesktopDemoComponent } from '@/components/demos/DesktopDemoComponent';
-import { EnterpriseDemoComponent } from '@/components/demos/EnterpriseDemoComponent';
-import { SandboxDemoComponent } from '@/components/demos/SandboxDemoComponent';
 import { ModernFeatureSection } from '@/components/ModernFeatureSection';
 import { BentoFeatureSection } from '@/components/BentoFeatureSection';
 import { LogoLoop } from '@/components/animation/LogoLoop';
 import LightRays from '@/components/animation/LightRay';
 import RotatingText from '@/components/animation/RotatingText';
-
+import DemoSection from "@/components/demos/DemoSection";
 
 const HomePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('with-agent');
@@ -87,7 +83,7 @@ const HomePage: React.FC = () => {
       title: '打開網頁',
       tagText: 'Webpage',
       icon: Globe,
-      mainText: 'Open Webpage',
+      mainText: 'Open Webpage → AGI',
       subText: 'DM as Service - 輸入需求，AI 即時生成內容與頁面，零代碼全智能',
       gifUrl: '/placeholder-browser.gif',
       path: '/browser?url=https://www.google.com',
@@ -96,8 +92,8 @@ const HomePage: React.FC = () => {
       title: '打開桌面',
       tagText: 'Desktop',
       icon: Monitor,
-      mainText: 'Open Desktop',
-      subText: 'LLM 本地化，實現 Edge AI 資料隱私安全，遵守指令的局域網 Agent 工作流',
+      mainText: 'Open Desktop → AGI',
+      subText: 'Open Agent 直接驅動企業現有網站與 SaaS，將所有功能轉化為 AGI 能力',
       gifUrl: '/placeholder-desktop.gif',
       path: '/local',
     },
@@ -105,7 +101,7 @@ const HomePage: React.FC = () => {
       title: '打開 SaaS',
       tagText: 'SaaS',
       icon: Building,
-      mainText: 'Open SaaS System',
+      mainText: 'Open SaaS → AGI',
       subText: '用 AI 打開 SaaS 系統，將你的 CRM、ERP、BI 全面導入 Supervisor Agent',
       gifUrl: '/placeholder-saas.gif',
       path: '/browser?url=https://www.taaze.ai/business-intelligent',
@@ -126,26 +122,26 @@ const HomePage: React.FC = () => {
       icon: MessageCircle,
       title: language === 'zh' ? 'DM as Service' : 'DM as Service',
       description: language === 'zh'
-        ? '像使用任何通訊軟體一樣，只要 DM Supervisor Agent，Agent 就會幫你 Take Actions。比如 DM 「華航旅遊規劃」，Agent 就會在華航 domain 下搜尋規劃並直接找到訂票頁面。'
-        : 'Just like using any messaging app, simply DM the Supervisor Agent and it will Take Actions for you. For example, DM \"China Airlines travel planning\" and the Agent will search and plan within the China Airlines domain, directly finding the booking page.',
+        ? '像使用任何通訊軟體一樣，只要 DM Supervisor Agent，Agent 就會幫你 Take Actions。比如 DM「華航旅遊規劃」，Agent 就會在華航 domain 下搜尋規劃並直接找到訂票頁面。'
+        : 'Just like using any messaging app, simply DM the Supervisor Agent and it will Take Actions for you. For example, DM "China Airlines travel planning" and the Agent will search and plan within the China Airlines domain, directly finding the booking page.',
       points: [
         {
-          title: language === 'zh' ? '自然對話介面' : 'Natural Conversation Interface',
+          title: language === 'zh' ? '專屬的個人體驗' : 'Personalized Experience',
           text: language === 'zh'
-            ? '無需學習複雜指令，就像跟朋友對話一樣輕鬆。只要說出你的需求，Agent 自動理解並執行。'
-            : 'No need to learn complex commands, as easy as chatting with a friend. Just express your needs, and the Agent automatically understands and executes.'
+            ? '每個用戶看到的內容都不一樣，不是模板化的頁面，而是根據他的背景和需求特別製作。'
+            : 'Every user sees different content, not templated pages, but specially crafted based on their background and needs.'
         },
         {
-          title: language === 'zh' ? '智能意圖識別' : 'Intelligent Intent Recognition',
+          title: language === 'zh' ? '智能適配' : 'Smart Adaptation',
           text: language === 'zh'
-            ? '從模糊的描述中精準識別你的真正意圖，自動導航至正確的網站和功能。讓 AI 成為你的專屬助手。'
-            : 'Precisely identify your true intent from vague descriptions, automatically navigating to the correct webpages and functions. Let AI become your personal assistant.'
+            ? '不需要手動設定，系統自動分析用戶的职業、行業、需求，推導最適合的內容和功能。'
+            : 'No manual setup needed, the system automatically analyzes user profession, industry, needs, and delivers the most suitable content and features.'
         },
         {
-          title: language === 'zh' ? '一鍵到底' : 'One-Click to Complete',
+          title: language === 'zh' ? '實時調整' : 'Real-time Adjustment',
           text: language === 'zh'
-            ? '從搜尋到執行，全程自動化。不再需要在多個網站間切換，不再需要記住複雜的操作流程。'
-            : 'From search to execution, fully automated. No more switching between multiple webpages, no more remembering complex operation procedures.'
+            ? '随用戶不斷使用，系統持續學習和優化，提供越來越精準的服務。'
+            : 'As users continue using, the system continuously learns and optimizes, providing increasingly precise services.'
         }
       ]
     },
@@ -385,14 +381,12 @@ const HomePage: React.FC = () => {
           </div>
           <div className="text-center mb-4 px-6 min-h-[200px]">
             <h1 className="text-4xl uppercase md:text-5xl font-serif text-foreground mb-6 leading-tight">
-              Unlock AGI <br />for Everything You Own
+              Open → AGI <br />Transform Everything You Own
             </h1>
 
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              企業即時擁有 AGI - 免準備資料，直接啟用智能
+              免標註、免格式化，資料原樣也能推理
             </p>
-
-
           </div>
         </div>
         <div className='flex items-center w-full transition-all duration-300 mb-6 gap-2 mx-auto justify-center'>
@@ -408,99 +402,7 @@ const HomePage: React.FC = () => {
             />
           </div>
         </div>
-
-        <div className="flex-1 flex z-10 max-w-[1400px] mx-auto items-start justify-center px-6 pb-10 w-full">
-          <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
-            {/* Left Side - Demo Area */}
-            <div className="w-full lg:w-2/3 order-2 lg:order-1">
-              <div className="relative w-full h-full bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-xl">
-                <div
-                  className={cn(
-                    "transition-opacity duration-300",
-                    isTransitioning ? "opacity-0" : "opacity-100"
-                  )}
-                >
-                  {selectedTag === 0 && <BrowserDemoComponent />}
-                  {selectedTag === 1 && <DesktopDemoComponent />}
-                  {selectedTag === 2 && <EnterpriseDemoComponent />}
-                  {selectedTag === 3 && <SandboxDemoComponent />}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Content and Options */}
-            <div className="w-full lg:w-1/3 order-1 lg:order-2">
-              {/* Options Panel with Border */}
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-foreground mb-4">AGI teams</h3>
-
-                {/* Option List */}
-                <div className="space-y-2">
-                  {tagContent.map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleTagChange(index)}
-                      className={cn(
-                        "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
-                        selectedTag === index
-                          ? "bg-primary/10 border-primary shadow-md"
-                          : "bg-background/50 border-transparent hover:bg-muted/50 hover:border-border"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-                          selectedTag === index
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        )}>
-                          <item.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className={cn(
-                            "font-medium transition-colors",
-                            selectedTag === index ? "text-primary" : "text-foreground"
-                          )}>
-                            {item.tagText}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {item.subText}
-                          </p>
-                        </div>
-                        {selectedTag === index && (
-                          <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* CTA Buttons */}
-                <div className="mt-6 flex gap-3">
-                  <RainbowButton
-                    onClick={() => router.push(tagContent[selectedTag].path)}
-                    className="flex-1 flex items-center justify-center gap-2"
-                  >
-                    <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
-                      {`${tagContent[selectedTag].tagText} AI`}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-
-                  </RainbowButton>
-                  <button
-                    onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
-                    className="flex-1 px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
-                  >
-                    {t.requestDemo}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        <DemoSection isTransitioning={isTransitioning} selectedTag={selectedTag} tagContent={tagContent} handleTagChange={handleTagChange} />
         {/* Company Carousel Section */}
         <div className="border-t border-border/50 bg-muted/30">
           <div className="py-12">

@@ -122,6 +122,14 @@
   --shadow-xl:  0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 
+  /* Neumorphism Shadows */
+  --neomorphism-raised: 8px 8px 16px hsl(0 0% 0% / 0.06), -8px -8px 16px hsl(0 0% 100% / 0.7);
+  --neomorphism-raised-sm: 4px 4px 8px hsl(0 0% 0% / 0.06), -4px -4px 8px hsl(0 0% 100% / 0.7);
+  --neomorphism-raised-lg: 12px 12px 24px hsl(0 0% 0% / 0.1), -12px -12px 24px hsl(0 0% 60% / 0.03);
+  --neomorphism-inset: inset 6px 6px 12px hsl(0 0% 0% / 0.08), inset -6px -6px 12px hsl(0 0% 100% / 0.6);
+  --neomorphism-inset-sm: inset 3px 3px 6px hsl(0 0% 0% / 0.08), inset -3px -3px 6px hsl(0 0% 100% / 0.6);
+  --neomorphism-inset-lg: inset 8px 8px 16px hsl(0 0% 0% / 0.1), inset -8px -8px 16px hsl(0 0% 100% / 0.7);
+
   /* Typographic defaults */
   --tracking-normal: 0em;
 
@@ -390,4 +398,101 @@ th span {
 }
 .bg-color-5 {
   background-color: hsl(var(--color-5));
+}
+
+/* Neumorphism utility classes */
+.neomorphism-raised {
+  box-shadow: var(--neomorphism-raised);
+  background: var(--background);
+}
+
+.neomorphism-raised-sm {
+  box-shadow: var(--neomorphism-raised-sm);
+  background: var(--background);
+}
+
+.neomorphism-raised-lg {
+  box-shadow: var(--neomorphism-raised-lg);
+  background: var(--background);
+}
+
+.neomorphism-inset {
+  box-shadow: var(--neomorphism-inset);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.neomorphism-inset-sm {
+  box-shadow: var(--neomorphism-inset-sm);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.neomorphism-inset-lg {
+  box-shadow: var(--neomorphism-inset-lg);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.neomorphism-button {
+  box-shadow: var(--neomorphism-raised-sm);
+  background: var(--background);
+  transition: all 0.2s ease;
+}
+
+.neomorphism-button:hover {
+  box-shadow: var(--neomorphism-raised);
+}
+
+.neomorphism-button:active {
+  box-shadow: var(--neomorphism-inset-sm);
+}
+
+.neomorphism-input {
+  box-shadow: var(--neomorphism-inset);
+  background: var(--background);
+  border: none;
+}
+
+.neomorphism-card {
+  box-shadow: var(--neomorphism-raised);
+  background: var(--background);
+}
+
+/* Floating header specific styles */
+.neomorphism-floating-header {
+  box-shadow: var(--neomorphism-raised-lg);
+  background: var(--background);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+}
+
+/* Enhanced status indicator */
+.status-indicator {
+  position: relative;
+}
+
+.status-indicator::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, transparent, rgba(74, 222, 128, 0.3), transparent);
+  border-radius: inherit;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
 }

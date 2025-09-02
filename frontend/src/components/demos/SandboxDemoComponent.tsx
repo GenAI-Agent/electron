@@ -111,10 +111,10 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
   }, [currentStep]);
 
   return (
-    <div className={cn("w-full h-full p-6 pb-10", className)}>
+    <div className={cn("w-full h-full p-4 pb-6", className)}>
       <style>{animationStyles}</style>
       {/* AI Election Sandbox Interface */}
-      <div className="w-full h-[600px] flex flex-col">
+      <div className="w-full h-full min-h-[480px] flex flex-col">
         <div className="flex-1 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-primary text-white px-4 py-2">
@@ -128,12 +128,12 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
           </div>
 
           <div className="flex flex-1">
-            {/* Left Panel - Intelligence Page Mockup */}
-            <div className="flex-1 bg-gray-50 border-r border-gray-200">
+            {/* Full Panel - Intelligence Page Mockup */}
+            <div className="w-full bg-gray-50">
               {(activeTabDemo === 'intelligence' || currentStep < 3) && (
                 <div className="h-full flex">
                   {/* Think Tanks List */}
-                  <div className="w-56 bg-white border-r border-gray-200 p-4">
+                  <div className="w-64 bg-white border-r border-gray-200 p-4">
                     <h4 className="text-sm font-semibold text-gray-800 mb-3">智庫中心</h4>
                     <div className="space-y-2">
                       {thinkTanks.map((tank) => (
@@ -172,7 +172,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
                   </div>
 
                   {/* Demo Animation Area */}
-                  <div className="flex-1 p-4 relative overflow-hidden">
+                  <div className="flex-1 p-6 relative overflow-hidden">
                     <div className="h-full flex flex-col items-center justify-center">
                       {/* Current Step Indicator */}
                       <div className="absolute top-4 right-4">
@@ -187,8 +187,8 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
                       {/* Data Flow Visualization */}
                       {showDataFlow && (
                         <div className="relative">
-                          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center animate-pulse">
-                            <Brain className="w-16 h-16 text-purple-600" />
+                          <div className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center animate-pulse">
+                            <Brain className="w-20 h-20 text-purple-600" />
                           </div>
 
                           {/* Animated data streams */}
@@ -259,99 +259,6 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
               )}
             </div>
 
-            {/* Right Panel - AI Agent */}
-            <div className="w-80 bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-              <div className="h-full flex flex-col">
-                {/* AI Agent Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-800">AI 智能助理</h4>
-                    <p className="text-xs text-gray-600">選情分析專家</p>
-                  </div>
-                </div>
-
-                {/* Demo Progress Bar */}
-                <div className="w-full mb-4">
-                  <div className="text-xs text-gray-600 mb-2">自動演示進度</div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000"
-                      style={{ width: `${((currentStep + 1) / demoSteps.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* AI Analysis Animation */}
-                <div className="space-y-3 overflow-y-auto">
-                  {showAIAnalysis && (
-                    <div className="space-y-3">
-                      {/* Real-time Analysis */}
-                      <div className="p-3 bg-white rounded-lg border border-blue-200 animate-slideIn">
-                        <p className="text-xs font-medium text-gray-800 mb-2">🤖 AI 即時分析</p>
-                        <div className="space-y-2">
-                          {[
-                            { label: '輿情赨勢', value: '持續上升 ↗️', color: 'text-green-600' },
-                            { label: '關鍵議題', value: '交通、教育、環保', color: 'text-blue-600' },
-                            { label: '情緒傾向', value: '正面 62%', color: 'text-purple-600' }
-                          ].map((item, itemIdx) => (
-                            <div
-                              key={itemIdx}
-                              className="flex justify-between text-xs animate-fadeIn"
-                              style={{ animationDelay: `${itemIdx * 0.2}s` }}
-                            >
-                              <span className="text-gray-600">{item.label}：</span>
-                              <span className={cn("font-medium", item.color)}>{item.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Strategic Suggestions */}
-                      <div className="p-3 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                        <p className="text-xs font-medium text-gray-800 mb-2">🎯 策略建議</p>
-                        <ul className="space-y-1 text-xs text-gray-600">
-                          <li className="flex items-start gap-1">
-                            <span className="text-green-500">✓</span>
-                            <span>加強交通議題宣傳</span>
-                          </li>
-                          <li className="flex items-start gap-1">
-                            <span className="text-green-500">✓</span>
-                            <span>回應民眾教育訴求</span>
-                          </li>
-                          <li className="flex items-start gap-1">
-                            <span className="text-green-500">✓</span>
-                            <span>提出環保政策藍圖</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Default Assistant Info */}
-                  <div className="p-3 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <p className="text-xs font-medium text-gray-800">AI 助理運作中</p>
-                    </div>
-                    <p className="text-xs text-gray-600">
-                      正在分析智庫資料，為您提供最新選情洞察...
-                    </p>
-                  </div>
-                </div>
-
-                {/* Input Area */}
-                <div className="mt-auto p-3 bg-white rounded-lg border border-gray-200">
-                  <input
-                    type="text"
-                    placeholder="詢問AI助理..."
-                    className="w-full text-xs bg-transparent outline-none text-gray-700 placeholder-gray-400"
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Bottom Demo Tabs */}
@@ -408,7 +315,7 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
         </div>
 
         {/* Feature Tags */}
-        <div className="flex flex-wrap gap-2 mt-4 justify-center">
+        <div className="flex flex-wrap gap-2 mt-3 justify-center">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">智庫整合</span>
           <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">即時分析</span>
           <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">策略模擬</span>

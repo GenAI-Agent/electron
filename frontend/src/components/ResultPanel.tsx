@@ -44,7 +44,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 }) => {
   return (
     <div
-      className="w-full h-full p-3 pr-3.5 pb-4 overflow-auto flex flex-col relative"
+      className="w-full h-full p-3 pr-3.5 pb-2 overflow-auto flex flex-col relative"
     >
       {mode === 'result' && (
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -100,7 +100,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-400 text-xs">
-              輸入訊息開始對話...
+              DM me...
             </div>
           )}
 

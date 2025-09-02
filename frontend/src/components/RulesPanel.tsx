@@ -507,17 +507,17 @@ const RulesPanel: React.FC<RulesPanelProps> = ({ onRulesUpdate }) => {
         </div>
 
         {/* 規則網格 */}
-        <div className="flex-1 p-1 overflow-auto grid grid-cols-2 gap-1 content-start">
+        <div className="flex-1 overflow-x-hidden p-1 overflow-auto grid grid-cols-2 gap-1 content-start">
           {rules.map((rule) => (
             <div
               key={rule.id}
-              className="h-[140px] bg-card rounded-lg border border-border cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-primary/50 flex flex-col group"
+              className="h-[140px] bg-card rounded-lg border border-border cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/50 flex flex-col group"
               onClick={() => handleRuleClick(rule)}
             >
               <div className="p-3 flex flex-col h-full">
                 {/* 標題 */}
                 <div className="mb-2">
-                  <h3 className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+                  <h3 className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors truncate">
                     {rule.name}
                   </h3>
                 </div>

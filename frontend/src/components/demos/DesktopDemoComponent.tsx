@@ -52,7 +52,7 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => (prev + 1) % demoSteps.length);
-    }, 3000);
+    }, 5000);
 
     const fileInterval = setInterval(() => {
       setProcessingFiles(prev => {
