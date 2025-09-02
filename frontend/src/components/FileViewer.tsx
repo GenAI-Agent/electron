@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { cn } from '@/utils/cn';
-import DataFileViewer from './DataFileViewer';
 import DataTable from './DataTable';
 import path from 'path';
 
@@ -175,9 +173,9 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
     if (fileContent.type === 'json') {
       return (
         <div className="h-full overflow-auto p-4">
-            <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto">
-              {JSON.stringify(fileContent.data, null, 2)}
-            </pre>
+          <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(fileContent.data, null, 2)}
+          </pre>
         </div>
       );
     }
@@ -186,15 +184,15 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
     if (fileContent.type === 'image') {
       return (
         <div className="h-full overflow-auto p-4 flex items-center justify-center">
-            <img
-              src={`file://${fileContent.filePath}`}
-              alt="圖片預覽"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain'
-              }}
-            />
+          <img
+            src={`file://${fileContent.filePath}`}
+            alt="圖片預覽"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain'
+            }}
+          />
         </div>
       );
     }
@@ -203,16 +201,16 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
     if (fileContent.type === 'video') {
       return (
         <div className="h-full overflow-auto p-4 flex items-center justify-center">
-            <video
-              controls
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%'
-              }}
-            >
-              <source src={`file://${fileContent.filePath}`} />
-              您的瀏覽器不支持視頻播放
-            </video>
+          <video
+            controls
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+          >
+            <source src={`file://${fileContent.filePath}`} />
+            您的瀏覽器不支持視頻播放
+          </video>
         </div>
       );
     }
@@ -221,16 +219,16 @@ const FileViewer: React.FC<FileViewerProps> = ({ filePath }) => {
     if (fileContent.type === 'audio') {
       return (
         <div className="h-full overflow-auto p-4 flex items-center justify-center">
-            <audio
-              controls
-              style={{
-                width: '100%',
-                maxWidth: '500px'
-              }}
-            >
-              <source src={`file://${fileContent.filePath}`} />
-              您的瀏覽器不支持音頻播放
-            </audio>
+          <audio
+            controls
+            style={{
+              width: '100%',
+              maxWidth: '500px'
+            }}
+          >
+            <source src={`file://${fileContent.filePath}`} />
+            您的瀏覽器不支持音頻播放
+          </audio>
         </div>
       );
     }

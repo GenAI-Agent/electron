@@ -31,6 +31,7 @@ interface EmailSummary {
 interface Email extends EmailSummary {
   body: string;
   recipients: string[];
+  summary: EmailSummary | null;
   cc?: string[];
   bcc?: string[];
   from: string;
@@ -52,6 +53,7 @@ interface Attachment {
   isIndexed?: boolean;
   shouldIndex?: boolean;
   contentSummary?: string;
+  onDownload?: () => void;
   url?: string;
 }
 
@@ -62,6 +64,7 @@ interface EmailThreadType {
   messageCount: number;
   lastActivity: Date;
   isRead: boolean;
+  isUnread: boolean;
   isStarred: boolean;
   hasAttachments: boolean;
   labels: EmailLabel[];
@@ -115,11 +118,11 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
   const handleDownloadAttachment = async (attachmentId: string, filename: string) => {
     try {
       const response = await fetch(`/api/attachments/${attachmentId}/download`)
-      
+
       if (!response.ok) {
         throw new Error('Failed to download attachment')
       }
-      
+
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -179,7 +182,7 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
                 )}
               </div>
               <span className="text-sm text-muted-foreground">
-                {formatEmailDate(lastEmail.date)}
+                {formatEmailDate(lastEmail.timestamp)}
               </span>
             </div>
 
@@ -190,9 +193,9 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
               </span>
             </div>
 
-            {!isExpanded && lastEmail.snippet && (
+            {!isExpanded && lastEmail.preview && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {lastEmail.snippet}
+                {lastEmail.preview}
               </p>
             )}
           </div>
@@ -235,13 +238,13 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(email.date), 'yyyy/MM/dd HH:mm')}
+                        {format(new Date(email.timestamp), 'yyyy/MM/dd HH:mm')}
                       </span>
                     </div>
 
-                    {selectedEmailId !== email.id && email.snippet && (
+                    {selectedEmailId !== email.id && email.preview && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {email.snippet}
+                        {email.preview}
                       </p>
                     )}
                   </div>
@@ -253,17 +256,17 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
                 <div className="px-4 pb-4">
                   {/* Recipients */}
                   <div className="text-sm text-muted-foreground mb-3 ml-11">
-                    <div>收件人: {email.to.join(', ')}</div>
-                    {email.cc.length > 0 && <div>副本: {email.cc.join(', ')}</div>}
+                    <div>收件人: {email.recipients.join(', ')}</div>
+                    {email.cc && email.cc.length > 0 && <div>副本: {email.cc.join(', ')}</div>}
                   </div>
 
                   {/* Email Summary */}
                   {email.summary && (
                     <div className="ml-11 mb-4 p-3 bg-blue-50 rounded-lg">
                       <h4 className="font-medium text-sm mb-2 text-blue-900">AI 摘要</h4>
-                      <p className="text-sm text-blue-800">{email.summary.summary}</p>
-                      
-                      {email.summary.actionItems.length > 0 && (
+                      <p className="text-sm text-blue-800">{JSON.stringify(email.summary)}</p>
+
+                      {/* {email.summary.actionItems && email.summary.actionItems.length > 0 && (
                         <div className="mt-2">
                           <h5 className="font-medium text-xs text-blue-900 mb-1">待辦事項:</h5>
                           <ul className="list-disc list-inside text-xs text-blue-800">
@@ -278,20 +281,20 @@ export function EmailThread({ thread, defaultExpanded = false, enableNavigation 
                         <Badge variant="outline" className="mt-2 text-xs">
                           {email.summary.category}
                         </Badge>
-                      )}
+                      )} */}
                     </div>
                   )}
 
                   {/* Email Body */}
                   <div className="ml-11">
-                    <div 
+                    <div
                       className="prose prose-sm max-w-none text-sm"
                       dangerouslySetInnerHTML={{ __html: email.body || '' }}
                     />
                   </div>
 
                   {/* Attachments */}
-                  {email.attachments.length > 0 && (
+                  {email.attachments && email.attachments.length > 0 && (
                     <div className="ml-11 mt-4">
                       <h4 className="font-medium text-sm mb-2">附件 ({email.attachments.length})</h4>
                       <div className="space-y-2">

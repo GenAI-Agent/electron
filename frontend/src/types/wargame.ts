@@ -4,12 +4,13 @@
 export interface WarGameProject {
   id: string;
   name: string;
-  type: 'election' | 'referendum' | 'crisis_response';
+  type: "election" | "referendum" | "crisis_response";
   description: string;
   createdAt: Date;
   updatedAt: Date;
-  status: 'active' | 'completed' | 'archived';
-
+  status: "active" | "completed" | "archived";
+  strategies: Strategy[];
+  simulation: SimulationProcess;
   // 基本設定
   baseSettings: {
     scenario: string; // "台北市長選舉", "核能公投"
@@ -44,7 +45,7 @@ export interface WarGameSession {
   name: string;
   description: string;
   createdAt: Date;
-  status: 'planning' | 'running' | 'completed';
+  status: "planning" | "running" | "completed";
 
   // 本次兵推的變數設定
   variables: WarGameVariables;
@@ -70,9 +71,9 @@ export interface WarGameSession {
 export interface WarGameVariables {
   // 外部環境變數
   environment: {
-    economicCondition: 'good' | 'neutral' | 'poor';
-    mediaEnvironment: 'favorable' | 'neutral' | 'hostile';
-    publicMood: 'optimistic' | 'neutral' | 'pessimistic';
+    economicCondition: "good" | "neutral" | "poor";
+    mediaEnvironment: "favorable" | "neutral" | "hostile";
+    publicMood: "optimistic" | "neutral" | "pessimistic";
     majorEvents: string[]; // ["颱風災害", "經濟數據公布"]
   };
 
@@ -82,7 +83,7 @@ export interface WarGameVariables {
       initialSupport: number; // 初始支持度
       budget: number;
       teamStrength: number; // 1-10
-      mediaRelations: 'good' | 'neutral' | 'poor';
+      mediaRelations: "good" | "neutral" | "poor";
       scandals: string[];
       advantages: string[];
     };
@@ -109,32 +110,32 @@ export interface Strategy {
   name: string;
   description: string;
   color: string; // 用於UI顯示的顏色
-  
+
   // 策略內容
   tactics: Tactic[];
   expectedOutcomes: ExpectedOutcome[];
   risks: Risk[];
   opportunities: Opportunity[];
-  
+
   // 資源需求
   resourceRequirements: ResourceRequirement[];
-  
+
   // 評估指標
   metrics: {
     successProbability: number; // 0-100
     confidenceLevel: number; // 0-100
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
     difficulty: number; // 1-10
     timeToImpact: number; // 天數
     costEffectiveness: number; // 1-10
   };
-  
+
   // 預測結果
   predictions: {
     voteShareChange: number; // 預期得票率變化
     supporterGrowth: number; // 支持者增長
     opponentResponse: string; // 對手可能反應
-    mediaImpact: 'positive' | 'neutral' | 'negative';
+    mediaImpact: "positive" | "neutral" | "negative";
     publicSentiment: number; // -1 to 1
   };
 }
@@ -143,7 +144,7 @@ export interface Tactic {
   id: string;
   name: string;
   description: string;
-  type: 'media' | 'grassroots' | 'policy' | 'event' | 'digital';
+  type: "media" | "grassroots" | "policy" | "event" | "digital";
   timeline: {
     startWeek: number;
     duration: number; // 週數
@@ -155,7 +156,7 @@ export interface Tactic {
 export interface ExpectedOutcome {
   description: string;
   probability: number; // 0-100
-  impact: 'high' | 'medium' | 'low';
+  impact: "high" | "medium" | "low";
   timeframe: string;
   metrics: {
     voteShare?: number;
@@ -168,8 +169,8 @@ export interface Risk {
   id: string;
   description: string;
   probability: number; // 0-100
-  impact: 'high' | 'medium' | 'low';
-  category: 'political' | 'media' | 'resource' | 'timing' | 'opponent';
+  impact: "high" | "medium" | "low";
+  category: "political" | "media" | "resource" | "timing" | "opponent";
   mitigation: string;
   contingencyPlan?: string;
 }
@@ -178,25 +179,28 @@ export interface Opportunity {
   id: string;
   description: string;
   probability: number; // 0-100
-  impact: 'high' | 'medium' | 'low';
+  impact: "high" | "medium" | "low";
   timeWindow: string;
   requirements: string[];
 }
 
 export interface ResourceRequirement {
-  type: 'budget' | 'personnel' | 'time' | 'media' | 'technology';
+  type: "budget" | "personnel" | "time" | "media" | "technology";
   amount: number;
   unit: string;
-  priority: 'critical' | 'important' | 'optional';
-  availability: 'available' | 'limited' | 'unavailable';
+  priority: "critical" | "important" | "optional";
+  availability: "available" | "limited" | "unavailable";
 }
 
 export interface SimulationProcess {
   // 推演階段
   phases: SimulationPhase[];
 
-  // 時間序列數據
+  // 時間序列數據 (用於圖表)
   timeline: TimelineData[];
+
+  // 活動時間軸 (用於顯示活動列表)
+  timelineEvents: TimelineEvent[];
 
   // 關鍵事件
   keyEvents: KeyEvent[];
@@ -246,13 +250,13 @@ export interface PollData {
     [playerId: string]: number;
   };
   marginOfError: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
 }
 
 // 週期性數據
 export interface PeriodicData {
   period: number;
-  type: 'week' | 'month';
+  type: "week" | "month";
 
   // 策略執行情況
   strategyExecution: {
@@ -293,7 +297,7 @@ export interface SimulationPhase {
   keyActivities: string[];
   expectedOutcomes: string[];
   actualOutcomes?: string[];
-  status: 'planned' | 'active' | 'completed';
+  status: "planned" | "active" | "completed";
 }
 
 export interface KeyEvent {
@@ -301,8 +305,8 @@ export interface KeyEvent {
   name: string;
   description: string;
   week: number;
-  type: 'milestone' | 'risk_materialized' | 'opportunity' | 'external_event';
-  impact: 'positive' | 'negative' | 'neutral';
+  type: "milestone" | "risk_materialized" | "opportunity" | "external_event";
+  impact: "positive" | "negative" | "neutral";
   affectedStrategies: string[];
   response: string;
 }
@@ -324,7 +328,7 @@ export interface DecisionOption {
   description: string;
   pros: string[];
   cons: string[];
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: "low" | "medium" | "high";
   resourceCost: number;
 }
 
@@ -333,7 +337,7 @@ export interface TimelineEvent {
   events: {
     strategy: string;
     activity: string;
-    status: 'planned' | 'active' | 'completed' | 'delayed' | 'cancelled';
+    status: "planned" | "active" | "completed" | "delayed" | "cancelled";
     impact?: number;
   }[];
 }
@@ -342,8 +346,8 @@ export interface Insight {
   id: string;
   title: string;
   description: string;
-  type: 'discovery' | 'risk_alert' | 'opportunity' | 'recommendation';
-  priority: 'high' | 'medium' | 'low';
+  type: "discovery" | "risk_alert" | "opportunity" | "recommendation";
+  priority: "high" | "medium" | "low";
   discoveredAt: number; // 週數
   relatedStrategies: string[];
   actionRequired: boolean;
@@ -357,19 +361,19 @@ export interface WarGameResults {
     confidenceLevel: number;
     keyFactors: string[];
   };
-  
+
   strategyComparison: StrategyComparison[];
-  
+
   riskAssessment: {
-    overallRiskLevel: 'low' | 'medium' | 'high';
+    overallRiskLevel: "low" | "medium" | "high";
     topRisks: Risk[];
     mitigationPlan: string[];
   };
-  
+
   recommendations: Recommendation[];
-  
+
   nextSteps: string[];
-  
+
   lessons: string[];
 }
 
@@ -388,8 +392,8 @@ export interface Recommendation {
   id: string;
   title: string;
   description: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  category: 'strategy' | 'tactics' | 'resources' | 'timing' | 'risk_management';
+  priority: "critical" | "high" | "medium" | "low";
+  category: "strategy" | "tactics" | "resources" | "timing" | "risk_management";
   implementation: {
     timeframe: string;
     resources: string[];

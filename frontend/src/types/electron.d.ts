@@ -206,6 +206,26 @@ declare global {
           hasGoogleAuth?: boolean;
           error?: string;
         }>;
+        getUserInfo: (accessToken: string) => Promise<{
+          success: boolean;
+          userInfo?: {
+            id: string;
+            email: string;
+            name: string;
+            picture?: string;
+            verified_email?: boolean;
+          };
+          error?: string;
+        }>;
+        getAuthStatus: () => Promise<{
+          success: boolean;
+          isAuthenticated?: boolean;
+          error?: string;
+        }>;
+        clearCookies: (domain: string) => Promise<{
+          success: boolean;
+          error?: string;
+        }>;
       };
 
       browserControl: {

@@ -6,8 +6,23 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronUp, Mail, Clock, User, Tag, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import type { EmailSummary } from '@/types'
+import { cn } from '@/utils/cn'
+interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  timestamp: Date;
+  isRead: boolean;
+  isStarred: boolean;
+  hasAttachments: boolean;
+  importance?: 'high' | 'medium' | 'low';
+  category?: string;
+  actionItems?: string[];
+  summary?: string;
+  from?: string;
+  date?: Date;
+}
 
 interface SummaryPanelProps {
   summary: EmailSummary
@@ -55,22 +70,22 @@ export function SummaryPanel({ summary, className }: SummaryPanelProps) {
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{new Date(summary.date).toLocaleDateString('zh-TW')}</span>
+                <span>{new Date(summary.date || new Date()).toLocaleDateString('zh-TW')}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {summary.importance && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={cn("text-xs", getImportanceColor(summary.importance))}
               >
                 {getImportanceIcon(summary.importance)}
                 <span className="ml-1 capitalize">{summary.importance}</span>
               </Badge>
             )}
-            
+
             {summary.category && (
               <Badge variant="secondary" className="text-xs">
                 <Tag className="w-3 h-3 mr-1" />
@@ -117,7 +132,7 @@ export function SummaryPanel({ summary, className }: SummaryPanelProps) {
               <Mail className="w-4 h-4 mr-1" />
               查看來源郵件
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -157,7 +172,7 @@ export function SummaryPanel({ summary, className }: SummaryPanelProps) {
                   <div className="text-sm text-gray-600">
                     <p><strong>主旨:</strong> {summary.subject}</p>
                     <p><strong>寄件者:</strong> {summary.from}</p>
-                    <p><strong>日期:</strong> {new Date(summary.date).toLocaleString('zh-TW')}</p>
+                    <p><strong>日期:</strong> {new Date(summary.date || new Date()).toLocaleString('zh-TW')}</p>
                   </div>
                 </div>
               </motion.div>

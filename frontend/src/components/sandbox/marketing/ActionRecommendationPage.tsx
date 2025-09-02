@@ -602,7 +602,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
   className,
   onOpenDataTab
 }) => {
-  const [activeTab, setActiveTab] = useState<'plans' | 'simulation' | 'strategy' | 'action' | 'timeline'>('plans');
+  const [activeTab, setActiveTab] = useState<'plans' | 'simulation' | 'strategy' | 'action' | 'timeline' | 'opportunities'>('plans');
   const [selectedPlan, setSelectedPlan] = useState<ActionPlan | null>(null);
 
   // 推演相關狀態
@@ -666,7 +666,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
         time: new Date().toTimeString().split(' ')[0],
         fullPath: `marketing-sandbox/action_${dataType}.csv`
       };
-      
+
       let data: any[] = [];
       switch (dataType) {
         case 'plans':
@@ -679,7 +679,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
           data = mockMarketOpportunities;
           break;
       }
-      
+
       onOpenDataTab('action', mockFile, data);
     }
   };
@@ -696,327 +696,326 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
         </div>
       </div>
 
-              {/* Tab Navigation */}
-        <div className="flex border-t border-gray-200">
-          {[
-            { key: 'plans', label: '行動計畫', icon: Target },
-            { key: 'simulation', label: '推演記錄', icon: BarChart3 },
-            { key: 'strategy', label: '每輪策略', icon: Eye },
-            { key: 'action', label: '行動建議', icon: Zap },
-            { key: 'timeline', label: '時間序列', icon: Calendar }
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={cn(
-                "flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
-                activeTab === tab.key
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              )}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>}
+      {/* Tab Navigation */}
+      <div className="flex border-t border-gray-200">
+        {[
+          { key: 'plans', label: '行動計畫', icon: Target },
+          { key: 'simulation', label: '推演記錄', icon: BarChart3 },
+          { key: 'strategy', label: '每輪策略', icon: Eye },
+          { key: 'action', label: '行動建議', icon: Zap },
+          { key: 'timeline', label: '時間序列', icon: Calendar }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            className={cn(
+              "flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
+              activeTab === tab.key
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            )}
+          >
+            <tab.icon className="w-4 h-4" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
 
       {/* 行動建議內容 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Action Plans List */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">推薦行動方案</h3>
-              <button
-                onClick={() => exportData('plans')}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                匯出數據
-              </button>
-            </div>
-            
-            {mockActionPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={cn(
-                  "bg-white rounded-lg p-6 shadow-sm border cursor-pointer transition-colors",
-                  selectedPlan?.id === plan.id ? "border-blue-500 bg-blue-50" : "hover:border-gray-300"
-                )}
-                onClick={() => setSelectedPlan(plan)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    {getCategoryIcon(plan.category)}
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{plan.title}</h4>
-                      <p className="text-sm text-gray-600">{plan.description}</p>
-                    </div>
-                  </div>
-                  {getStatusIcon(plan.status)}
-                </div>
-                
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium border",
-                      getPriorityColor(plan.priority)
-                    )}>
-                      {plan.priority === 'high' ? '高優先' :
-                       plan.priority === 'medium' ? '中優先' : '低優先'}
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      影響度: {plan.impact}% | 執行難度: {plan.effort}%
-                    </span>
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      plan.dataSource.confidence > 80 ? "bg-green-50 text-green-600" :
-                      plan.dataSource.confidence > 60 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
-                    )}>
-                      信心度: {plan.dataSource.confidence}%
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-500">{plan.timeline}</span>
-                </div>
-
-                <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Eye className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-medium text-blue-900">建議來源</span>
-                  </div>
-                  <p className="text-sm text-blue-800">{plan.dataSource.description}</p>
-                </div>
-
-                <div className="flex items-center space-x-6 text-sm mb-3">
-                  <div className="flex items-center space-x-1">
-                    <DollarSign className="w-4 h-4 text-green-500" />
-                    <span className="text-green-600">+{plan.expectedResults.revenue}%</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <BarChart3 className="w-4 h-4 text-blue-500" />
-                    <span className="text-blue-600">+{plan.expectedResults.marketShare}%</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Users className="w-4 h-4 text-purple-500" />
-                    <span className={cn(
-                      plan.expectedResults.customerSatisfaction >= 0 ? "text-purple-600" : "text-red-600"
-                    )}>
-                      {plan.expectedResults.customerSatisfaction >= 0 ? '+' : ''}{plan.expectedResults.customerSatisfaction}%
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Zap className="w-4 h-4 text-orange-500" />
-                    <span className="text-orange-600">ROI: {plan.executionPlan.expectedROI}x</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Action Plans List */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">推薦行動方案</h3>
+            <button
+              onClick={() => exportData('plans')}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              匯出數據
+            </button>
           </div>
 
-          {/* Detailed Plan Analysis */}
-          {selectedPlan && (
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">{selectedPlan.title} - 詳細執行計畫</h3>
-                <button
-                  onClick={() => setSelectedPlan(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* 支撐數據 */}
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-3">支撐數據與分析依據</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedPlan.dataSource.supportingData.map((data, index) => (
-                    <div key={index} className="flex items-start space-x-2">
-                      <BarChart3 className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-blue-800">{data}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 預算與ROI */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-green-50 rounded-lg text-center">
-                  <DollarSign className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm text-green-600">總預算</p>
-                  <p className="text-lg font-bold text-green-900">
-                    ${(selectedPlan.executionPlan.budget / 1000000).toFixed(1)}M
-                  </p>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg text-center">
-                  <TrendingUp className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                  <p className="text-sm text-blue-600">預期ROI</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {selectedPlan.executionPlan.expectedROI}x
-                  </p>
-                </div>
-                <div className="p-4 bg-purple-50 rounded-lg text-center">
-                  <Calendar className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                  <p className="text-sm text-purple-600">執行週期</p>
-                  <p className="text-lg font-bold text-purple-900">{selectedPlan.timeline}</p>
-                </div>
-                <div className="p-4 bg-orange-50 rounded-lg text-center">
-                  <Shield className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-                  <p className="text-sm text-orange-600">風險緩解</p>
-                  <p className="text-lg font-bold text-orange-900">
-                    {selectedPlan.expectedResults.riskMitigation}%
-                  </p>
-                </div>
-              </div>
-
-              {/* 時程規劃 */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-4">執行時程</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <h5 className="font-medium text-yellow-900 mb-2">準備階段</h5>
-                    <p className="text-sm text-yellow-800">{selectedPlan.executionPlan.timeline.preparation}</p>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <h5 className="font-medium text-green-900 mb-2">執行階段</h5>
-                    <p className="text-sm text-green-800">{selectedPlan.executionPlan.timeline.execution}</p>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h5 className="font-medium text-blue-900 mb-2">評估階段</h5>
-                    <p className="text-sm text-blue-800">{selectedPlan.executionPlan.timeline.evaluation}</p>
+          {mockActionPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className={cn(
+                "bg-white rounded-lg p-6 shadow-sm border cursor-pointer transition-colors",
+                selectedPlan?.id === plan.id ? "border-blue-500 bg-blue-50" : "hover:border-gray-300"
+              )}
+              onClick={() => setSelectedPlan(plan)}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  {getCategoryIcon(plan.category)}
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{plan.title}</h4>
+                    <p className="text-sm text-gray-600">{plan.description}</p>
                   </div>
                 </div>
+                {getStatusIcon(plan.status)}
               </div>
 
-              {/* 部門協調 */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-4">部門協調與資源分配</h4>
-                <div className="space-y-3">
-                  {selectedPlan.executionPlan.departments.map((dept, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Users className="w-4 h-4 text-gray-500" />
-                        <div>
-                          <p className="font-medium text-gray-900">{dept.name}</p>
-                          <p className="text-sm text-gray-600">{dept.responsibility}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900">{dept.resources}%</p>
-                        <p className="text-xs text-gray-500">資源配置</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-4">
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium border",
+                    getPriorityColor(plan.priority)
+                  )}>
+                    {plan.priority === 'high' ? '高優先' :
+                      plan.priority === 'medium' ? '中優先' : '低優先'}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    影響度: {plan.impact}% | 執行難度: {plan.effort}%
+                  </span>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium",
+                    plan.dataSource.confidence > 80 ? "bg-green-50 text-green-600" :
+                      plan.dataSource.confidence > 60 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
+                  )}>
+                    信心度: {plan.dataSource.confidence}%
+                  </span>
                 </div>
+                <span className="text-sm text-gray-500">{plan.timeline}</span>
               </div>
 
-              {/* 里程碑 */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-4">關鍵里程碑</h4>
-                <div className="space-y-4">
-                  {selectedPlan.executionPlan.milestones.map((milestone, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h5 className="font-medium text-gray-900">{milestone.phase}</h5>
-                        <span className="text-sm text-gray-500">{milestone.deadline}</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">交付成果:</p>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {milestone.deliverables.map((deliverable, idx) => (
-                              <li key={idx} className="flex items-center">
-                                <CheckCircle className="w-3 h-3 text-green-500 mr-2" />
-                                {deliverable}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">關鍵指標:</p>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {milestone.kpis.map((kpi, idx) => (
-                              <li key={idx} className="flex items-center">
-                                <Target className="w-3 h-3 text-blue-500 mr-2" />
-                                {kpi}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Eye className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-900">建議來源</span>
                 </div>
+                <p className="text-sm text-blue-800">{plan.dataSource.description}</p>
               </div>
 
-              {/* 異業合作 */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-4">異業合作夥伴</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedPlan.executionPlan.partnerships.map((partnership, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="font-medium text-gray-900">{partnership.partner}</h5>
-                        <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          partnership.type === 'tech' ? "bg-blue-50 text-blue-600" :
-                          partnership.type === 'vendor' ? "bg-green-50 text-green-600" :
-                          partnership.type === 'airline' ? "bg-purple-50 text-purple-600" :
-                          partnership.type === 'hotel' ? "bg-yellow-50 text-yellow-600" : "bg-gray-50 text-gray-600"
-                        )}>
-                          {partnership.type}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{partnership.contribution}</p>
-                    </div>
-                  ))}
+              <div className="flex items-center space-x-6 text-sm mb-3">
+                <div className="flex items-center space-x-1">
+                  <DollarSign className="w-4 h-4 text-green-500" />
+                  <span className="text-green-600">+{plan.expectedResults.revenue}%</span>
                 </div>
-              </div>
-
-              {/* 風險評估與緩解 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">風險評估與緩解策略</h4>
-                  <div className="space-y-3">
-                    {selectedPlan.risks.map((risk, index) => (
-                      <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-start justify-between mb-2">
-                          <h5 className="font-medium text-red-900">{risk.risk}</h5>
-                          <div className="text-right">
-                            <p className="text-xs text-red-600">機率: {risk.probability}%</p>
-                            <p className="text-xs text-red-600">影響: {risk.impact}%</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <Shield className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-gray-700">{risk.mitigation}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex items-center space-x-1">
+                  <BarChart3 className="w-4 h-4 text-blue-500" />
+                  <span className="text-blue-600">+{plan.expectedResults.marketShare}%</span>
                 </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">執行要求</h4>
-                  <ul className="space-y-2">
-                    {selectedPlan.requirements.map((req, index) => (
-                      <li key={index} className="text-sm text-gray-600 flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex items-center space-x-1">
+                  <Users className="w-4 h-4 text-purple-500" />
+                  <span className={cn(
+                    plan.expectedResults.customerSatisfaction >= 0 ? "text-purple-600" : "text-red-600"
+                  )}>
+                    {plan.expectedResults.customerSatisfaction >= 0 ? '+' : ''}{plan.expectedResults.customerSatisfaction}%
+                  </span>
                 </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  開始執行方案
-                </button>
+                <div className="flex items-center space-x-1">
+                  <Zap className="w-4 h-4 text-orange-500" />
+                  <span className="text-orange-600">ROI: {plan.executionPlan.expectedROI}x</span>
+                </div>
               </div>
             </div>
-          )}
+          ))}
         </div>
-      )}
+
+        {/* Detailed Plan Analysis */}
+        {selectedPlan && (
+          <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">{selectedPlan.title} - 詳細執行計畫</h3>
+              <button
+                onClick={() => setSelectedPlan(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 支撐數據 */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-3">支撐數據與分析依據</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedPlan.dataSource.supportingData.map((data, index) => (
+                  <div key={index} className="flex items-start space-x-2">
+                    <BarChart3 className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-blue-800">{data}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 預算與ROI */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 bg-green-50 rounded-lg text-center">
+                <DollarSign className="w-6 h-6 text-green-500 mx-auto mb-2" />
+                <p className="text-sm text-green-600">總預算</p>
+                <p className="text-lg font-bold text-green-900">
+                  ${(selectedPlan.executionPlan.budget / 1000000).toFixed(1)}M
+                </p>
+              </div>
+              <div className="p-4 bg-blue-50 rounded-lg text-center">
+                <TrendingUp className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                <p className="text-sm text-blue-600">預期ROI</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {selectedPlan.executionPlan.expectedROI}x
+                </p>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg text-center">
+                <Calendar className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+                <p className="text-sm text-purple-600">執行週期</p>
+                <p className="text-lg font-bold text-purple-900">{selectedPlan.timeline}</p>
+              </div>
+              <div className="p-4 bg-orange-50 rounded-lg text-center">
+                <Shield className="w-6 h-6 text-orange-500 mx-auto mb-2" />
+                <p className="text-sm text-orange-600">風險緩解</p>
+                <p className="text-lg font-bold text-orange-900">
+                  {selectedPlan.expectedResults.riskMitigation}%
+                </p>
+              </div>
+            </div>
+
+            {/* 時程規劃 */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-4">執行時程</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <h5 className="font-medium text-yellow-900 mb-2">準備階段</h5>
+                  <p className="text-sm text-yellow-800">{selectedPlan.executionPlan.timeline.preparation}</p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h5 className="font-medium text-green-900 mb-2">執行階段</h5>
+                  <p className="text-sm text-green-800">{selectedPlan.executionPlan.timeline.execution}</p>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h5 className="font-medium text-blue-900 mb-2">評估階段</h5>
+                  <p className="text-sm text-blue-800">{selectedPlan.executionPlan.timeline.evaluation}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 部門協調 */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-4">部門協調與資源分配</h4>
+              <div className="space-y-3">
+                {selectedPlan.executionPlan.departments.map((dept, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Users className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">{dept.name}</p>
+                        <p className="text-sm text-gray-600">{dept.responsibility}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">{dept.resources}%</p>
+                      <p className="text-xs text-gray-500">資源配置</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 里程碑 */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-4">關鍵里程碑</h4>
+              <div className="space-y-4">
+                {selectedPlan.executionPlan.milestones.map((milestone, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="font-medium text-gray-900">{milestone.phase}</h5>
+                      <span className="text-sm text-gray-500">{milestone.deadline}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">交付成果:</p>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {milestone.deliverables.map((deliverable, idx) => (
+                            <li key={idx} className="flex items-center">
+                              <CheckCircle className="w-3 h-3 text-green-500 mr-2" />
+                              {deliverable}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">關鍵指標:</p>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {milestone.kpis.map((kpi, idx) => (
+                            <li key={idx} className="flex items-center">
+                              <Target className="w-3 h-3 text-blue-500 mr-2" />
+                              {kpi}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 異業合作 */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-4">異業合作夥伴</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedPlan.executionPlan.partnerships.map((partnership, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-900">{partnership.partner}</h5>
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium",
+                        partnership.type === 'tech' ? "bg-blue-50 text-blue-600" :
+                          partnership.type === 'vendor' ? "bg-green-50 text-green-600" :
+                            partnership.type === 'airline' ? "bg-purple-50 text-purple-600" :
+                              partnership.type === 'hotel' ? "bg-yellow-50 text-yellow-600" : "bg-gray-50 text-gray-600"
+                      )}>
+                        {partnership.type}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{partnership.contribution}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 風險評估與緩解 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">風險評估與緩解策略</h4>
+                <div className="space-y-3">
+                  {selectedPlan.risks.map((risk, index) => (
+                    <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <h5 className="font-medium text-red-900">{risk.risk}</h5>
+                        <div className="text-right">
+                          <p className="text-xs text-red-600">機率: {risk.probability}%</p>
+                          <p className="text-xs text-red-600">影響: {risk.impact}%</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Shield className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-700">{risk.mitigation}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">執行要求</h4>
+                <ul className="space-y-2">
+                  {selectedPlan.requirements.map((req, index) => (
+                    <li key={index} className="text-sm text-gray-600 flex items-center">
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                開始執行方案
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 移除fleet標籤內容，因為已經簡化為只有行動建議 */}
       {false && (
@@ -1030,7 +1029,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
               匯出數據
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {mockFleetSchedule.map((aircraft) => (
               <div key={aircraft.aircraftId} className="bg-white rounded-lg p-6 shadow-sm border">
@@ -1042,33 +1041,33 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
                     aircraft.utilization > 80 ? "bg-green-50 text-green-600" :
-                    aircraft.utilization > 60 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
+                      aircraft.utilization > 60 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
                   )}>
                     使用率 {aircraft.utilization}%
                   </span>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-gray-600">機型</p>
                     <p className="font-medium text-gray-900">{aircraft.aircraftType}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">當前航線</p>
                     <p className="font-medium text-gray-900">{aircraft.currentRoute}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">下次可用時間</p>
                     <p className="font-medium text-gray-900">{aircraft.nextAvailable}</p>
                   </div>
-                  
+
                   <div className="pt-3 border-t">
                     <p className="text-sm text-gray-600 mb-2">建議行動</p>
                     <p className="font-medium text-blue-600">{aircraft.recommendedAction}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600 mb-2">可選航線</p>
                     <div className="flex flex-wrap gap-1">
@@ -1097,7 +1096,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
               匯出數據
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {mockMarketOpportunities.map((opportunity, index) => (
               <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
@@ -1110,7 +1109,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                     優先度: {opportunity.priority}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-600">市場規模</p>
@@ -1121,7 +1120,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                     <p className="font-medium text-green-600">{opportunity.profitability}%</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm text-gray-600">競爭程度</p>
@@ -1130,7 +1129,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                       getCompetitionColor(opportunity.competition)
                     )}>
                       {opportunity.competition === 'low' ? '低競爭' :
-                       opportunity.competition === 'medium' ? '中競爭' : '高競爭'}
+                        opportunity.competition === 'medium' ? '中競爭' : '高競爭'}
                     </span>
                   </div>
                   <div>
@@ -1138,7 +1137,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                     <p className="text-sm font-medium text-gray-900">{opportunity.seasonality}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-gray-600 mb-2">進入障礙</p>
@@ -1151,7 +1150,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600 mb-2">建議策略</p>
                     <div className="space-y-1">
@@ -1168,7 +1167,7 @@ export const ActionRecommendationPage: React.FC<ActionRecommendationPageProps> =
             ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

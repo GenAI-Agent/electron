@@ -798,7 +798,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
         {/* Bottom Panel (Input) - Neumorphism style input area */}
         <div className="flex flex-col min-h-[100px] p-2 relative z-[2] bg-background overflow-visible">
           {/* Quick Rules Selection - Only show when no conversation history and panelMode is result */}
-          {panelMode === 'result' && input.trim() === '' && (
+          {panelMode === 'result' && input.trim() === '' && messages.length === 0 && (
             <div className="mb-2">
               <div className="flex flex-wrap gap-2 justify-start">
                 {availableRules.slice(0, 3).map((rule, index) => (

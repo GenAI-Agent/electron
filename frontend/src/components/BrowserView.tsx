@@ -57,7 +57,17 @@ const BrowserView: React.FC<BrowserViewProps> = ({
     };
 
     const handleDidFailLoad = (event: any) => {
-      console.error('Failed to load:', event.errorDescription);
+      console.error('Failed to load:', {
+        errorDescription: event.errorDescription,
+        errorCode: event.errorCode,
+        url: event.validatedURL,
+        isMainFrame: event.isMainFrame
+      });
+      
+      // For ERR_ABORTED (-3) specifically, provide helpful information
+      if (event.errorCode === -3) {
+        console.warn('ERR_ABORTED detected - This website may have security policies (CSP, X-Frame-Options) that prevent loading in webviews. Consider using external browser or implementing session header modification.');
+      }
     };
 
     const handleDidStartLoading = () => {
@@ -97,8 +107,9 @@ const BrowserView: React.FC<BrowserViewProps> = ({
         nodeintegration={false}
         webpreferences="contextIsolation=true,webSecurity=false"
         allowpopups={true}
-        useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         partition="persist:browser"
+        httpreferrer="https://www.google.com/"
       />
     </div>
   );

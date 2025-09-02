@@ -4,6 +4,7 @@ import { cn } from '@/utils/cn';
 import BrowserView from '@/components/BrowserView';
 import AgentPanel from '@/components/AgentPanel';
 import Header, { ViewMode } from '@/components/ui/header';
+import { ModalProvider, ModalManager } from '@/components/Modal';
 
 const BrowserPage: React.FC = () => {
   const router = useRouter();
@@ -54,7 +55,8 @@ const BrowserPage: React.FC = () => {
   if (!url && !path && !file) return null;
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background relative overflow-hidden">
+    <ModalProvider>
+      <div className="h-screen w-screen flex flex-col bg-background relative overflow-hidden">
       {/* Header */}
       <Header
         title={getTitle()}
@@ -62,7 +64,6 @@ const BrowserPage: React.FC = () => {
         onUrlChange={handleUrlChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-
       />
 
       {/* Main Content Area */}
@@ -164,7 +165,11 @@ const BrowserPage: React.FC = () => {
         </div>
 
       </div>
-    </div>
+
+      {/* Global Modal Manager */}
+      <ModalManager />
+      </div>
+    </ModalProvider>
   );
 };
 

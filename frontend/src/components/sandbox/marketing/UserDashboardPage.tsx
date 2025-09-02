@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  Users, 
-  TrendingUp, 
-  Plane, 
-  MapPin, 
-  Clock, 
-  BarChart3,
-  Activity,
-  Search,
-  Calendar,
-  Globe
+import {
+  Users,
+  TrendingUp,
+  Clock,
+  Globe,
+  AlertCircle,
+  DollarSign,
+  Star,
+  Target
 } from 'lucide-react';
 
 interface UserDashboardPageProps {
@@ -489,10 +487,10 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <span className={cn(
                         "text-xs",
                         comp.trend === 'improving' ? "text-blue-600" :
-                        comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
+                          comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
                       )}>
                         {comp.trend === 'improving' ? '↗' :
-                         comp.trend === 'declining' ? '↘' : '→'}
+                          comp.trend === 'declining' ? '↘' : '→'}
                       </span>
                     </div>
                   </div>
@@ -533,7 +531,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                         getSeverityColor(category.severity)
                       )}>
                         {category.severity === 'high' ? '高' :
-                         category.severity === 'medium' ? '中' : '低'}
+                          category.severity === 'medium' ? '中' : '低'}
                       </span>
                     </div>
                     <span className="text-lg font-bold text-gray-900">{category.count}</span>
@@ -578,10 +576,10 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <span className={cn(
                         "text-xs px-2 py-1 rounded-full",
                         issue.trend === 'increasing' ? "bg-gray-100 text-gray-700" :
-                        issue.trend === 'decreasing' ? "bg-blue-100 text-blue-700" : "bg-gray-50 text-gray-600"
+                          issue.trend === 'decreasing' ? "bg-blue-100 text-blue-700" : "bg-gray-50 text-gray-600"
                       )}>
                         {issue.trend === 'increasing' ? '↗ 增加' :
-                         issue.trend === 'decreasing' ? '↘ 減少' : '→ 穩定'}
+                          issue.trend === 'decreasing' ? '↘ 減少' : '→ 穩定'}
                       </span>
                     </div>
                   </div>
@@ -593,7 +591,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                           className={cn(
                             "h-2 rounded-full",
                             issue.impact > 80 ? "bg-blue-600" :
-                            issue.impact > 60 ? "bg-blue-400" : "bg-gray-400"
+                              issue.impact > 60 ? "bg-blue-400" : "bg-gray-400"
                           )}
                           style={{ width: `${issue.impact}%` }}
                         />
@@ -724,10 +722,10 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <span className={cn(
                         "text-sm font-medium",
                         comp.trend === 'improving' ? "text-blue-600" :
-                        comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
+                          comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
                       )}>
                         {comp.trend === 'improving' ? '↗ 改善中' :
-                         comp.trend === 'declining' ? '↘ 下滑中' : '→ 穩定'}
+                          comp.trend === 'declining' ? '↘ 下滑中' : '→ 穩定'}
                       </span>
                     </div>
                   </div>

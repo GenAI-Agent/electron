@@ -101,7 +101,7 @@ const ChinaAirlinesPage: React.FC = () => {
       tagText: 'Webpage',
       icon: Globe,
       mainText: '即插即用 華航AGI',
-      subText: '華航無需改變任何系統，直接成為 AGI 的一部分。\n用戶 DM Agent，即時在華航環境中查詢航班、規劃行程，甚至完成訂票。\n華航的一切功都能直接為AGI所用',
+      subText: '華航無需改變任何系統，直接成為 AGI 的一部分。\n用戶 DM Agent，即時在華航環境中查詢航班、規劃行程，甚至完成訂票。\n華航的一切功能都可直接為AGI所用',
       demoContent: {
         type: 'webpage',
         data: {

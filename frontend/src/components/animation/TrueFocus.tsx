@@ -39,7 +39,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
     const [focusRect, setFocusRect] = useState<FocusRect>({ x: 0, y: 0, width: 0, height: 0 });
 
     useEffect(() => {
-        console.log('TrueFocus - selectedIndex changed to:', selectedIndex, 'Word:', words[selectedIndex]);
+        // console.log('TrueFocus - selectedIndex changed to:', selectedIndex, 'Word:', words[selectedIndex]);
         setCurrentIndex(selectedIndex);
     }, [selectedIndex]);
 
@@ -72,7 +72,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
                 height: activeRect.height,
             };
 
-            console.log('TrueFocus - Updating focusRect for targetIndex:', targetIndex, 'word:', words[targetIndex], 'isHovered:', hoveredIndex !== null);
+            // console.log('TrueFocus - Updating focusRect for targetIndex:', targetIndex, 'word:', words[targetIndex], 'isHovered:', hoveredIndex !== null);
             setFocusRect(newRect);
         };
 
@@ -114,7 +114,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
     };
 
     const handleClick = (index: number) => {
-        console.log('TrueFocus - Clicked word index:', index, 'Word:', words[index]);
+        // console.log('TrueFocus - Clicked word index:', index, 'Word:', words[index]);
         // Don't set currentIndex here, let the parent component handle it via selectedIndex prop
         onWordSelect?.(index);
     };

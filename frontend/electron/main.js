@@ -126,6 +126,13 @@ function createWindow() {
       mainWindow.setWindowButtonVisibility(false);
     }
 
+    // Handle certificate errors for webviews
+    mainWindow.webContents.on('certificate-error', (event, url, error, certificate, callback) => {
+      // Allow all certificates for development/testing
+      event.preventDefault();
+      callback(true);
+    });
+
     // Set user agent for webviews to avoid bot detection
     mainWindow.webContents.session.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
   });
@@ -135,6 +142,59 @@ function createWindow() {
   });
 }
 
+// Configure webview session to handle ERR_ABORTED issues
+function configureWebviewSession() {
+  const { session } = require('electron');
+  
+  // Get the browser session used by webviews
+  const browserSession = session.fromPartition('persist:browser');
+  
+  // Modify response headers to bypass frame restrictions
+  browserSession.webRequest.onHeadersReceived((details, callback) => {
+    const responseHeaders = details.responseHeaders;
+    
+    // Remove X-Frame-Options header that blocks webviews
+    if (responseHeaders['x-frame-options']) {
+      delete responseHeaders['x-frame-options'];
+    }
+    if (responseHeaders['X-Frame-Options']) {
+      delete responseHeaders['X-Frame-Options'];
+    }
+    
+    // Modify CSP headers to allow framing
+    if (responseHeaders['content-security-policy']) {
+      responseHeaders['content-security-policy'] = responseHeaders['content-security-policy'].map(csp => 
+        csp.replace(/frame-ancestors[^;]*;?/g, 'frame-ancestors *;')
+      );
+    }
+    
+    callback({ responseHeaders });
+  });
+
+  // Set request headers to appear more like regular browser
+  browserSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    details.requestHeaders['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8';
+    details.requestHeaders['Accept-Language'] = 'en-US,en;q=0.5';
+    details.requestHeaders['Accept-Encoding'] = 'gzip, deflate, br';
+    details.requestHeaders['Connection'] = 'keep-alive';
+    details.requestHeaders['Upgrade-Insecure-Requests'] = '1';
+    details.requestHeaders['Sec-Fetch-Dest'] = 'document';
+    details.requestHeaders['Sec-Fetch-Mode'] = 'navigate';
+    details.requestHeaders['Sec-Fetch-Site'] = 'none';
+    
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  // Handle certificate errors for webviews
+  browserSession.setCertificateVerifyProc((request, callback) => {
+    // Allow all certificates for development/testing
+    callback(0);
+  });
+
+  console.log('✅ Webview session configured to handle ERR_ABORTED issues');
+}
+
 app.whenReady().then(async () => {
   try {
     // Start backend first
@@ -142,6 +202,9 @@ app.whenReady().then(async () => {
     console.log('Backend started successfully');
 
     createWindow();
+    
+    // Configure webview session after window creation
+    configureWebviewSession();
 
     // Register handlers immediately after creating window
     oauthHandlers.register(mainWindow);

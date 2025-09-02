@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
-import { 
-  Calendar, 
-  Clock, 
-  TrendingUp, 
-  AlertTriangle, 
-  Target, 
+import {
+  Calendar,
+  Clock,
+  TrendingUp,
+  AlertTriangle,
+  Target,
   BarChart3,
   Play,
   Pause,
@@ -298,16 +298,16 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
   const [showNewSegmentModal, setShowNewSegmentModal] = useState(false);
 
   const handleTimeSegmentToggle = (segmentId: string) => {
-    setSelectedTimeSegments(prev => 
-      prev.includes(segmentId) 
+    setSelectedTimeSegments(prev =>
+      prev.includes(segmentId)
         ? prev.filter(id => id !== segmentId)
         : [...prev, segmentId]
     );
   };
 
   const handleScenarioToggle = (scenarioId: string) => {
-    setSelectedScenarios(prev => 
-      prev.includes(scenarioId) 
+    setSelectedScenarios(prev =>
+      prev.includes(scenarioId)
         ? prev.filter(id => id !== scenarioId)
         : [...prev, scenarioId]
     );
@@ -315,22 +315,28 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
 
   const runSimulation = async () => {
     setIsSimulating(true);
-    
+
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Generate mock results
     const results: SimulationResult[] = [];
     selectedTimeSegments.forEach(segmentId => {
       selectedScenarios.forEach(scenarioId => {
         const segment = mockTimeSegments.find(s => s.id === segmentId);
         const scenario = mockScenarios.find(s => s.id === scenarioId);
-        
+
         if (segment && scenario) {
           results.push({
+            id: `result-${results.length + 1}`,
+            timestamp: new Date().toISOString(),
+            status: 'completed',
+            keyInsights: [],
+            riskFactors: [],
             scenario: scenario.name,
             timeSegment: segment.name,
             metrics: {
+              probability: 123,
               revenue: 1000000 + (scenario.expectedOutcome.revenue * 10000),
               marketShare: 25 + scenario.expectedOutcome.marketShare,
               customerSatisfaction: 80 + scenario.expectedOutcome.customerSatisfaction,
@@ -345,7 +351,7 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
         }
       });
     });
-    
+
     setSimulationResults(results);
     setIsSimulating(false);
   };
@@ -389,7 +395,7 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
         time: new Date().toTimeString().split(' ')[0],
         fullPath: 'marketing-sandbox/strategy_simulation.csv'
       };
-      
+
       onOpenDataTab('strategy', mockFile, simulationResults);
     }
   };
@@ -574,10 +580,10 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                         <span className={cn(
                           "px-2 py-1 rounded-full text-xs font-medium",
                           result.status === 'completed' ? "bg-green-50 text-green-600" :
-                          result.status === 'running' ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"
+                            result.status === 'running' ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"
                         )}>
                           {result.status === 'completed' ? '完成' :
-                           result.status === 'running' ? '進行中' : '失敗'}
+                            result.status === 'running' ? '進行中' : '失敗'}
                         </span>
                       </div>
 
@@ -605,10 +611,10 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                         風險等級: <span className={cn(
                           "font-medium",
                           result.metrics.riskLevel > 60 ? "text-blue-700" :
-                          result.metrics.riskLevel > 40 ? "text-blue-600" : "text-gray-600"
+                            result.metrics.riskLevel > 40 ? "text-blue-600" : "text-gray-600"
                         )}>
                           {result.metrics.riskLevel > 60 ? '高' :
-                           result.metrics.riskLevel > 40 ? '中' : '低'}
+                            result.metrics.riskLevel > 40 ? '中' : '低'}
                         </span>
                       </div>
 

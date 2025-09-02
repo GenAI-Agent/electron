@@ -402,17 +402,10 @@ th span {
 /* Neumorphism utility classes */
 .neomorphism-raised {
   box-shadow: var(--neomorphism-raised);
-  background: var(--background);
 }
 
 .neomorphism-raised-sm {
   box-shadow: var(--neomorphism-raised-sm);
-  background: var(--background);
-}
-
-.neomorphism-raised-lg {
-  box-shadow: var(--neomorphism-raised-lg);
-  background: var(--background);
 }
 
 .neomorphism-inset {

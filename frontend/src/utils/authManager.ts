@@ -43,7 +43,7 @@ class AuthManager {
         this.authStatus = {
           isAuthenticated: true, // 假設有用戶信息就是已認證
           userInfo: storedUserInfo,
-          tokens: storedTokens
+          tokens: storedTokens || undefined
         };
         console.log('Restored user info from localStorage:', storedUserInfo.name);
       }
@@ -64,7 +64,7 @@ class AuthManager {
           this.authStatus = {
             isAuthenticated: true,
             userInfo: storedUserInfo,
-            tokens: storedTokens
+            tokens: storedTokens || undefined
           };
           console.log('Using stored user info for authenticated session');
         } else if (storedTokens?.access_token) {
@@ -73,13 +73,13 @@ class AuthManager {
             console.log('No stored user info, attempting to fetch from API...');
             const userInfoResult = await window.electronAPI.oauth.getUserInfo(storedTokens.access_token);
             if (userInfoResult.success) {
-              this.storeUserInfo(userInfoResult.userInfo);
+              this.storeUserInfo(userInfoResult.userInfo!);
               this.authStatus = {
                 isAuthenticated: true,
-                userInfo: userInfoResult.userInfo,
+                userInfo: userInfoResult.userInfo!,
                 tokens: storedTokens
               };
-              console.log('Successfully fetched user info from API:', userInfoResult.userInfo.name);
+              console.log('Successfully fetched user info from API:', userInfoResult.userInfo!.name);
             } else {
               // 無法獲取用戶信息，清除認證狀態
               console.warn('Failed to fetch user info, clearing auth status');
@@ -143,6 +143,7 @@ class AuthManager {
       // Google OAuth 設定
       const config = {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '你的Google Client ID',
+        clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || '你的Google Client Secret',
         scope: 'openid email profile'
       };
 
@@ -157,8 +158,8 @@ class AuthManager {
       // 交換授權碼為 token
       const tokenResult = await window.electronAPI.oauth.exchangeToken({
         clientId: config.clientId,
-        clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || '你的Google Client Secret',
-        code: flowResult.code
+        clientSecret: config.clientSecret,
+        code: flowResult.code!
       });
 
       if (!tokenResult.success) {
@@ -167,17 +168,17 @@ class AuthManager {
       }
 
       // 獲取用戶信息
-      const userInfoResult = await window.electronAPI.oauth.getUserInfo(tokenResult.tokens.access_token);
+      const userInfoResult = await window.electronAPI.oauth.getUserInfo(tokenResult.tokens!.access_token);
       
       if (userInfoResult.success) {
         // 存儲用戶信息和 tokens
-        this.storeTokens(tokenResult.tokens);
-        this.storeUserInfo(userInfoResult.userInfo);
+        this.storeTokens(tokenResult.tokens!);
+        this.storeUserInfo(userInfoResult.userInfo!);
         
         this.authStatus = {
           isAuthenticated: true,
-          userInfo: userInfoResult.userInfo,
-          tokens: tokenResult.tokens
+          userInfo: userInfoResult.userInfo!,
+          tokens: tokenResult.tokens!
         };
 
         this.notifyListeners();
@@ -277,22 +278,6 @@ class AuthManager {
   }
 }
 
-// 擴展 window 類型以包含 electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      oauth?: {
-        startFlow: (config: any) => Promise<any>;
-        exchangeToken: (config: any) => Promise<any>;
-        refreshToken: (config: any) => Promise<any>;
-        stopFlow: () => Promise<any>;
-        getUserInfo: (accessToken: string) => Promise<any>;
-        getAuthStatus: () => Promise<any>;
-        clearCookies: (domain: string) => Promise<any>;
-      };
-    };
-  }
-}
 
 export default AuthManager;
 export type { AuthStatus, UserInfo, AuthTokens };

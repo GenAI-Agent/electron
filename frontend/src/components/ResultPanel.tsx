@@ -3,6 +3,7 @@ import { Loader2, Target, CheckCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import RulesPanel from './RulesPanel';
 import { ReactMarkdownCustom } from './ReactMarkdownCustom';
+import JourneyComponent from './JourneyComponent';
 
 interface ChatMessage {
   id: string;
@@ -56,7 +57,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                   {message.type === 'user' ? (
                     /* 用户消息 - 右对齐气泡样式 */
                     <div className="flex justify-end">
-                      <div className="blue-button-white-text px-3 py-2 rounded-lg max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm">
+                      <div className="bg-primary text-white px-3 py-2 rounded-lg max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm">
                         {message.content}
                       </div>
                     </div>
@@ -65,7 +66,14 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                     <div className="flex justify-start">
                       <div className="px-3 py-2 rounded-lg max-w-full">
                         <div className="text-sm leading-relaxed text-slate-700">
-                          {message.content ? (
+                          {/* TODO: DEV 檢查前一筆訊息是否包含「華航旅程」 */}
+                          {message.type === 'assistant' && index > 0 &&
+                            messages[index - 1].content.includes('華航旅程') ? (
+                            <div className="prose prose-sm max-w-none">
+                              已經規劃好華航旅程，點擊查看詳細信息
+                              <JourneyComponent />
+                            </div>
+                          ) : message.content ? (
                             <div className="prose prose-sm max-w-none">
                               <ReactMarkdownCustom>
                                 {message.content}
@@ -74,7 +82,6 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                           ) : message.isLoading ? (
                             <span className="text-slate-500">正在思考...</span>
                           ) : null}
-
                           {message.isLoading && (
                             <div className="flex items-center mt-2">
                               <Loader2 className="w-4 h-4 text-blue-500 animate-spin mr-2" />
@@ -100,7 +107,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-400 text-xs">
-              DM me...
+              DM OPEN AGENT...
             </div>
           )}
 

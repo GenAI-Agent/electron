@@ -7,7 +7,7 @@ import { DesktopDemoComponent } from "./DesktopDemoComponent";
 import { EnterpriseDemoComponent } from "./EnterpriseDemoComponent";
 import { SandboxDemoComponent } from "./SandboxDemoComponent";
 import { RainbowButton } from "../animation/RainbowButton";
-import { ArrowRight, Send, MessageCircle, BarChart3, FileText, Database, CheckSquare } from "lucide-react";
+import { Send, FileText, Database, CheckSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { LensOSLogo } from "../animation/LensLogo";
 
@@ -37,6 +37,17 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
     1: "Generate a monthly performance report from my local data", // Desktop Demo  
     2: "Analyze our SaaS metrics and create growth projections", // Enterprise Demo
     3: "Create task lists for election campaign strategy" // Sandbox Demo
+  };
+
+  // Get button text based on demo type
+  const getDemoButtonText = (index: number) => {
+    switch (index) {
+      case 0: return "Open Browser";
+      case 1: return "Open Desktop"; 
+      case 2: return "Open SaaS";
+      case 3: return "Open Sandbox";
+      default: return "Open Demo";
+    }
   };
 
   const getDemoResponse = () => {
@@ -384,92 +395,97 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
                   {/* Option Grid - 4宮格 */}
                   <div className="grid grid-cols-2 gap-4 flex-1">
                     {tagContent.map((item: any, index: number) => (
-                      <button
+                      <div
                         key={index}
                         onMouseEnter={() => setHoveredTag(index)}
-                        onClick={() => {
-                          handleTagChange(index);
-                          setIsDemoMode(true);
-                          setDemoStep(0);
-                          setCurrentQuery("");
-                          setUserInput(demoQueries[index as keyof typeof demoQueries]);
-                          setAgentLoading(false);
-                          setIsTransmitting(false);
-                          setShowResponse(false);
-
-                          // Auto-send query after 200ms delay
-                          setTimeout(() => {
-                            const query = demoQueries[index as keyof typeof demoQueries];
-                            setCurrentQuery(query);
-                            setIsTransmitting(true);
-                            setUserInput("");
-
-                            // Transmission animation
-                            setTimeout(() => {
-                              setIsTransmitting(false);
-                              setAgentLoading(true);
-                            }, 800);
-
-                            // Agent loading phase  
-                            setTimeout(() => {
-                              setAgentLoading(false);
-                              setShowResponse(true);
-                            }, 2500);
-                          }, 200);
-                        }}
                         className={cn(
-                          "relative w-full h-full min-h-[140px] p-4 rounded-xl transition-all duration-200 flex flex-col items-center justify-center text-center group",
-                          selectedTag === index
-                            ? "bg-primary/10 border-2 border-primary shadow-inner"
-                            : hoveredTag === index
-                              ? "neomorphism-raised hover:scale-105"
-                              : "neomorphism-raised-sm hover:neomorphism-raised"
+                          "relative w-full h-full min-h-[140px] border rounded-xl transition-all duration-200 flex flex-col group",
+                          hoveredTag === index
+                            ? "neomorphism-raised bg-primary/10 border-primary shadow-inner hover:scale-105"
+                            : "neomorphism-raised-sm bg-background hover:neomorphism-raised border-transparent"
                         )}
                       >
-                        <div className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center mb-3 transition-all duration-200",
-                          selectedTag === index
-                            ? "bg-primary text-primary-foreground shadow-lg"
-                            : hoveredTag === index
-                              ? "neomorphism-raised-sm bg-primary/20 text-primary"
-                              : "neomorphism-inset-sm bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-                        )}>
-                          <item.icon className="w-7 h-7" />
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <h4 className={cn(
-                            "font-bold text-base mb-2 transition-colors",
-                            selectedTag === index ? "text-primary" : "text-foreground"
+                        {/* Main content area */}
+                        <button
+                          onClick={() => {
+                            handleTagChange(index);
+                            setIsDemoMode(true);
+                            setDemoStep(0);
+                            setCurrentQuery("");
+                            setUserInput(demoQueries[index as keyof typeof demoQueries]);
+                            setAgentLoading(false);
+                            setIsTransmitting(false);
+                            setShowResponse(false);
+                            // Auto-send query after 200ms delay
+                            setTimeout(() => {
+                              const query = demoQueries[index as keyof typeof demoQueries];
+                              setCurrentQuery(query);
+                              setIsTransmitting(true);
+                              setUserInput("");
+
+                              // Transmission animation
+                              setTimeout(() => {
+                                setIsTransmitting(false);
+                                setAgentLoading(true);
+                              }, 800);
+
+                              // Agent loading phase  
+                              setTimeout(() => {
+                                setAgentLoading(false);
+                                setShowResponse(true);
+                              }, 2500);
+                            }, 200);
+                          }}
+                          className="flex-1 p-4 flex flex-col items-center justify-center text-center bg-transparent hover:bg-transparent border-none outline-none"
+                        >
+                          <div className={cn(
+                            "w-14 h-14 rounded-xl flex neomorphism-raised-sm items-center justify-center mb-3 transition-all duration-200",
+                            hoveredTag === index
+                              ? "text-primary shadow-inner bg-background"
+                              : "bg-muted text-muted-foreground group-hover:bg-background group-hover:text-primary"
                           )}>
-                            {item.tagText}
-                          </h4>
-                          <p className="text-xs text-muted-foreground leading-relaxed px-2">
-                            {item.subText}
-                          </p>
+                            <item.icon className="w-7 h-7" />
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <h4 className={cn(
+                              "font-bold text-base mb-2 transition-colors",
+                              hoveredTag === index ? "text-primary" : "text-foreground"
+                            )}>
+                              {item.tagText}
+                            </h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed px-2">
+                              {item.subText}
+                            </p>
+                          </div>
+                        </button>
+                        
+                        {/* RainbowButton area - show on hover */}
+                        <div className={cn(
+                          "p-2 pt-0 transition-all duration-200",
+                          hoveredTag === index ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-2"
+                        )}>
+                          <RainbowButton
+                            onClick={() => router.push(item.path)}
+                            className="w-full h-8 text-xs"
+                          >
+                            {getDemoButtonText(index)}
+                          </RainbowButton>
                         </div>
-                        {selectedTag === index && (
+
+                        {hoveredTag === index && (
                           <div className="absolute top-3 right-3 w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center">
                             <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
                           </div>
                         )}
-                      </button>
+                      </div>
                     ))}
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="mt-auto pt-6 flex gap-3">
-                    <RainbowButton
-                      onClick={() => router.push(tagContent[selectedTag].path)}
-                      className="flex-1 flex items-center justify-center gap-2"
-                    >
-                      <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
-                        {`${tagContent[selectedTag].tagText} AI`}
-                      </span>
-                      <ArrowRight className="w-4 h-4" />
-                    </RainbowButton>
+                  <div className="mt-auto pt-6">
                     <button
                       onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
-                      className="flex-1 px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
+                      className="w-full px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
                     >
                       {t.requestDemo}
                     </button>

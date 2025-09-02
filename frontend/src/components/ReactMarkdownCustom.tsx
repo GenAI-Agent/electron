@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 import { cn } from "@/utils/cn";
+import { useRouter } from "next/router";
 
 interface ReactMarkdownCustomProps {
   children: string;
@@ -12,6 +13,7 @@ export function ReactMarkdownCustom({
   children,
   className,
 }: ReactMarkdownCustomProps) {
+  const router = useRouter();
   return (
     <ReactMarkdown
       className={cn(className)}
@@ -63,15 +65,22 @@ export function ReactMarkdownCustom({
             return <button {...buttonProps}>{children}</button>;
           }
           return (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center mx-0.5 rounded-md bg-card px-1.5 py-1 text-xs font-medium text-primary transition-colors"
-              {...props}
+            <button onClick={() => {
+              router.push(`/browser?url=${href}`);
+            }}
+              className="cursor-pointer inline-flex items-center justify-center mx-0.5 rounded-lg bg-gradient-to-r from-primary px-1.5 py-1 to-primary/80 hover:from-primary/90 hover:to-primary/70 text-xs font-medium text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
             >
               {children}
-            </a >
+            </button >
+            // <a
+            //   href={href}
+            //   target="_blank"
+            //   rel="noreferrer"
+            //   className="inline-flex items-center justify-center mx-0.5 rounded-md bg-card px-1.5 py-1 text-xs font-medium text-primary transition-colors"
+            //   {...props}
+            // >
+            //   {children}
+            // </a>
           );
         },
         blockquote: ({ ...props }) => (
