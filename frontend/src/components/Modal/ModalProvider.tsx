@@ -4,6 +4,9 @@ interface ModalContextType {
   isJourneyModalOpen: boolean;
   openJourneyModal: () => void;
   closeJourneyModal: () => void;
+  isChristmasModalOpen: boolean;
+  openChristmasModal: () => void;
+  closeChristmasModal: () => void;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
@@ -22,9 +25,12 @@ interface ModalProviderProps {
 
 export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [isJourneyModalOpen, setIsJourneyModalOpen] = useState(false);
+  const [isChristmasModalOpen, setIsChristmasModalOpen] = useState(false);
 
   const openJourneyModal = () => setIsJourneyModalOpen(true);
   const closeJourneyModal = () => setIsJourneyModalOpen(false);
+  const openChristmasModal = () => setIsChristmasModalOpen(true);
+  const closeChristmasModal = () => setIsChristmasModalOpen(false);
 
   return (
     <ModalContext.Provider
@@ -32,6 +38,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
         isJourneyModalOpen,
         openJourneyModal,
         closeJourneyModal,
+        isChristmasModalOpen,
+        openChristmasModal,
+        closeChristmasModal,
       }}
     >
       {children}

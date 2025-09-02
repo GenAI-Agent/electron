@@ -4,6 +4,7 @@ import { cn } from '@/utils/cn';
 import RulesPanel from './RulesPanel';
 import { ReactMarkdownCustom } from './ReactMarkdownCustom';
 import JourneyComponent from './JourneyComponent';
+import { useModal } from './Modal/ModalProvider';
 
 interface ChatMessage {
   id: string;
@@ -43,6 +44,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   simulationRecords = [],
   onSimulationRecordSelect
 }) => {
+  const { openChristmasModal } = useModal();
   return (
     <div
       className="w-full h-full p-3 pr-3.5 pb-2 overflow-auto flex flex-col relative"
@@ -64,14 +66,25 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                   ) : (
                     /* AI 回复 - 左对齐卡片样式，使用 ReactMarkdown */
                     <div className="flex justify-start">
-                      <div className="px-3 py-2 rounded-lg max-w-full">
+                      <div className="px-3 py-4 rounded-lg max-w-full">
                         <div className="text-sm leading-relaxed text-slate-700">
-                          {/* TODO: DEV 檢查前一筆訊息是否包含「華航旅程」 */}
+                          {/* TODO: DEV 檢查前一筆訊息是否包含「華航旅程」或「聖誕節旅程」 */}
                           {message.type === 'assistant' && index > 0 &&
                             messages[index - 1].content.includes('華航旅程') ? (
-                            <div className="prose prose-sm max-w-none">
+                            <div className="prose prose-sm max-w-none flex flex-col gap-2">
                               已經規劃好華航旅程，點擊查看詳細信息
                               <JourneyComponent />
+                            </div>
+                          ) : message.type === 'assistant' && index > 0 &&
+                            messages[index - 1].content.includes('聖誕節旅程') ? (
+                            <div className="prose prose-sm max-w-none flex flex-col gap-2">
+                              已經規劃好聖誕節旅程，點擊查看詳細信息
+                              <button
+                                onClick={openChristmasModal}
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 w-fit"
+                              >
+                                🎄 查看2025聖誕節推薦
+                              </button>
                             </div>
                           ) : message.content ? (
                             <div className="prose prose-sm max-w-none">
@@ -83,7 +96,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                             <span className="text-slate-500">正在思考...</span>
                           ) : null}
                           {message.isLoading && (
-                            <div className="flex items-center mt-2">
+                            <div className="flex items-center mt-2 py-4">
                               <Loader2 className="w-4 h-4 text-blue-500 animate-spin mr-2" />
                               <span className="text-slate-500 text-xs">AI 正在處理中...</span>
                             </div>
@@ -168,7 +181,6 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
           新增以使用技能管理功能
         </div>
       )}
-
 
     </div>
   );

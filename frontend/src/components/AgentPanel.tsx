@@ -831,6 +831,54 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
               </div>
             </div>
           )}
+          {panelMode === 'result' && messages.length > 0 && messages.length < 6 && (
+            <div className="mb-2">
+              <div className="flex flex-wrap gap-2 justify-start">
+                <button
+                  onClick={() => {
+                    // 設置輸入值
+                    setInput(`聖誕節旅程推薦`);
+                    // 觸發 form 動畫效果
+                    triggerFormAnimation();
+                    // 聚焦到輸入框
+                    setTimeout(() => {
+                      const textarea = document.querySelector('textarea');
+                      if (textarea) {
+                        textarea.focus();
+                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                      }
+                    }, 150); // 稍微延遲以讓動畫先開始
+                  }}
+                  className={cn(
+                    "bg-primary/40 animate-pulse duration-1000 px-3 py-1.5 rounded-full text-xs text-foreground hover:scale-105 transition-all",
+                  )}
+                >
+                  聖誕節旅程推薦
+                </button>
+                <button
+                  onClick={() => {
+                    // 設置輸入值
+                    setInput(`華航旅程`);
+                    // 觸發 form 動畫效果
+                    triggerFormAnimation();
+                    // 聚焦到輸入框
+                    setTimeout(() => {
+                      const textarea = document.querySelector('textarea');
+                      if (textarea) {
+                        textarea.focus();
+                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                      }
+                    }, 150); // 稍微延遲以讓動畫先開始
+                  }}
+                  className={cn(
+                    "bg-primary/40 animate-pulse duration-1000 px-3 py-1.5 rounded-full text-xs text-foreground hover:scale-105 transition-all",
+                  )}
+                >
+                  華航旅程
+                </button>
+              </div>
+            </div>
+          )}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col relative flex-1"

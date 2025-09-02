@@ -32,13 +32,19 @@ const BaseModal: React.FC<BaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className={cn(
-        "bg-white rounded-lg p-6 w-full mx-4",
-        maxWidthClasses[maxWidth],
-        className
-      )}>
-        <div className="space-y-4 relative">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]"
+      onClick={onClose}
+    >
+      <div
+        className={cn(
+          "bg-white rounded-lg p-6 max-h-[80vh] overflow-y-auto w-full mx-4",
+          maxWidthClasses[maxWidth],
+          className
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-4 relative h-full">
           <X onClick={onClose} className="text-white absolute right-2 top-2 z-20 size-4" />
           {children}
         </div>

@@ -14,7 +14,7 @@ const JourneyComponent: React.FC<JourneyComponentProps> = ({ className }) => {
     <button
       onClick={openJourneyModal}
       className={cn(
-        "inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors",
+        "inline-flex items-center w-fit gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors",
         className
       )}
     >
