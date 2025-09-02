@@ -46,12 +46,19 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
     console.log('創建新兵推場景');
   };
 
+  // 統一色彩系統
+  const colors = {
+    primary: 'text-blue-600 bg-blue-50 border-blue-200',
+    neutral: 'text-gray-600 bg-gray-50 border-gray-200',
+    highlight: 'text-blue-700 bg-blue-100 border-blue-300'
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-50 border-green-200';
-      case 'active': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'archived': return 'text-gray-600 bg-gray-50 border-gray-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'completed': return colors.primary;
+      case 'active': return colors.highlight;
+      case 'archived': return colors.neutral;
+      default: return colors.neutral;
     }
   };
 
@@ -66,10 +73,10 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-orange-600 bg-orange-50';
-      case 'low': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'high': return colors.highlight;
+      case 'medium': return colors.primary;
+      case 'low': return colors.neutral;
+      default: return colors.neutral;
     }
   };
 
@@ -106,7 +113,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                 <span className="text-sm text-gray-500">
                   {selectedProject.baseSettings.timeframe} • {selectedProject.summary.totalRuns} 次兵推
                 </span>
-                <span className="text-sm font-medium text-green-600">
+                <span className="text-sm font-medium text-blue-600">
                   {selectedProject.summary.winCount}勝{selectedProject.summary.lossCount}負
                 </span>
               </div>
@@ -161,7 +168,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       <h4 className="text-sm font-medium text-gray-700 mb-2">參與方</h4>
                       <div className="flex flex-wrap gap-1">
                         {selectedProject.baseSettings.participants.map(participant => (
-                          <span key={participant} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                          <span key={participant} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                             {participant}
                           </span>
                         ))}
@@ -172,7 +179,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       <h4 className="text-sm font-medium text-gray-700 mb-2">目標</h4>
                       <div className="flex flex-wrap gap-1">
                         {selectedProject.baseSettings.objectives.slice(0, 2).map(objective => (
-                          <span key={objective} className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
+                          <span key={objective} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                             {objective}
                           </span>
                         ))}
@@ -186,25 +193,25 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">總體統計</h3>
 
                   <div className="space-y-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">
                         {selectedProject.summary.totalRuns}
                       </div>
-                      <div className="text-sm text-blue-700">總兵推次數</div>
+                      <div className="text-sm text-gray-600">總兵推次數</div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-xl font-bold text-green-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-xl font-bold text-blue-600">
                           {selectedProject.summary.winCount}
                         </div>
-                        <div className="text-xs text-green-700">勝場</div>
+                        <div className="text-xs text-gray-600">勝場</div>
                       </div>
-                      <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <div className="text-xl font-bold text-red-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-xl font-bold text-gray-600">
                           {selectedProject.summary.lossCount}
                         </div>
-                        <div className="text-xs text-red-700">敗場</div>
+                        <div className="text-xs text-gray-600">敗場</div>
                       </div>
                     </div>
 
@@ -213,7 +220,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="flex-1 bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-green-500 h-2 rounded-full"
+                            className="bg-blue-500 h-2 rounded-full"
                             style={{ width: `${selectedProject.summary.averageWinRate}%` }}
                           ></div>
                         </div>
@@ -231,7 +238,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">關鍵洞察</h3>
                 <div className="space-y-3">
                   {selectedProject.summary.keyInsights.map((insight, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                    <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                       <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-gray-700">{insight}</p>
                     </div>
@@ -240,7 +247,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
 
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">建議策略</h4>
-                  <p className="text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
                     {selectedProject.summary.recommendedStrategy}
                   </p>
                 </div>
@@ -275,8 +282,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                           </span>
                           <span className={cn("px-2 py-1 rounded text-xs font-medium",
                             session.results.summary.winningStrategy === 'candidate-a' ?
-                              'bg-green-50 text-green-700' :
-                              'bg-red-50 text-red-700'
+                              'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
                           )}>
                             {session.results.summary.winningStrategy === 'candidate-a' ? '候選人A勝' : '候選人B勝'}
                           </span>
@@ -331,8 +338,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                         <div className="text-right">
                           <div className={cn("px-3 py-1 rounded-full text-sm font-medium mb-2",
                             session.results.summary.winningStrategy === 'candidate-a' ?
-                              'bg-green-50 text-green-700' :
-                              'bg-red-50 text-red-700'
+                              'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
                           )}>
                             {session.results.summary.winningStrategy === 'candidate-a' ? '候選人A勝' : '候選人B勝'}
                           </div>
@@ -343,37 +350,37 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       </div>
 
                       <div className="grid grid-cols-4 gap-4 mb-4">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
                           <div className="text-lg font-bold text-blue-600">
                             {session.results.summary.winProbability}%
                           </div>
-                          <div className="text-xs text-blue-700">勝率</div>
+                          <div className="text-xs text-gray-600">勝率</div>
                         </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <div className="text-lg font-bold text-purple-600">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="text-lg font-bold text-blue-600">
                             {session.results.summary.confidenceLevel}%
                           </div>
-                          <div className="text-xs text-purple-700">信心度</div>
+                          <div className="text-xs text-gray-600">信心度</div>
                         </div>
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                          <div className="text-sm font-medium text-orange-600">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="text-sm font-medium text-gray-700">
                             {session.variables.environment.economicCondition === 'good' ? '良好' :
                               session.variables.environment.economicCondition === 'poor' ? '不佳' : '中性'}
                           </div>
-                          <div className="text-xs text-orange-700">經濟環境</div>
+                          <div className="text-xs text-gray-600">經濟環境</div>
                         </div>
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
                           <div className="text-sm font-medium text-gray-600">
                             {session.variables.voterStructure.turnoutRate}%
                           </div>
-                          <div className="text-xs text-gray-500">投票率</div>
+                          <div className="text-xs text-gray-600">投票率</div>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div className="flex flex-wrap gap-2">
                           {session.variables.environment.majorEvents.slice(0, 2).map(event => (
-                            <span key={event} className="px-2 py-1 bg-yellow-50 text-yellow-700 rounded text-xs">
+                            <span key={event} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                               {event}
                             </span>
                           ))}
@@ -389,8 +396,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                           <div className="text-xs text-gray-500 mb-1">與上次對比:</div>
                           <div className="flex items-center space-x-2">
                             <span className={cn("text-sm font-medium",
-                              session.comparison.performanceChange > 0 ? 'text-green-600' :
-                                session.comparison.performanceChange < 0 ? 'text-red-600' :
+                              session.comparison.performanceChange > 0 ? 'text-blue-600' :
+                                session.comparison.performanceChange < 0 ? 'text-gray-500' :
                                   'text-gray-600'
                             )}>
                               {session.comparison.performanceChange > 0 ? '+' : ''}{session.comparison.performanceChange}%
@@ -422,7 +429,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       className={cn(
                         "p-3 rounded-lg border text-left transition-colors",
                         selectedSession?.id === session.id
-                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          ? "border-blue-500 bg-blue-100 text-blue-900"
                           : "border-gray-200 hover:border-gray-300 text-gray-700"
                       )}
                     >
@@ -458,31 +465,31 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
 
                     {/* Variables Summary */}
                     <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-sm font-medium text-blue-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700">
                           {selectedSession.variables.environment.economicCondition === 'good' ? '良好' :
                             selectedSession.variables.environment.economicCondition === 'poor' ? '不佳' : '中性'}
                         </div>
-                        <div className="text-xs text-blue-700">經濟環境</div>
+                        <div className="text-xs text-gray-600">經濟環境</div>
                       </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-sm font-medium text-purple-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700">
                           {selectedSession.variables.environment.mediaEnvironment === 'favorable' ? '友善' :
                             selectedSession.variables.environment.mediaEnvironment === 'hostile' ? '敵對' : '中性'}
                         </div>
-                        <div className="text-xs text-purple-700">媒體環境</div>
+                        <div className="text-xs text-gray-600">媒體環境</div>
                       </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-sm font-medium text-green-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700">
                           {selectedSession.variables.voterStructure.turnoutRate}%
                         </div>
-                        <div className="text-xs text-green-700">預期投票率</div>
+                        <div className="text-xs text-gray-600">預期投票率</div>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-sm font-medium text-orange-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-blue-600">
                           {selectedSession.results.summary.winProbability}%
                         </div>
-                        <div className="text-xs text-orange-700">最終勝率</div>
+                        <div className="text-xs text-gray-600">最終勝率</div>
                       </div>
                     </div>
                   </div>
@@ -499,7 +506,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                     <div className="space-y-4">
                       {selectedSession.simulation.timeline.map((timePoint, index) => (
                         <div key={timePoint.period} className="border-l-2 border-gray-200 pl-4 relative">
-                          <div className="absolute -left-2 w-4 h-4 bg-blue-500 rounded-full"></div>
+                          <div className="absolute -left-2 w-4 h-4 bg-gray-400 rounded-full"></div>
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-sm font-medium text-gray-900">
                               第{timePoint.period}週 ({timePoint.date})
@@ -510,40 +517,40 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                              <div className="text-sm font-medium text-blue-900 mb-1">候選人A</div>
+                            <div className="bg-gray-50 p-3 rounded-lg">
+                              <div className="text-sm font-medium text-gray-900 mb-1">候選人A</div>
                               <div className="flex items-center space-x-2">
                                 <div className="text-lg font-bold text-blue-600">
                                   {timePoint.playerData['candidate-a']?.supportRate}%
                                 </div>
                                 <div className={cn("text-xs px-2 py-1 rounded",
-                                  timePoint.playerData['candidate-a']?.momentum > 0 ? 'bg-green-100 text-green-700' :
-                                    timePoint.playerData['candidate-a']?.momentum < 0 ? 'bg-red-100 text-red-700' :
+                                  timePoint.playerData['candidate-a']?.momentum > 0 ? 'bg-blue-100 text-blue-700' :
+                                    timePoint.playerData['candidate-a']?.momentum < 0 ? 'bg-gray-200 text-gray-700' :
                                       'bg-gray-100 text-gray-700'
                                 )}>
                                   {timePoint.playerData['candidate-a']?.momentum > 0 ? '+' : ''}{timePoint.playerData['candidate-a']?.momentum}
                                 </div>
                               </div>
-                              <div className="text-xs text-blue-700 mt-1">
+                              <div className="text-xs text-gray-600 mt-1">
                                 預算使用: {formatCurrency(timePoint.playerData['candidate-a']?.budgetSpent || 0)}
                               </div>
                             </div>
 
-                            <div className="bg-orange-50 p-3 rounded-lg">
-                              <div className="text-sm font-medium text-orange-900 mb-1">候選人B</div>
+                            <div className="bg-gray-50 p-3 rounded-lg">
+                              <div className="text-sm font-medium text-gray-900 mb-1">候選人B</div>
                               <div className="flex items-center space-x-2">
-                                <div className="text-lg font-bold text-orange-600">
+                                <div className="text-lg font-bold text-gray-700">
                                   {timePoint.playerData['candidate-b']?.supportRate}%
                                 </div>
                                 <div className={cn("text-xs px-2 py-1 rounded",
-                                  timePoint.playerData['candidate-b']?.momentum > 0 ? 'bg-green-100 text-green-700' :
-                                    timePoint.playerData['candidate-b']?.momentum < 0 ? 'bg-red-100 text-red-700' :
+                                  timePoint.playerData['candidate-b']?.momentum > 0 ? 'bg-blue-100 text-blue-700' :
+                                    timePoint.playerData['candidate-b']?.momentum < 0 ? 'bg-gray-200 text-gray-700' :
                                       'bg-gray-100 text-gray-700'
                                 )}>
                                   {timePoint.playerData['candidate-b']?.momentum > 0 ? '+' : ''}{timePoint.playerData['candidate-b']?.momentum}
                                 </div>
                               </div>
-                              <div className="text-xs text-orange-700 mt-1">
+                              <div className="text-xs text-gray-600 mt-1">
                                 預算使用: {formatCurrency(timePoint.playerData['candidate-b']?.budgetSpent || 0)}
                               </div>
                             </div>
@@ -554,12 +561,12 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             <div className="text-xs text-gray-600">關鍵行動:</div>
                             <div className="flex flex-wrap gap-1">
                               {timePoint.playerData['candidate-a']?.keyActions.map(action => (
-                                <span key={action} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                <span key={action} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                                   A: {action}
                                 </span>
                               ))}
                               {timePoint.playerData['candidate-b']?.keyActions.map(action => (
-                                <span key={action} className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
+                                <span key={action} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                                   B: {action}
                                 </span>
                               ))}
@@ -572,7 +579,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                               <div className="text-xs text-gray-600 mb-1">重大事件:</div>
                               <div className="flex flex-wrap gap-1">
                                 {timePoint.environmentData.majorEvents.map(event => (
-                                  <span key={event} className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">
+                                  <span key={event} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                                     {event}
                                   </span>
                                 ))}
@@ -594,8 +601,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             <div className="flex items-start justify-between mb-2">
                               <h5 className="font-medium text-gray-900">{event.name}</h5>
                               <span className={cn("px-2 py-1 rounded text-xs font-medium",
-                                event.impact === 'positive' ? 'bg-green-50 text-green-700' :
-                                  event.impact === 'negative' ? 'bg-red-50 text-red-700' :
+                                event.impact === 'positive' ? 'bg-blue-100 text-blue-700' :
+                                  event.impact === 'negative' ? 'bg-gray-200 text-gray-700' :
                                     'bg-gray-50 text-gray-700'
                               )}>
                                 第{event.week}週
@@ -654,20 +661,20 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       </h5>
                       <div className="space-y-3">
                         {session.simulation.insights.filter(i => i.type === 'discovery').map(insight => (
-                          <div key={insight.id} className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                          <div key={insight.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                             <div className="flex items-start justify-between mb-2">
-                              <h6 className="font-medium text-blue-900">{insight.title}</h6>
+                              <h6 className="font-medium text-gray-900">{insight.title}</h6>
                               <span className={cn("px-2 py-1 rounded text-xs font-medium",
-                                insight.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                  insight.priority === 'medium' ? 'bg-orange-100 text-orange-700' :
-                                    'bg-green-100 text-green-700'
+                                insight.priority === 'high' ? 'bg-blue-100 text-blue-700' :
+                                  insight.priority === 'medium' ? 'bg-gray-200 text-gray-700' :
+                                    'bg-gray-100 text-gray-700'
                               )}>
                                 {insight.priority === 'high' ? '高重要性' :
                                   insight.priority === 'medium' ? '中重要性' : '低重要性'}
                               </span>
                             </div>
-                            <p className="text-sm text-blue-800 mb-2">{insight.description}</p>
-                            <div className="text-xs text-blue-600">
+                            <p className="text-sm text-gray-700 mb-2">{insight.description}</p>
+                            <div className="text-xs text-gray-600">
                               發現時間：第{insight.discoveredAt}週
                             </div>
                           </div>
@@ -678,17 +685,17 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                     {/* 行動建議 */}
                     <div className="mb-6">
                       <h5 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                        <Target className="w-5 h-5 text-green-600 mr-2" />
+                        <Target className="w-5 h-5 text-blue-600 mr-2" />
                         行動建議
                       </h5>
                       <div className="space-y-3">
                         {session.simulation.insights.filter(i => i.actionRequired && i.actionItems && i.actionItems.length > 0).map(insight => (
-                          <div key={insight.id} className="border border-green-200 rounded-lg p-4 bg-green-50">
-                            <h6 className="font-medium text-green-900 mb-2">{insight.title}</h6>
-                            <ul className="text-sm text-green-800 space-y-1">
+                          <div key={insight.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h6 className="font-medium text-gray-900 mb-2">{insight.title}</h6>
+                            <ul className="text-sm text-gray-700 space-y-1">
                               {insight.actionItems?.map((item, index) => (
                                 <li key={index} className="flex items-start">
-                                  <span className="text-green-600 mr-2">•</span>
+                                  <span className="text-blue-600 mr-2">•</span>
                                   {item}
                                 </li>
                               ))}
@@ -706,16 +713,16 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                       </h5>
                       <div className="space-y-3">
                         {session.simulation.insights.filter(i => i.type === 'risk_alert').map(insight => (
-                          <div key={insight.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
-                            <h6 className="font-medium text-red-900 mb-2">{insight.title}</h6>
-                            <p className="text-sm text-red-800 mb-2">{insight.description}</p>
+                          <div key={insight.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h6 className="font-medium text-gray-900 mb-2">{insight.title}</h6>
+                            <p className="text-sm text-gray-700 mb-2">{insight.description}</p>
                             {insight.actionItems && insight.actionItems.length > 0 && (
                               <div>
-                                <div className="text-xs text-red-600 mb-1">建議應對措施：</div>
-                                <ul className="text-sm text-red-700 space-y-1">
+                                <div className="text-xs text-gray-600 mb-1">建議應對措施：</div>
+                                <ul className="text-sm text-gray-700 space-y-1">
                                   {insight.actionItems.map((item, index) => (
                                     <li key={index} className="flex items-start">
-                                      <span className="text-red-500 mr-2">•</span>
+                                      <span className="text-blue-600 mr-2">•</span>
                                       {item}
                                     </li>
                                   ))}
@@ -727,9 +734,9 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
 
                         {/* 如果沒有風險隱憂，顯示一般性風險 */}
                         {session.simulation.insights.filter(i => i.type === 'risk_alert').length === 0 && (
-                          <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
-                            <h6 className="font-medium text-yellow-900 mb-2">潛在風險提醒</h6>
-                            <p className="text-sm text-yellow-800">
+                          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h6 className="font-medium text-gray-900 mb-2">潛在風險提醒</h6>
+                            <p className="text-sm text-gray-700">
                               {session.runNumber <= 2 ? '初期兵推風險相對較低，但需注意突發事件的影響' :
                                 session.runNumber <= 5 ? '中期需特別關注媒體環境變化和民意波動' :
                                   '後期兵推複雜度較高，需防範多重風險疊加效應'}
@@ -765,8 +772,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             </span>
                             <span className={cn("px-2 py-1 rounded text-xs font-medium",
                               session.results.summary.winningStrategy === 'candidate-a' ?
-                                'bg-green-50 text-green-700' :
-                                'bg-red-50 text-red-700'
+                                'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
                             )}>
                               {session.results.summary.winningStrategy === 'candidate-a' ? 'A勝' : 'B勝'}
                             </span>
@@ -775,7 +782,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             <div className="flex-1 bg-gray-200 rounded-full h-3">
                               <div
                                 className={cn("h-3 rounded-full",
-                                  session.results.summary.winProbability >= 50 ? 'bg-green-500' : 'bg-red-500'
+                                  session.results.summary.winProbability >= 50 ? 'bg-blue-500' : 'bg-gray-400'
                                 )}
                                 style={{ width: `${session.results.summary.winProbability}%` }}
                               ></div>
@@ -785,8 +792,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             </span>
                             {session.comparison && (
                               <span className={cn("text-xs px-2 py-1 rounded",
-                                session.comparison.performanceChange > 0 ? 'bg-green-100 text-green-700' :
-                                  session.comparison.performanceChange < 0 ? 'bg-red-100 text-red-700' :
+                                session.comparison.performanceChange > 0 ? 'bg-blue-100 text-blue-700' :
+                                  session.comparison.performanceChange < 0 ? 'bg-gray-200 text-gray-700' :
                                     'bg-gray-100 text-gray-700'
                               )}>
                                 {session.comparison.performanceChange > 0 ? '+' : ''}{session.comparison.performanceChange}%
@@ -803,56 +810,56 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                 <div className="mb-8">
                   <h4 className="text-md font-medium text-gray-900 mb-4">變數影響分析</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h5 className="text-sm font-medium text-blue-900 mb-3">經濟環境影響</h5>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="text-sm font-medium text-gray-900 mb-3">經濟環境影響</h5>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-blue-700">良好環境</span>
-                          <span className="font-medium text-blue-900">平均勝率 80%</span>
+                          <span className="text-gray-600">良好環境</span>
+                          <span className="font-medium text-blue-600">平均勝率 80%</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-blue-700">中性環境</span>
-                          <span className="font-medium text-blue-900">平均勝率 52%</span>
+                          <span className="text-gray-600">中性環境</span>
+                          <span className="font-medium text-gray-700">平均勝率 52%</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-blue-700">不佳環境</span>
-                          <span className="font-medium text-blue-900">平均勝率 45%</span>
+                          <span className="text-gray-600">不佳環境</span>
+                          <span className="font-medium text-gray-600">平均勝率 45%</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                      <h5 className="text-sm font-medium text-purple-900 mb-3">媒體環境影響</h5>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="text-sm font-medium text-gray-900 mb-3">媒體環境影響</h5>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-purple-700">友善媒體</span>
-                          <span className="font-medium text-purple-900">+8% 勝率</span>
+                          <span className="text-gray-600">友善媒體</span>
+                          <span className="font-medium text-blue-600">+8% 勝率</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-purple-700">中性媒體</span>
-                          <span className="font-medium text-purple-900">基準</span>
+                          <span className="text-gray-600">中性媒體</span>
+                          <span className="font-medium text-gray-700">基準</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-purple-700">敵對媒體</span>
-                          <span className="font-medium text-purple-900">-12% 勝率</span>
+                          <span className="text-gray-600">敵對媒體</span>
+                          <span className="font-medium text-gray-600">-12% 勝率</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <h5 className="text-sm font-medium text-green-900 mb-3">投票率影響</h5>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="text-sm font-medium text-gray-900 mb-3">投票率影響</h5>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-green-700">高投票率 (70%+)</span>
-                          <span className="font-medium text-green-900">+5% 勝率</span>
+                          <span className="text-gray-600">高投票率 (70%+)</span>
+                          <span className="font-medium text-blue-600">+5% 勝率</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-green-700">中投票率 (60-70%)</span>
-                          <span className="font-medium text-green-900">基準</span>
+                          <span className="text-gray-600">中投票率 (60-70%)</span>
+                          <span className="font-medium text-gray-700">基準</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-green-700">低投票率 (&lt;60%)</span>
-                          <span className="font-medium text-green-900">-3% 勝率</span>
+                          <span className="text-gray-600">低投票率 (&lt;60%)</span>
+                          <span className="font-medium text-gray-600">-3% 勝率</span>
                         </div>
                       </div>
                     </div>
@@ -870,8 +877,8 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                             第{session.runNumber}次 vs 第{session.runNumber - 1}次
                           </h5>
                           <span className={cn("px-2 py-1 rounded text-sm font-medium",
-                            session.comparison!.performanceChange > 0 ? 'bg-green-50 text-green-700' :
-                              session.comparison!.performanceChange < 0 ? 'bg-red-50 text-red-700' :
+                            session.comparison!.performanceChange > 0 ? 'bg-blue-100 text-blue-700' :
+                              session.comparison!.performanceChange < 0 ? 'bg-gray-200 text-gray-700' :
                                 'bg-gray-50 text-gray-700'
                           )}>
                             {session.comparison!.performanceChange > 0 ? '+' : ''}{session.comparison!.performanceChange}% 變化
@@ -880,7 +887,7 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                         <div className="space-y-2">
                           {session.comparison!.keyDifferences.map((diff, index) => (
                             <div key={index} className="flex items-start space-x-2">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
                               <span className="text-sm text-gray-600">{diff}</span>
                             </div>
                           ))}
@@ -899,11 +906,11 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">最終結果</h3>
                   <div className="space-y-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
                         {selectedScenario.results.summary.winProbability}%
                       </div>
-                      <div className="text-sm text-green-700">勝出機率</div>
+                      <div className="text-sm text-gray-600">勝出機率</div>
                     </div>
 
                     <div>
@@ -928,9 +935,9 @@ export const WarGamePage: React.FC<WarGamePageProps> = ({ className }) => {
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="font-medium text-gray-900 text-sm">{rec.title}</h4>
                           <span className={cn("px-2 py-1 rounded text-xs font-medium",
-                            rec.priority === 'critical' ? 'bg-red-50 text-red-700' :
-                              rec.priority === 'high' ? 'bg-orange-50 text-orange-700' :
-                                'bg-blue-50 text-blue-700'
+                            rec.priority === 'critical' ? 'bg-blue-100 text-blue-700' :
+                              rec.priority === 'high' ? 'bg-gray-200 text-gray-700' :
+                                'bg-gray-100 text-gray-700'
                           )}>
                             {rec.priority === 'critical' ? '緊急' :
                               rec.priority === 'high' ? '重要' : '一般'}

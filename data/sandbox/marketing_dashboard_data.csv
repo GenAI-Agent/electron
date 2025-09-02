@@ -1,0 +1,7 @@
+id,name,value,unit,change,changeType,target,status,description
+revenue,月營收,125.8,M,12.5,increase,130,good,較上月成長12.5%，接近目標值
+market_share,市占率,23.5,%,-1.2,decrease,25,warning,較上月下降1.2%，需要關注
+customer_satisfaction,客戶滿意度,4.2,/5,0.3,increase,4.5,good,持續改善中，接近目標
+load_factor,載客率,78.5,%,5.2,increase,80,good,旺季效應，表現良好
+on_time_performance,準點率,85.2,%,-2.1,decrease,90,warning,天氣因素影響，需要改善
+cost_per_seat,每座位成本,2.8,K,-3.5,decrease,2.5,good,成本控制有效

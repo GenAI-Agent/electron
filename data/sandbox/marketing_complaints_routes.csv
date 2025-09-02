@@ -1,0 +1,8 @@
+route,complaints,severity,percentage,mainIssues,resolutionRate,avgSatisfaction
+TPE-NRT,28,high,22,班機延誤;行李問題;客服態度,85,3.2
+TPE-ICN,22,medium,17,座位問題;餐點服務;客服態度,90,3.8
+TPE-BKK,19,medium,15,行李問題;班機延誤;餐點服務,88,3.5
+TPE-SIN,15,low,12,餐點服務;座位問題;客服態度,92,4.1
+TPE-LAX,25,high,20,班機延誤;座位問題;行李問題,82,3.0
+TPE-HKG,12,low,9,客服態度;餐點服務;座位問題,95,4.3
+TPE-KUL,8,low,6,餐點服務;行李問題;班機延誤,93,4.0

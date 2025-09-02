@@ -168,7 +168,7 @@ const mockScenarios: Scenario[] = [
 const mockHistoricalSimulations: HistoricalSimulation[] = [
   {
     id: 'sim-001',
-    name: '2025春節旺季策略推演',
+    name: '春節旺季市場分析',
     date: '2025-01-15',
     scenarios: ['觀光業復甦', '燃油價格上漲'],
     timeSegments: ['2025 Q1 春節旺季'],
@@ -241,7 +241,7 @@ const mockHistoricalSimulations: HistoricalSimulation[] = [
   },
   {
     id: 'sim-002',
-    name: '競爭對手進入市場影響評估',
+    name: '市場競爭態勢分析',
     date: '2025-02-20',
     scenarios: ['新競爭者進入', '數位轉型成功'],
     timeSegments: ['2025 Q2 淡季調整'],
@@ -350,14 +350,21 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
     setIsSimulating(false);
   };
 
+  // 統一色彩系統
+  const colors = {
+    primary: 'text-blue-600 bg-blue-50 border-blue-200',
+    neutral: 'text-gray-600 bg-gray-50 border-gray-200',
+    highlight: 'text-blue-700 bg-blue-100 border-blue-300'
+  };
+
   const getImpactColor = (impact: 'high' | 'medium' | 'low') => {
     switch (impact) {
       case 'high':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return colors.highlight;
       case 'medium':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return colors.primary;
       default:
-        return 'text-green-600 bg-green-50 border-green-200';
+        return colors.neutral;
     }
   };
 
@@ -597,8 +604,8 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                       <div className="text-xs text-gray-600">
                         風險等級: <span className={cn(
                           "font-medium",
-                          result.metrics.riskLevel > 60 ? "text-red-600" :
-                          result.metrics.riskLevel > 40 ? "text-yellow-600" : "text-green-600"
+                          result.metrics.riskLevel > 60 ? "text-blue-700" :
+                          result.metrics.riskLevel > 40 ? "text-blue-600" : "text-gray-600"
                         )}>
                           {result.metrics.riskLevel > 60 ? '高' :
                            result.metrics.riskLevel > 40 ? '中' : '低'}
@@ -651,32 +658,9 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                   )}
                   onClick={() => setSelectedHistoricalSim(simulation)}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">{simulation.name}</h4>
-                    <span className="text-sm text-gray-500">{simulation.date}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-4 mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {simulation.timeSegments.length} 個時間區段
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {simulation.scenarios.length} 個情境
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {simulation.scenarios.map((scenario, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        {scenario}
-                      </span>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-900">{simulation.name}</h4>
+                    <span className="text-xs text-gray-400">{simulation.date}</span>
                   </div>
                 </div>
               ))}
@@ -696,29 +680,29 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
               {/* 三種情況對比 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 {/* 最佳情況 */}
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-green-900">最佳情況</h4>
-                    <span className="text-sm text-green-600">
+                    <h4 className="font-medium text-gray-900">最佳情況</h4>
+                    <span className="text-sm text-blue-600 font-semibold">
                       {selectedHistoricalSim.summary.bestCase.metrics.probability}%
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-green-700">營收</span>
-                      <span className="font-medium text-green-900">
+                      <span className="text-sm text-gray-600">營收</span>
+                      <span className="font-medium text-gray-900">
                         ${(selectedHistoricalSim.summary.bestCase.metrics.revenue / 1000000).toFixed(1)}M
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-green-700">市占率</span>
-                      <span className="font-medium text-green-900">
+                      <span className="text-sm text-gray-600">市占率</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.bestCase.metrics.marketShare}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-green-700">風險</span>
-                      <span className="font-medium text-green-900">
+                      <span className="text-sm text-gray-600">風險</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.bestCase.metrics.riskLevel}%
                       </span>
                     </div>
@@ -726,29 +710,29 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                 </div>
 
                 {/* 最可能情況 */}
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-blue-900">最可能情況</h4>
-                    <span className="text-sm text-blue-600">
+                    <h4 className="font-medium text-gray-900">最可能情況</h4>
+                    <span className="text-sm text-blue-600 font-semibold">
                       {selectedHistoricalSim.summary.mostLikely.metrics.probability}%
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-blue-700">營收</span>
-                      <span className="font-medium text-blue-900">
+                      <span className="text-sm text-gray-600">營收</span>
+                      <span className="font-medium text-gray-900">
                         ${(selectedHistoricalSim.summary.mostLikely.metrics.revenue / 1000000).toFixed(1)}M
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-blue-700">市占率</span>
-                      <span className="font-medium text-blue-900">
+                      <span className="text-sm text-gray-600">市占率</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.mostLikely.metrics.marketShare}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-blue-700">風險</span>
-                      <span className="font-medium text-blue-900">
+                      <span className="text-sm text-gray-600">風險</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.mostLikely.metrics.riskLevel}%
                       </span>
                     </div>
@@ -756,29 +740,29 @@ export const StrategySimulationPage: React.FC<StrategySimulationPageProps> = ({
                 </div>
 
                 {/* 最壞情況 */}
-                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-red-900">最壞情況</h4>
-                    <span className="text-sm text-red-600">
+                    <h4 className="font-medium text-gray-900">最壞情況</h4>
+                    <span className="text-sm text-blue-600 font-semibold">
                       {selectedHistoricalSim.summary.worstCase.metrics.probability}%
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-red-700">營收</span>
-                      <span className="font-medium text-red-900">
+                      <span className="text-sm text-gray-600">營收</span>
+                      <span className="font-medium text-gray-900">
                         ${(selectedHistoricalSim.summary.worstCase.metrics.revenue / 1000000).toFixed(1)}M
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-red-700">市占率</span>
-                      <span className="font-medium text-red-900">
+                      <span className="text-sm text-gray-600">市占率</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.worstCase.metrics.marketShare}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-red-700">風險</span>
-                      <span className="font-medium text-red-900">
+                      <span className="text-sm text-gray-600">風險</span>
+                      <span className="font-medium text-gray-900">
                         {selectedHistoricalSim.summary.worstCase.metrics.riskLevel}%
                       </span>
                     </div>

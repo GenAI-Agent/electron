@@ -169,16 +169,23 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({ className = "" }
     }, 3000);
   };
 
+  // 統一色彩系統
+  const colors = {
+    primary: 'text-blue-600 bg-blue-50',
+    neutral: 'text-gray-600 bg-gray-50',
+    highlight: 'text-blue-700 bg-blue-100'
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50';
+        return colors.primary;
       case 'running':
-        return 'text-blue-600 bg-blue-50';
+        return colors.highlight;
       case 'failed':
-        return 'text-red-600 bg-red-50';
+        return colors.neutral;
       default:
-        return 'text-gray-600 bg-gray-50';
+        return colors.neutral;
     }
   };
 

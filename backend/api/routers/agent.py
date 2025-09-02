@@ -318,6 +318,27 @@ async def generate_stream_response(
                                 elif "petition" in filename:
                                     platform_type = "陳情系統"
                                     platform_name = "Petition"
+                                elif "marketing_dashboard" in filename:
+                                    platform_type = "營運儀表板"
+                                    platform_name = "Marketing Dashboard"
+                                elif "marketing_strategy" in filename:
+                                    platform_type = "策略推演"
+                                    platform_name = "Strategy Simulation"
+                                elif "marketing_action" in filename:
+                                    platform_type = "行動建議"
+                                    platform_name = "Action Recommendation"
+                                elif "marketing_intelligence" in filename:
+                                    platform_type = "智庫"
+                                    platform_name = "Intelligence Hub"
+                                elif "marketing_competitor" in filename:
+                                    platform_type = "競爭者分析"
+                                    platform_name = "Competitor Analysis"
+                                elif "marketing_complaints" in filename:
+                                    platform_type = "客訴分析"
+                                    platform_name = "Complaints Analysis"
+                                elif "marketing_china_airlines" in filename:
+                                    platform_type = "華航企業資料"
+                                    platform_name = "China Airlines Data"
                                 else:
                                     platform_type = "未知平台"
                                     platform_name = "Unknown"

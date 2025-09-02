@@ -202,14 +202,21 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
     }
   };
 
+  // 統一色彩系統
+  const colors = {
+    primary: 'text-blue-600 bg-blue-50 border-blue-200',
+    neutral: 'text-gray-600 bg-gray-50 border-gray-200',
+    highlight: 'text-blue-700 bg-blue-100 border-blue-300'
+  };
+
   const getSeverityColor = (severity: 'high' | 'medium' | 'low') => {
     switch (severity) {
       case 'high':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return colors.highlight;
       case 'medium':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return colors.primary;
       default:
-        return 'text-green-600 bg-green-50 border-green-200';
+        return colors.neutral;
     }
   };
 
@@ -258,7 +265,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                   className={cn(
                     "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                     selectedTimeRange === range
-                      ? "bg-green-500 text-white"
+                      ? "bg-blue-500 text-white"
                       : "text-gray-600 hover:text-gray-900"
                   )}
                 >
@@ -281,20 +288,20 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
               </h3>
               <button
                 onClick={() => handleDataExport('alerts')}
-                className="text-sm text-red-600 hover:text-red-800"
+                className="text-sm text-blue-600 hover:text-blue-800"
               >
                 查看所有預警
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {metrics.alerts.filter(alert => alert.actionRequired).map((alert) => (
-                <div key={alert.id} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                <div key={alert.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-start space-x-2">
                     {getAlertIcon(alert.type)}
                     <div className="flex-1">
-                      <h4 className="font-medium text-red-900">{alert.title}</h4>
-                      <p className="text-sm text-red-700 mt-1">{alert.description}</p>
-                      <p className="text-xs text-red-600 mt-2">影響: {alert.impact}</p>
+                      <h4 className="font-medium text-gray-900">{alert.title}</h4>
+                      <p className="text-sm text-gray-700 mt-1">{alert.description}</p>
+                      <p className="text-xs text-blue-600 font-medium mt-2">影響: {alert.impact}</p>
                     </div>
                   </div>
                 </div>
@@ -320,7 +327,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
             {getChangeIcon(metrics.revenue.trend)}
             <span className={cn(
               "text-sm font-medium",
-              metrics.revenue.trend === 'up' ? "text-green-600" : "text-red-600"
+              metrics.revenue.trend === 'up' ? "text-blue-600" : "text-gray-600"
             )}>
               {metrics.revenue.change > 0 ? '+' : ''}{metrics.revenue.change}%
             </span>
@@ -340,7 +347,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
             {getChangeIcon(metrics.loadFactor.trend)}
             <span className={cn(
               "text-sm font-medium",
-              metrics.loadFactor.trend === 'up' ? "text-green-600" : "text-red-600"
+              metrics.loadFactor.trend === 'up' ? "text-blue-600" : "text-gray-600"
             )}>
               {metrics.loadFactor.change > 0 ? '+' : ''}{metrics.loadFactor.change}%
             </span>
@@ -360,7 +367,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
             {getChangeIcon(metrics.onTimePerformance.trend)}
             <span className={cn(
               "text-sm font-medium",
-              metrics.onTimePerformance.trend === 'up' ? "text-green-600" : "text-red-600"
+              metrics.onTimePerformance.trend === 'up' ? "text-blue-600" : "text-gray-600"
             )}>
               {metrics.onTimePerformance.change > 0 ? '+' : ''}{metrics.onTimePerformance.change}%
             </span>
@@ -380,7 +387,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
             {getChangeIcon(metrics.customerSatisfaction.trend)}
             <span className={cn(
               "text-sm font-medium",
-              metrics.customerSatisfaction.trend === 'up' ? "text-green-600" : "text-red-600"
+              metrics.customerSatisfaction.trend === 'up' ? "text-blue-600" : "text-gray-600"
             )}>
               {metrics.customerSatisfaction.change > 0 ? '+' : ''}{metrics.customerSatisfaction.change}
             </span>
@@ -428,7 +435,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                     </div>
                     <span className={cn(
                       "px-2 py-1 rounded-full text-xs font-medium",
-                      geo.growth > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                      geo.growth > 0 ? "bg-gray-100 text-blue-600" : "bg-gray-100 text-gray-600"
                     )}>
                       {geo.growth > 0 ? '+' : ''}{geo.growth}%
                     </span>
@@ -475,15 +482,14 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                     <div className="flex items-center space-x-2">
                       <span className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",
-                        comp.ranking <= 2 ? "bg-green-50 text-green-600" :
-                        comp.ranking <= 3 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
+                        comp.ranking <= 2 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
                       )}>
                         #{comp.ranking}
                       </span>
                       <span className={cn(
                         "text-xs",
-                        comp.trend === 'improving' ? "text-green-600" :
-                        comp.trend === 'declining' ? "text-red-600" : "text-gray-600"
+                        comp.trend === 'improving' ? "text-blue-600" :
+                        comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
                       )}>
                         {comp.trend === 'improving' ? '↗' :
                          comp.trend === 'declining' ? '↘' : '→'}
@@ -506,10 +512,10 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
               <h3 className="text-lg font-semibold text-gray-900">客訴類別分析</h3>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">總計:</span>
-                <span className="text-lg font-bold text-red-600">{metrics.complaints.total}</span>
+                <span className="text-lg font-bold text-blue-600">{metrics.complaints.total}</span>
                 <span className={cn(
                   "text-sm font-medium",
-                  metrics.complaints.change > 0 ? "text-red-600" : "text-green-600"
+                  metrics.complaints.change > 0 ? "text-gray-600" : "text-blue-600"
                 )}>
                   ({metrics.complaints.change > 0 ? '+' : ''}{metrics.complaints.change}%)
                 </span>
@@ -536,7 +542,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                     <div className="flex items-center space-x-4">
                       <span className={cn(
                         "font-medium",
-                        category.change > 0 ? "text-red-600" : "text-green-600"
+                        category.change > 0 ? "text-gray-600" : "text-blue-600"
                       )}>
                         {category.change > 0 ? '+' : ''}{category.change}% vs 上月
                       </span>
@@ -571,8 +577,8 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <span className="text-lg font-bold text-gray-900">{issue.count}</span>
                       <span className={cn(
                         "text-xs px-2 py-1 rounded-full",
-                        issue.trend === 'increasing' ? "bg-red-50 text-red-600" :
-                        issue.trend === 'decreasing' ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600"
+                        issue.trend === 'increasing' ? "bg-gray-100 text-gray-700" :
+                        issue.trend === 'decreasing' ? "bg-blue-100 text-blue-700" : "bg-gray-50 text-gray-600"
                       )}>
                         {issue.trend === 'increasing' ? '↗ 增加' :
                          issue.trend === 'decreasing' ? '↘ 減少' : '→ 穩定'}
@@ -586,8 +592,8 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                         <div
                           className={cn(
                             "h-2 rounded-full",
-                            issue.impact > 80 ? "bg-red-500" :
-                            issue.impact > 60 ? "bg-yellow-500" : "bg-green-500"
+                            issue.impact > 80 ? "bg-blue-600" :
+                            issue.impact > 60 ? "bg-blue-400" : "bg-gray-400"
                           )}
                           style={{ width: `${issue.impact}%` }}
                         />
@@ -656,7 +662,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <td className="text-right py-3 px-4">
                         <span className={cn(
                           "font-medium",
-                          geo.growth > 0 ? "text-green-600" : "text-red-600"
+                          geo.growth > 0 ? "text-blue-600" : "text-gray-600"
                         )}>
                           {geo.growth > 0 ? '+' : ''}{geo.growth}%
                         </span>
@@ -692,8 +698,7 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                     <h4 className="font-medium text-gray-900">{comp.metric}</h4>
                     <span className={cn(
                       "px-2 py-1 rounded-full text-xs font-medium",
-                      comp.ranking <= 2 ? "bg-green-50 text-green-600" :
-                      comp.ranking <= 3 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"
+                      comp.ranking <= 2 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
                     )}>
                       業界排名 #{comp.ranking}
                     </span>
@@ -718,8 +723,8 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
                       <span className="text-sm text-gray-600">趨勢</span>
                       <span className={cn(
                         "text-sm font-medium",
-                        comp.trend === 'improving' ? "text-green-600" :
-                        comp.trend === 'declining' ? "text-red-600" : "text-gray-600"
+                        comp.trend === 'improving' ? "text-blue-600" :
+                        comp.trend === 'declining' ? "text-gray-500" : "text-gray-600"
                       )}>
                         {comp.trend === 'improving' ? '↗ 改善中' :
                          comp.trend === 'declining' ? '↘ 下滑中' : '→ 穩定'}

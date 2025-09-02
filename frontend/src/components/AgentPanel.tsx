@@ -84,8 +84,8 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   };
 
   // 內部百分比狀態（可被 props 初始化）
-  const [heightPct, setHeightPct] = useState(75);  // 預設上面 75%，下面輸入框 25%
-  useEffect(() => { setHeightPct(clamp(topHeight || 75, 70, 85)); }, [topHeight]);
+  const [heightPct, setHeightPct] = useState(65);  // 預設上面 65%，下面輸入框 35%
+  useEffect(() => { setHeightPct(clamp(topHeight || 65, 45, 70)); }, [topHeight]);
 
   // 檢測當前模式和文件上下文
   useEffect(() => {
@@ -178,7 +178,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
     const move = (y: number) => {
       const raw = ((y - rect.top) / rect.height) * 100;
-      const next = clamp(raw, 50, 75);        // 限制：上面 40%-85%（底部 15%-60%）
+      const next = clamp(raw, 45, 70);        // 限制：上面 45%-70%（底部 30%-55%）
       // 用 rAF 避免大量 reflow
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -753,18 +753,18 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
       ></div>
 
       {/* Bottom Panel (Input) - 動態高度但底部固定的输入区域 */}
-      <div className="flex flex-col min-h-[180px] p-4 pb-2 relative z-[2] bg-card border-t border-border">
+      <div className="flex flex-col min-h-[200px] p-4 pb-8 relative z-[2] bg-card border-t border-border overflow-visible">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col relative flex-1 mb-2"
+          className="flex flex-col relative flex-1"
         >
-          <div className="relative flex-1 flex flex-col">
+          <div className="relative flex-1 flex flex-col min-h-0">
             {/* 外层输入框容器 - 包含文字区域和图标，看起来像一个完整的输入框 */}
-            <div className="flex-1 relative border border-border bg-background flex flex-col">
+            <div className="flex-1 relative border border-border bg-background flex flex-col min-h-[120px]">
               {/* 文字输入区域容器 - 限制文字显示区域，为底部图标预留空间 */}
-              <div className="flex-1 relative overflow-hidden mb-12">
+              <div className="flex-1 relative overflow-hidden mb-12 min-h-0">
                 <textarea
-                  className="w-full h-full bg-transparent focus:outline-none pt-3 pl-4 pr-4 pb-12 text-base leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground"
+                  className="w-full h-full bg-transparent focus:outline-none pt-3 pl-4 pr-4 pb-3 text-base leading-relaxed text-foreground cursor-text resize-none placeholder:text-muted-foreground"
                   placeholder="輸入文字開始對話..."
                   value={input}
                   onChange={(e) => handleInputChange(e.target.value)}
@@ -785,14 +785,15 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
                   }}
                   style={{
                     fontSize: '14px',
-                    cursor: 'text'
+                    cursor: 'text',
+                    minHeight: '60px'
                   }}
                 />
               </div>
             </div>
             {/* 發送按鈕 - 调整位置 */}
             {/* Bottom action buttons row */}
-            <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
               {/* Left side icons */}
               <div className="flex gap-1">
                 <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200">
@@ -828,7 +829,7 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
 
             {/* Rule Autocomplete 下拉列表 */}
             {showRuleAutocomplete && (ruleMatches.length > 0 || availableRules.length > 0) && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg z-[1000] max-h-64 overflow-y-auto">
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg z-[2000] max-h-48 overflow-y-auto">
                 {/* 分類選項 */}
                 <div className="sticky top-0 bg-card border-b border-border p-2">
                   <div className="flex flex-wrap gap-1">

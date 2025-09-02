@@ -161,7 +161,190 @@ export default function MarketingSandboxPage() {
     }
   };
 
-  // Update session context based on open data tabs
+  // 建立所有marketing相關的資料檔案清單（不開分頁，僅供Agent使用）
+  const getAllMarketingDataFiles = () => {
+    return [
+      {
+        id: 'dashboard-kpi',
+        title: '營運KPI指標',
+        source: 'dashboard',
+        filename: 'marketing_dashboard_data.csv',
+        date: '2025-09-01',
+        time: '09:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'dashboard-routes',
+        title: '航線表現資料',
+        source: 'dashboard',
+        filename: 'marketing_dashboard_routes.csv',
+        date: '2025-09-01',
+        time: '09:15:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'dashboard-alerts',
+        title: '營運警示資料',
+        source: 'dashboard',
+        filename: 'marketing_dashboard_alerts.csv',
+        date: '2025-09-01',
+        time: '09:30:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'strategy-simulations',
+        title: '策略推演記錄',
+        source: 'strategy',
+        filename: 'marketing_strategy_data.csv',
+        date: '2025-09-01',
+        time: '10:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'strategy-results',
+        title: '推演結果詳細',
+        source: 'strategy',
+        filename: 'marketing_strategy_results.csv',
+        date: '2025-09-01',
+        time: '10:15:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'action-recommendations',
+        title: '行動建議清單',
+        source: 'action',
+        filename: 'marketing_action_data.csv',
+        date: '2025-09-01',
+        time: '11:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'intelligence-countries',
+        title: '國家市場分析',
+        source: 'intelligence',
+        filename: 'marketing_intelligence_data.csv',
+        date: '2025-09-01',
+        time: '12:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'intelligence-social',
+        title: '社群監控資料',
+        source: 'intelligence',
+        filename: 'marketing_intelligence_social.csv',
+        date: '2025-09-01',
+        time: '12:15:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'competitor-analysis',
+        title: '競爭者分析',
+        source: 'competitor',
+        filename: 'marketing_competitor_data.csv',
+        date: '2025-09-01',
+        time: '13:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'china-airlines-data',
+        title: '華航企業資料',
+        source: 'competitor',
+        filename: 'marketing_china_airlines_data.csv',
+        date: '2025-09-01',
+        time: '13:15:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'complaints-categories',
+        title: '客訴類型分析',
+        source: 'complaints',
+        filename: 'marketing_complaints_categories.csv',
+        date: '2025-09-01',
+        time: '14:00:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'complaints-details',
+        title: '客訴詳細記錄',
+        source: 'complaints',
+        filename: 'marketing_complaints_details.csv',
+        date: '2025-09-01',
+        time: '14:15:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'complaints-routes',
+        title: '航線客訴分析',
+        source: 'complaints',
+        filename: 'marketing_complaints_routes.csv',
+        date: '2025-09-01',
+        time: '14:30:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      },
+      {
+        id: 'complaints-trends',
+        title: '客訴趨勢分析',
+        source: 'complaints',
+        filename: 'marketing_complaints_trends.csv',
+        date: '2025-09-01',
+        time: '14:45:00',
+        data: [],
+        isActive: false,
+        isAnalytics: false
+      }
+    ];
+  };
+
+  // 設置session context，讓Agent能讀取所有marketing資料（不開分頁）
+  const setupMarketingContext = () => {
+    const allMarketingFiles = getAllMarketingDataFiles();
+
+    const filesData = allMarketingFiles.map(file => ({
+      source: file.source,
+      date: file.date,
+      time: file.time,
+      filename: file.filename,
+      data: file.data
+    }));
+
+    sessionManager.setMultiFileContext({
+      files: filesData,
+      totalFiles: allMarketingFiles.length
+    });
+  };
+
+  // 在組件載入時設置marketing context
+  useEffect(() => {
+    setupMarketingContext();
+  }, []);
+
+  // Update session context based on open data tabs (保留原有功能)
   const updateSessionContext = () => {
     if (dataTabs.length === 0) return;
 
@@ -341,17 +524,17 @@ export default function MarketingSandboxPage() {
             <AgentPanel
               onDragStateChange={(dragging) => setIsDragging(dragging)}
               sandboxContext={{
-                selectedDatasets: dataTabs.map(tab => ({
-                  id: tab.id,
-                  source: tab.source,
-                  filename: tab.filename,
-                  date: tab.date,
-                  time: tab.time,
-                  data: tab.data
+                selectedDatasets: getAllMarketingDataFiles().map(file => ({
+                  id: file.id,
+                  source: file.source,
+                  filename: file.filename,
+                  date: file.date,
+                  time: file.time,
+                  data: file.data
                 })),
-                filePaths: dataTabs.map(tab => {
-                  const filename = tab.filename;
-                  return `../data/marketing-sandbox/${filename.endsWith('.csv') ? filename : filename + '.csv'}`;
+                filePaths: getAllMarketingDataFiles().map(file => {
+                  const filename = file.filename;
+                  return `../data/sandbox/${filename.endsWith('.csv') ? filename : filename + '.csv'}`;
                 })
               }}
             />

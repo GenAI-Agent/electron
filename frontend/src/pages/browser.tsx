@@ -54,7 +54,7 @@ const BrowserPage: React.FC = () => {
   if (!url && !path && !file) return null;
 
   return (
-    <div className="h-screen w-screen flex flex-col pt-10 bg-background relative overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background relative overflow-hidden">
       {/* Header */}
       <Header
         title={getTitle()}
@@ -66,7 +66,7 @@ const BrowserPage: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden min-h-0">
+      <div className="flex-1 relative overflow-hidden min-h-0 mt-[40px]">
         {/* Browser View - Always visible */}
         <div
           className="absolute inset-0 transition-all duration-300 ease-in-out"

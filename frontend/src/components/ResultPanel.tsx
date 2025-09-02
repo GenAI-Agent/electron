@@ -44,13 +44,13 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 }) => {
   return (
     <div
-      className="w-full h-full p-3 pr-3.5 pb-1 overflow-auto flex flex-col relative"
+      className="w-full h-full p-3 pr-3.5 pb-4 overflow-auto flex flex-col relative"
     >
       {mode === 'result' && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* 优化的消息显示 */}
           {messages.length > 0 ? (
-            <div className="flex-1 overflow-auto space-y-3 p-2">
+            <div className="flex-1 overflow-auto space-y-3 p-2 pb-4">
               {messages.map((message, index) => (
                 <div key={message.id} className="flex flex-col">
                   {message.type === 'user' ? (

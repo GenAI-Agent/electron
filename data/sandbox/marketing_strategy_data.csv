@@ -1,0 +1,6 @@
+id,name,date,scenarios,timeSegments,revenue,marketShare,customerSatisfaction,riskLevel,probability,status
+sim-001,2025春節旺季策略推演,2025-01-15,觀光業復甦;燃油價格上漲,2025 Q1 春節旺季,1300000,40,105,25,85,completed
+sim-002,競爭對手進入市場影響評估,2025-02-20,新競爭者進入;數位轉型成功,2025 Q2 淡季調整,920000,28,88,35,60,completed
+sim-003,夏季旺季定價策略,2025-03-15,旅遊需求復甦;價格競爭加劇,2025 Q3 夏季旺季,1580000,35,92,30,75,completed
+sim-004,數位行銷vs傳統廣告,2025-04-10,數位轉型;成本控制,2025 Q2-Q3,1350000,32,78,20,68,completed
+sim-005,服務品質提升計畫,2025-05-05,客戶體驗;品牌形象,2025全年,1420000,29,95,25,72,completed

@@ -1,0 +1,9 @@
+id,title,category,priority,status,impact,feasibility,timeline,budget,description,expectedOutcome,riskLevel
+action-001,動態定價系統部署,pricing,high,ready,high,medium,Q4 2025,15000000,部署AI驅動的動態定價系統，根據需求和競爭情況自動調整票價,預期提升營收12-18%，優化載客率,medium
+action-002,日本航線增班,capacity,high,analysis,high,low,Q1 2026,25000000,因應日本旅遊需求復甦，增加TPE-NRT和TPE-KIX航線班次,預期增加市占率5-8%，提升營收,high
+action-003,客戶服務數位化,digital,medium,planning,medium,high,Q3 2025,8000000,導入AI客服和自助服務系統，提升客戶體驗,減少客服成本30%，提升滿意度,low
+action-004,會員計畫升級,loyalty,medium,development,medium,high,Q4 2025,12000000,重新設計常客計畫，增加個人化獎勵和體驗,提升會員活躍度25%，增加忠誠度,low
+action-005,競爭對手監控系統,intelligence,high,ready,high,high,Q3 2025,5000000,建立即時競爭對手價格和策略監控系統,提升市場反應速度，優化競爭策略,low
+action-006,永續航空燃料,sustainability,low,research,low,low,2026-2027,50000000,逐步導入永續航空燃料，減少碳排放,符合環保法規，提升品牌形象,high
+action-007,機場服務優化,operations,medium,planning,medium,medium,Q4 2025,18000000,改善地面服務流程，縮短轉機時間,提升準點率5%，改善客戶體驗,medium
+action-008,數據分析平台,analytics,high,development,high,medium,Q1 2026,20000000,建立統一的客戶和營運數據分析平台,提升決策效率，優化營運,medium

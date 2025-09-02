@@ -1,0 +1,7 @@
+id,name,type,marketShare,routes,strengths,weaknesses,economy_price,business_price,premium_price,onboard_services,ground_services,digital_services
+eva-air,長榮航空,full-service,28,TPE-LAX;TPE-NRT;TPE-LHR;TPE-BKK,服務品質;航線網絡;品牌形象,票價較高;數位化程度,25000,85000,45000,娛樂系統;餐飲服務;WiFi,貴賓室;優先登機;行李服務,手機App;線上報到;座位選擇
+starlux,星宇航空,full-service,15,TPE-NRT;TPE-ICN;TPE-BKK;TPE-SIN,服務創新;新穎機隊;品牌形象,航線網絡有限;成本較高,28000,95000,52000,高級娛樂;精緻餐飲;免費WiFi,精品貴賓室;禮賓服務;快速通關,STARLUX App;數位服務;個人化體驗
+tigerair,台灣虎航,low-cost,8,TPE-NRT;TPE-ICN;TPE-BKK;TPE-SIN,低價策略;年輕客群;靈活營運,服務有限;準點率;品牌形象,12000,0,18000,付費餐飲;付費娛樂;付費WiFi,自助報到;付費選位;付費行李,Tigerair App;線上購物;社群互動
+jal,日本航空,full-service,22,TPE-NRT;TPE-KIX;TPE-CTS,國際網路;服務品質;聯盟優勢,價格較高;在台競爭,26000,88000,48000,日式服務;精緻餐飲;娛樂系統,櫻花貴賓室;優先服務;行李直掛,JAL App;線上服務;里程兌換
+ana,全日空,full-service,20,TPE-NRT;TPE-KIX;TPE-CTS,營運效率;技術創新;準點率,在台知名度;價格競爭,25500,86000,47000,ANA服務;日式餐飲;個人娛樂,ANA貴賓室;星空聯盟;快速服務,ANA App;數位化服務;會員服務
+korean-air,大韓航空,full-service,18,TPE-ICN;TPE-PUS,樞紐優勢;轉機便利;航線網絡,服務一致性;競爭激烈,24000,82000,44000,韓式服務;娛樂系統;餐飲選擇,仁川樞紐;貴賓室;轉機服務,Korean Air App;線上服務;SKYPASS

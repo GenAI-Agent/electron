@@ -1,0 +1,16 @@
+metric,value,unit,description
+name,中華航空,text,公司名稱
+marketShare,25,percent,市場占有率
+economy_price,23000,TWD,經濟艙平均票價
+business_price,78000,TWD,商務艙平均票價
+premium_price,42000,TWD,豪華經濟艙平均票價
+strengths,航線網絡廣泛;品牌歷史悠久;政府支持;兩岸航線優勢,text,競爭優勢
+weaknesses,數位化轉型較慢;成本控制;年輕客群吸引力,text,競爭劣勢
+onboard_services,個人娛樂系統;中式餐飲;WiFi服務,text,機上服務
+ground_services,松山機場樞紐;貴賓室服務;快速通關,text,地面服務
+digital_services,CI App;線上報到;數位登機證,text,數位服務
+routes,TPE-LAX;TPE-NRT;TPE-FRA;TPE-SYD;TPE-PVG,text,主要航線
+loyalty_program_name,Dynasty Flyer,text,常客計畫名稱
+loyalty_members,2800000,number,會員總數
+loyalty_tiers,一般會員;金卡;翡翠卡;鑽石卡,text,會員等級
+partnerships,萬豪酒店;中信銀行;台灣高鐵,text,合作夥伴

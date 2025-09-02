@@ -1,0 +1,16 @@
+id,date,category,severity,channel,description,customerType,route,resolution,resolutionTime,satisfaction,followUp
+C001,2025-09-01,班機延誤,high,phone,CI123班機延誤3小時，導致錯過重要會議，要求賠償,business,TPE-NRT,提供餐券、住宿券，並安排隔日優先座位,4,3,true
+C002,2025-09-01,行李問題,medium,counter,行李在轉機時遺失，內有重要文件和個人物品,leisure,TPE-BKK,48小時內找回行李，提供臨時用品補償,48,4,false
+C003,2025-08-31,客服態度,high,email,客服人員態度不佳，未能妥善處理退票需求,frequent,TPE-ICN,重新培訓相關人員，提供服務補償,72,2,true
+C004,2025-08-31,座位問題,medium,social,商務艙座椅無法調整，影響長途飛行舒適度,business,TPE-LAX,技術人員檢修，提供艙等升級補償,6,4,false
+C005,2025-08-30,餐點服務,low,phone,素食餐點選擇有限，且口味不佳,leisure,TPE-SIN,改善素食菜單，提供餐飲券補償,2,3,false
+C006,2025-08-30,班機延誤,high,counter,颱風導致班機取消，地勤安排不當,leisure,TPE-KUL,提供住宿和改簽服務，加強天候應變,8,3,true
+C007,2025-08-29,行李問題,medium,email,行李箱在運送過程中損壞，內物散落,business,TPE-HKG,賠償行李箱費用，檢討行李處理流程,24,4,false
+C008,2025-08-29,客服態度,high,phone,電話客服等待時間過長，且無法解決問題,frequent,TPE-SYD,增加客服人力，建立快速處理機制,12,2,true
+C009,2025-08-28,座位問題,low,social,經濟艙座位間距太小，長途飛行不舒適,leisure,TPE-FRA,說明座位規格，提供舒適用品,1,3,false
+C010,2025-08-28,餐點服務,medium,counter,兒童餐內容不適合，孩子拒絕食用,leisure,TPE-NRT,改善兒童餐選項，提供替代餐點,3,3,false
+C011,2025-08-27,班機延誤,high,email,機械故障導致延誤5小時，無適當說明,business,TPE-ICN,提供詳細說明和補償，改善溝通流程,6,2,true
+C012,2025-08-27,行李問題,low,phone,行李延誤送達，影響商務行程,business,TPE-BKK,加速行李追蹤，提供緊急用品,18,4,false
+C013,2025-08-26,客服態度,medium,social,網路客服回應緩慢，問題未獲解決,leisure,TPE-SIN,優化線上客服系統，加強訓練,36,3,false
+C014,2025-08-26,座位問題,high,counter,座位分配錯誤，家庭成員被分開,leisure,TPE-KUL,重新安排座位，檢討訂位系統,2,4,false
+C015,2025-08-25,餐點服務,low,email,機上飲料選擇有限，服務頻率不足,frequent,TPE-HKG,增加飲料選項，改善服務流程,1,3,false

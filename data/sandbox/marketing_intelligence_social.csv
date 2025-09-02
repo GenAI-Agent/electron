@@ -1,0 +1,8 @@
+platform,mentions,sentiment,engagement,reach,topTopics,trendDirection,influencerMentions
+Twitter,2850,positive,high,1200000,服務品質;準點率;客服態度,increasing,15
+Threads,1650,neutral,medium,850000,票價比較;航線選擇;促銷活動,stable,8
+PTT,980,mixed,high,450000,客訴處理;會員權益;航班延誤,decreasing,3
+Facebook,3200,positive,medium,1800000,旅遊分享;服務體驗;品牌形象,increasing,22
+Instagram,1850,positive,high,950000,機上餐點;座艙服務;旅遊照片,increasing,18
+YouTube,650,positive,medium,380000,安全宣導;服務介紹;企業形象,stable,5
+LinkedIn,420,neutral,low,180000,企業文化;永續發展;業務合作,stable,2

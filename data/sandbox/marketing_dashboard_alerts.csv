@@ -1,0 +1,6 @@
+id,type,severity,title,description,timestamp,source
+alert-1,opportunity,high,日本旅遊需求激增,日本政府宣布進一步放寬入境限制，預期台日航線需求將增長40%,2025-09-01 09:30,市場情報
+alert-2,risk,medium,競爭對手降價策略,長榮航空推出秋季促銷，主要航線票價下調15%,2025-09-01 08:15,競爭分析
+alert-3,action_required,high,動態定價系統待部署,系統開發已完成，等待管理層批准上線時程,2025-08-31 16:45,行動建議
+alert-4,opportunity,medium,韓國市場復甦,韓國旅遊需求回升，預期Q4增長25%,2025-08-31 14:20,市場情報
+alert-5,risk,low,燃油價格波動,國際油價上漲趨勢，預估影響成本3-5%,2025-08-31 11:30,成本分析
