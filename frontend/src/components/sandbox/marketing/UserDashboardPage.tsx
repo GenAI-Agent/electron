@@ -187,16 +187,16 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({
 
   const getChangeIcon = (trend: 'up' | 'down') => {
     return trend === 'up' ?
-      <TrendingUp className="w-4 h-4 text-green-500" /> :
-      <TrendingUp className="w-4 h-4 text-red-500 rotate-180" />;
+      <TrendingUp className="w-4 h-4 text-blue-500" /> :
+      <TrendingUp className="w-4 h-4 text-orange-500 rotate-180" />;
   };
 
   const getAlertIcon = (type: 'critical' | 'warning' | 'info') => {
     switch (type) {
       case 'critical':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       default:
         return <AlertCircle className="w-5 h-5 text-blue-500" />;
     }

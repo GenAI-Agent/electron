@@ -166,19 +166,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'good':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-blue-600 bg-blue-50 border-blue-200';
       case 'warning':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'critical':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-orange-700 bg-orange-100 border-orange-300';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getAlertColor = (type: string, severity: string) => {
-    if (type === 'opportunity') return 'border-l-green-500 bg-green-50';
-    if (type === 'risk') return 'border-l-red-500 bg-red-50';
+    if (type === 'opportunity') return 'border-l-blue-500 bg-blue-50';
+    if (type === 'risk') return 'border-l-orange-500 bg-orange-50';
     return severity === 'high' ? 'border-l-orange-500 bg-orange-50' : 'border-l-blue-500 bg-blue-50';
   };
 
@@ -295,31 +295,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <td className="py-3 px-4 font-medium text-gray-900">{route.route}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">
-                      <span className={cn(
-                        "font-medium",
-                        route.loadFactor >= 80 ? "text-green-600" :
-                          route.loadFactor >= 70 ? "text-yellow-600" : "text-red-600"
-                      )}>
+                      <span className="font-medium text-gray-900">
                         {route.loadFactor}%
                       </span>
                       <div className="w-16 h-2 bg-gray-200 rounded-full">
                         <div
-                          className={cn(
-                            "h-2 rounded-full",
-                            route.loadFactor >= 80 ? "bg-green-500" :
-                              route.loadFactor >= 70 ? "bg-yellow-500" : "bg-red-500"
-                          )}
+                          className="h-2 rounded-full bg-blue-500"
                           style={{ width: `${route.loadFactor}%` }}
                         />
                       </div>
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={cn(
-                      "font-medium",
-                      route.onTime >= 90 ? "text-green-600" :
-                        route.onTime >= 85 ? "text-yellow-600" : "text-red-600"
-                    )}>
+                    <span className="font-medium text-gray-900">
                       {route.onTime}%
                     </span>
                   </td>
@@ -327,34 +315,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-1">
                       {route.growth > 0 ? (
-                        <ArrowUpRight className="w-4 h-4 text-green-500" />
+                        <ArrowUpRight className="w-4 h-4 text-blue-500" />
                       ) : (
-                        <ArrowDownRight className="w-4 h-4 text-red-500" />
+                        <ArrowDownRight className="w-4 h-4 text-gray-500" />
                       )}
-                      <span className={cn(
-                        "font-medium",
-                        route.growth > 0 ? "text-green-600" : "text-red-600"
-                      )}>
+                      <span className="font-medium text-gray-900">
                         {route.growth > 0 ? '+' : ''}{route.growth}%
                       </span>
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      route.competition === 'high' ? "bg-red-100 text-red-700" :
-                        route.competition === 'medium' ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
-                    )}>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                       {route.competition === 'high' ? '激烈' :
                         route.competition === 'medium' ? '中等' : '溫和'}
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      route.status === 'good' ? "bg-green-100 text-green-700" :
-                        route.status === 'warning' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
-                    )}>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                       {route.status === 'good' ? '良好' :
                         route.status === 'warning' ? '注意' : '警告'}
                     </span>
@@ -408,11 +385,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className="text-xs text-gray-500 mb-1">目標: {kpi.target}{kpi.unit}</div>
                 <div className="w-16 h-2 bg-gray-200 rounded-full">
                   <div
-                    className={cn(
-                      "h-2 rounded-full",
-                      kpi.status === 'good' ? "bg-green-500" :
-                        kpi.status === 'warning' ? "bg-yellow-500" : "bg-red-500"
-                    )}
+                    className="h-2 rounded-full bg-blue-500"
                     style={{ width: `${Math.min((kpi.value / kpi.target) * 100, 100)}%` }}
                   />
                 </div>
@@ -432,10 +405,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="space-y-3">
             <h4 className="font-medium text-gray-700">客訴類型分布</h4>
             {[
-              { type: '班機延誤', count: 45, percentage: 35, color: 'bg-red-500' },
-              { type: '行李問題', count: 32, percentage: 25, color: 'bg-orange-500' },
-              { type: '服務品質', count: 28, percentage: 22, color: 'bg-yellow-500' },
-              { type: '票務問題', count: 23, percentage: 18, color: 'bg-blue-500' }
+              { type: '班機延誤', count: 45, percentage: 35, color: 'bg-orange-500' },
+              { type: '行李問題', count: 32, percentage: 25, color: 'bg-gray-400' },
+              { type: '服務品質', count: 28, percentage: 22, color: 'bg-gray-500' },
+              { type: '票務問題', count: 23, percentage: 18, color: 'bg-gray-600' }
             ].map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">

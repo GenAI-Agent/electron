@@ -1547,22 +1547,21 @@ export const IntelligenceHubPage: React.FC<IntelligenceHubPageProps> = ({
                 <h4 className="font-medium text-gray-900 mb-3">監控平台</h4>
                 <div className="flex flex-wrap gap-3">
                   {[
-                    { id: 'all', name: '全部平台', icon: '🌐' },
-                    { id: 'twitter', name: 'Twitter', icon: '🐦' },
-                    { id: 'threads', name: 'Threads', icon: '🧵' },
-                    { id: 'ptt', name: 'PTT', icon: '💬' }
+                    { id: 'all', name: '全部平台' },
+                    { id: 'twitter', name: 'Twitter' },
+                    { id: 'threads', name: 'Threads' },
+                    { id: 'ptt', name: 'PTT' }
                   ].map((platform) => (
                     <button
                       key={platform.id}
                       onClick={() => setPlatformFilter(platform.id as any)}
                       className={cn(
-                        "flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors",
+                        "px-3 py-2 rounded-lg border transition-colors",
                         platformFilter === platform.id
                           ? "border-blue-500 bg-blue-50 text-blue-700"
                           : "border-gray-200 hover:border-gray-300 text-gray-700"
                       )}
                     >
-                      <span>{platform.icon}</span>
                       <span className="text-sm font-medium">{platform.name}</span>
                     </button>
                   ))}

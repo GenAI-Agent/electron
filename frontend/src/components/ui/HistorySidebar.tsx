@@ -43,11 +43,11 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-blue-500" />;
       case 'running':
-        return <Play className="w-4 h-4 text-blue-500" />;
+        return <Play className="w-4 h-4 text-orange-500" />;
       case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-gray-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500" />;
     }
@@ -55,18 +55,18 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
   const getStatusColor = (status: string, isActive: boolean = false) => {
     if (isActive) {
-      return "bg-primary/20 text-white shadow-lg shadow-primary/30";
+      return "bg-blue-100 text-blue-900 shadow-lg border-blue-200";
     }
 
     switch (status) {
       case 'completed':
-        return "text-green-200 hover:bg-green-100 border-green-100";
+        return "text-gray-700 hover:bg-blue-50 border-gray-200";
       case 'running':
-        return "text-blue-200 hover:bg-blue-100 border-blue-100";
+        return "text-gray-700 hover:bg-orange-50 border-gray-200";
       case 'failed':
-        return "text-red-200 hover:bg-red-100 border-red-100";
+        return "text-gray-700 hover:bg-gray-50 border-gray-200";
       default:
-        return "text-gray-200 hover:bg-gray-100 border-gray-100";
+        return "text-gray-700 hover:bg-gray-50 border-gray-200";
     }
   };
 
@@ -101,7 +101,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <button
             onClick={onAddNew}
             className={cn(
-              "w-full flex items-center gap-3 p-3 rounded-lg text-green-600 hover:bg-green-50 border border-dashed border-green-300 hover:border-green-400 transition-all duration-200",
+              "w-full flex items-center gap-3 p-3 rounded-lg text-blue-600 hover:bg-blue-50 border border-dashed border-blue-300 hover:border-blue-400 transition-all duration-200",
               !isExpanded && "justify-center"
             )}
           >
@@ -137,31 +137,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   </div>
                 </div>
 
-                {/* Description */}
-                {item.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
 
-                {/* Date and Duration */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>{item.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{item.duration}</span>
-                  </div>
-                </div>
-
-                {/* Metadata */}
-                {item.metadata && (
-                  <div className="text-xs text-muted-foreground border-t border-border pt-2">
-                    {item.metadata}
-                  </div>
-                )}
               </div>
             ) : (
               // Collapsed view - just show status icon
