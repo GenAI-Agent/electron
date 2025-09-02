@@ -64,16 +64,16 @@ export const BentoFeatureSection: React.FC<BentoFeatureSectionProps> = ({
 
               {/* Content */}
               <div className="relative space-y-6">
-                <div className="inline-flex items-center gap-3 px-4 py-2 bg-primary/10 rounded-full">
+                {/* <div className="inline-flex items-center gap-3 px-4 py-2 bg-primary/10 rounded-full">
                   <Icon className="w-5 h-5 text-primary" />
                   <span className="text-sm font-medium text-primary">Feature {(index + 1).toString().padStart(2, '0')}</span>
-                </div>
+                </div> */}
 
-                <div className="space-y-4 max-w-xl">
+                <div className="space-y-4 pt-10 max-w-xl">
                   <h2 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                     {title}
                   </h2>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
+                  <p className="text-lg whitespace-pre-wrap text-muted-foreground leading-relaxed">
                     {description}
                   </p>
                 </div>

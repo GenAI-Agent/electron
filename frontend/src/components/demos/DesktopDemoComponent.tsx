@@ -95,10 +95,6 @@ export const DesktopDemoComponent: React.FC<DesktopDemoComponentProps> = ({ clas
           <div className="bg-primary text-white px-4 py-2 flex items-center gap-4">
             <Monitor className="w-5 h-5" />
             <span className="text-sm font-medium">LensOS Desktop Agent</span>
-            <div className="ml-auto flex gap-1">
-              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 flex-1">

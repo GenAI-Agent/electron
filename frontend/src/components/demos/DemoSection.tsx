@@ -22,7 +22,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
   const { language } = useLanguageStore();
   const t = translations[language as 'zh' | 'en'];
   const router = useRouter();
-  
+
   const [hoveredTag, setHoveredTag] = useState<number>(selectedTag);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
@@ -31,7 +31,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
   const [agentLoading, setAgentLoading] = useState(false);
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [showResponse, setShowResponse] = useState(false);
-  
+
   const demoQueries = {
     0: "Help me scrape product prices from competitor websites", // Browser Demo
     1: "Generate a monthly performance report from my local data", // Desktop Demo  
@@ -95,7 +95,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
             </div>
           )
         };
-      
+
       case 1: // Desktop Demo - 報表
         return {
           type: "report",
@@ -157,7 +157,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
             </div>
           )
         };
-      
+
       case 2: // Enterprise Demo - 數據報告
         return {
           type: "data-report",
@@ -234,7 +234,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
             </div>
           )
         };
-      
+
       case 3: // Sandbox Demo - Tasks
         return {
           type: "tasks",
@@ -267,7 +267,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="bg-white rounded-lg border shadow-sm">
                   <div className="p-3 border-l-4 border-l-gray-600">
                     <div className="flex items-center gap-3">
@@ -308,7 +308,7 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
                   <span>Project: Election 2024 Campaign</span>
                   <span className="bg-gray-100 px-2 py-0.5 rounded">58% Complete</span>
@@ -317,29 +317,29 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
             </div>
           )
         };
-        
+
       default:
         return { type: "default", content: <div>No content available</div> };
     }
   };
-  
+
   useEffect(() => {
     setHoveredTag(selectedTag);
   }, [selectedTag]);
 
   const handleSendQuery = () => {
     if (!userInput.trim()) return;
-    
+
     setCurrentQuery(userInput);
     setIsTransmitting(true);
     setUserInput("");
-    
+
     // Transmission animation
     setTimeout(() => {
       setIsTransmitting(false);
       setAgentLoading(true);
     }, 800);
-    
+
     // Agent loading phase  
     setTimeout(() => {
       setAgentLoading(false);
@@ -356,13 +356,14 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
   return (
 
     <div className="flex-1 flex z-10 max-w-[1400px] mx-auto items-start justify-center px-6 pb-10 w-full">
-      <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full">
-        {/* Left Side - Demo Area */}
-        <div className="w-full lg:w-1/2 order-2 lg:order-1">
-          <div className="relative w-full h-full min-h-[500px] bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-xl">
+      {/* Single unified frame container */}
+      <div className="neomorphism-raised rounded-2xl overflow-hidden shadow-xl w-full">
+        <div className="flex flex-col lg:flex-row items-stretch">
+          {/* Left Side - Demo Area */}
+          <div className="w-full lg:w-1/2 order-2 lg:order-1 min-h-[500px] bg-background/50">
             <div
               className={cn(
-                "transition-opacity duration-300",
+                "transition-opacity duration-300 h-full",
                 isTransitioning ? "opacity-0" : "opacity-100"
               )}
             >
@@ -372,219 +373,231 @@ const DemoSection: React.FC<DemoSectionProps> = ({ isTransitioning, selectedTag,
               {hoveredTag === 3 && <SandboxDemoComponent />}
             </div>
           </div>
-        </div>
 
-        {/* Right Side - Content and Options */}
-        <div className="w-full lg:w-1/2 order-1 lg:order-2">
-          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg h-full min-h-[500px] flex flex-col">
-            {!isDemoMode ? (
-              <>
-                <h3 className="text-lg font-semibold text-foreground mb-4">Open AGI</h3>
+          {/* Right Side - Content and Options */}
+          <div className="w-full lg:w-1/2 order-1 lg:order-2 border-l border-border/30">
+            <div className="bg-background p-6 h-full min-h-[500px] flex flex-col">
+              {!isDemoMode ? (
+                <>
+                  <h3 className="text-xl font-bold text-foreground mb-6 text-center">Open AGI</h3>
 
-                {/* Option List */}
-                <div className="space-y-2 flex-1">
-                  {tagContent.map((item: any, index: number) => (
-                    <button
-                      key={index}
-                      onMouseEnter={() => setHoveredTag(index)}
-                      onClick={() => {
-                        handleTagChange(index);
-                        setIsDemoMode(true);
-                        setDemoStep(0);
-                        setCurrentQuery("");
-                        setUserInput(demoQueries[index as keyof typeof demoQueries]);
-                        setAgentLoading(false);
-                        setIsTransmitting(false);
-                        setShowResponse(false);
-                        
-                        // Auto-send query after 200ms delay
-                        setTimeout(() => {
-                          const query = demoQueries[index as keyof typeof demoQueries];
-                          setCurrentQuery(query);
-                          setIsTransmitting(true);
-                          setUserInput("");
-                          
-                          // Transmission animation
+                  {/* Option Grid - 4宮格 */}
+                  <div className="grid grid-cols-2 gap-4 flex-1">
+                    {tagContent.map((item: any, index: number) => (
+                      <button
+                        key={index}
+                        onMouseEnter={() => setHoveredTag(index)}
+                        onClick={() => {
+                          handleTagChange(index);
+                          setIsDemoMode(true);
+                          setDemoStep(0);
+                          setCurrentQuery("");
+                          setUserInput(demoQueries[index as keyof typeof demoQueries]);
+                          setAgentLoading(false);
+                          setIsTransmitting(false);
+                          setShowResponse(false);
+
+                          // Auto-send query after 200ms delay
                           setTimeout(() => {
-                            setIsTransmitting(false);
-                            setAgentLoading(true);
-                          }, 800);
-                          
-                          // Agent loading phase  
-                          setTimeout(() => {
-                            setAgentLoading(false);
-                            setShowResponse(true);
-                          }, 2500);
-                        }, 200);
-                      }}
-                      className={cn(
-                        "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
-                        selectedTag === index
-                          ? "bg-primary/10 border-primary shadow-md"
-                          : hoveredTag === index
-                          ? "bg-muted/50 border-border"
-                          : "bg-background/50 border-transparent hover:bg-muted/50 hover:border-border"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                            const query = demoQueries[index as keyof typeof demoQueries];
+                            setCurrentQuery(query);
+                            setIsTransmitting(true);
+                            setUserInput("");
+
+                            // Transmission animation
+                            setTimeout(() => {
+                              setIsTransmitting(false);
+                              setAgentLoading(true);
+                            }, 800);
+
+                            // Agent loading phase  
+                            setTimeout(() => {
+                              setAgentLoading(false);
+                              setShowResponse(true);
+                            }, 2500);
+                          }, 200);
+                        }}
+                        className={cn(
+                          "relative w-full h-full min-h-[140px] p-4 rounded-xl transition-all duration-200 flex flex-col items-center justify-center text-center group",
                           selectedTag === index
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary/10 border-2 border-primary shadow-inner"
                             : hoveredTag === index
-                            ? "bg-primary/20 text-primary"
-                            : "bg-muted text-muted-foreground"
+                              ? "neomorphism-raised hover:scale-105"
+                              : "neomorphism-raised-sm hover:neomorphism-raised"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-14 h-14 rounded-xl flex items-center justify-center mb-3 transition-all duration-200",
+                          selectedTag === index
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : hoveredTag === index
+                              ? "neomorphism-raised-sm bg-primary/20 text-primary"
+                              : "neomorphism-inset-sm bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                         )}>
-                          <item.icon className="w-5 h-5" />
+                          <item.icon className="w-7 h-7" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex flex-col items-center">
                           <h4 className={cn(
-                            "font-medium transition-colors",
+                            "font-bold text-base mb-2 transition-colors",
                             selectedTag === index ? "text-primary" : "text-foreground"
                           )}>
                             {item.tagText}
                           </h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground leading-relaxed px-2">
                             {item.subText}
                           </p>
                         </div>
                         {selectedTag === index && (
-                          <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
+                          <div className="absolute top-3 right-3 w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center">
+                            <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
                           </div>
                         )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* CTA Buttons */}
-                <div className="mt-6 flex gap-3">
-                  <RainbowButton
-                    onClick={() => router.push(tagContent[selectedTag].path)}
-                    className="flex-1 flex items-center justify-center gap-2"
-                  >
-                    <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
-                      {`${tagContent[selectedTag].tagText} AI`}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-                  </RainbowButton>
-                  <button
-                    onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
-                    className="flex-1 px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
-                  >
-                    {t.requestDemo}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Open Agent Panel Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <LensOSLogo size={32} className="flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground">Open Agent</h3>
-                    <p className="text-xs text-muted-foreground">Lens OS Intelligence</p>
+                      </button>
+                    ))}
                   </div>
-                  <button 
-                    onClick={() => {
-                      setIsDemoMode(false);
-                      setDemoStep(0);
-                      setCurrentQuery("");
-                      setUserInput("");
-                      setAgentLoading(false);
-                      setIsTransmitting(false);
-                      setShowResponse(false);
-                    }}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
 
-                {/* Chat Interface */}
-                <div className="flex-1 bg-background/30 rounded-lg p-4 mb-4 overflow-y-auto">
-                  <div className="space-y-4 min-h-[200px]">
-                    
-                    {/* User Query */}
-                    {currentQuery && (
-                      <div className="flex gap-3 justify-end">
-                        <div className={cn(
-                          "bg-primary/20 rounded-lg p-3 max-w-[80%] transition-all duration-500",
-                          isTransmitting && "animate-pulse scale-105"
-                        )}>
-                          <p className="text-sm">{currentQuery}</p>
+                  {/* CTA Buttons */}
+                  <div className="mt-auto pt-6 flex gap-3">
+                    <RainbowButton
+                      onClick={() => router.push(tagContent[selectedTag].path)}
+                      className="flex-1 flex items-center justify-center gap-2"
+                    >
+                      <span className="flex items-center justify-center gap-2 text-sm flex-shrink-0">
+                        {`${tagContent[selectedTag].tagText} AI`}
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </RainbowButton>
+                    <button
+                      onClick={() => router.push('/browser?url=https://www.ask-lens.ai/about-us')}
+                      className="flex-1 px-4 py-3 bg-background border-2 flex items-center justify-center gap-2 cursor-pointer border-border rounded-xl font-medium hover:bg-muted hover:border-primary/50 transition-all duration-200 text-sm"
+                    >
+                      {t.requestDemo}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Floating Header - Neumorphism Style */}
+                  <div className="neomorphism-floating-header rounded-xl p-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="neomorphism-raised-sm w-10 h-10 rounded-lg flex items-center justify-center relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg" />
+                          <LensOSLogo size={24} className="relative z-10 text-primary" />
                         </div>
-                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                          <div className="w-3 h-3 rounded-full bg-primary-foreground" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Transmission Animation */}
-                    {isTransmitting && (
-                      <div className="flex justify-center">
-                        <div className="flex gap-1 items-center text-xs text-muted-foreground">
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                          <span className="ml-2">Transmitting to Open Agent...</span>
+                        <div className="flex flex-col">
+                          <h3 className="text-lg font-bold text-foreground tracking-tight">
+                            Open Agent
+                          </h3>
                         </div>
                       </div>
-                    )}
 
-                    {/* Agent Loading */}
-                    {agentLoading && (
-                      <div className="flex gap-3">
-                        <LensOSLogo size={24} className="flex-shrink-0 mt-1" />
-                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1">
-                              <div className="w-1 h-1 bg-primary rounded-full animate-bounce" />
-                              <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                              <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                            </div>
-                            <span className="text-sm text-muted-foreground">Processing your request...</span>
+                      <button
+                        onClick={() => {
+                          setIsDemoMode(false);
+                          setDemoStep(0);
+                          setCurrentQuery("");
+                          setUserInput("");
+                          setAgentLoading(false);
+                          setIsTransmitting(false);
+                          setShowResponse(false);
+                        }}
+                        className="neomorphism-button w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200 group"
+                      >
+                        <span className="text-sm group-hover:rotate-90 transition-transform duration-200">✕</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Chat Interface - Neumorphism Style */}
+                  <div className="flex-1 neomorphism-inset rounded-lg p-3 mb-3 overflow-y-auto">
+                    <div className="space-y-3 min-h-[180px]">
+
+                      {/* User Query */}
+                      {currentQuery && (
+                        <div className="flex gap-2 justify-end">
+                          <div className={cn(
+                            "neomorphism-raised-sm bg-primary/10 rounded-lg p-2.5 max-w-[80%] transition-all duration-500",
+                            isTransmitting && "animate-pulse scale-105"
+                          )}>
+                            <p className="text-xs text-foreground">{currentQuery}</p>
+                          </div>
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                            <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Agent Response */}
-                    {showResponse && (
-                      <div className="flex gap-3">
-                        <LensOSLogo size={24} className="flex-shrink-0 mt-1" />
-                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                          <p className="text-sm mb-3">Task completed successfully! Here's your result:</p>
-                          {getDemoResponse().content}
+                      {/* Transmission Animation */}
+                      {isTransmitting && (
+                        <div className="flex justify-center">
+                          <div className="neomorphism-inset-sm rounded-full px-3 py-2 flex gap-1 items-center">
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                            <span className="ml-2 text-xs text-muted-foreground">正在傳送至 Open Agent...</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
+                      {/* Agent Loading */}
+                      {agentLoading && (
+                        <div className="flex gap-2">
+                          <div className="w-5 h-5 neomorphism-raised-sm rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <LensOSLogo size={24} className="text-primary" />
+                          </div>
+                          <div className="neomorphism-inset-sm rounded-lg p-2 max-w-[80%]">
+                            <div className="flex items-center gap-1">
+                              <div className="flex gap-0.5">
+                                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" />
+                                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Agent Response */}
+                      {showResponse && (
+                        <div className="flex gap-2 h-fit">
+                          <div className="w-5 h-5 neomorphism-raised-sm rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <LensOSLogo size={24} className="text-primary" />
+                          </div>
+                          <div className="bg-background max-h-84 overflow-y-hidden border border-border/30 rounded-lg pt-1.5 p-2.5 max-w-[80%]">
+                            <p className="text-xs mb-2 text-muted-foreground">任務執行完成！</p>
+                            <div className="scale-75 origin-top-left transform">
+                              {getDemoResponse().content}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
                   </div>
-                </div>
 
-                {/* Input Field */}
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-background/50 border border-border rounded-lg px-4 py-2 flex items-center opacity-50">
-                    <input
-                      type="text"
-                      value={userInput}
-                      placeholder="Demo mode - query will be sent automatically"
-                      className="flex-1 bg-transparent text-sm focus:outline-none cursor-not-allowed"
+                  {/* Input Field - Neumorphism Style */}
+                  <div className="flex gap-2">
+                    <div className="flex-1 neomorphism-inset rounded-lg px-3 py-2 flex items-center opacity-50">
+                      <input
+                        type="text"
+                        value={userInput}
+                        placeholder="Demo 模式 - 查詢將自動發送"
+                        className="flex-1 bg-transparent text-xs focus:outline-none cursor-not-allowed placeholder:text-muted-foreground/70"
+                        disabled={true}
+                        readOnly
+                      />
+                    </div>
+                    <button
                       disabled={true}
-                      readOnly
-                    />
+                      className="neomorphism-button w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground cursor-not-allowed opacity-50"
+                    >
+                      <Send className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button 
-                    disabled={true}
-                    className="px-4 py-2 bg-muted text-muted-foreground rounded-lg cursor-not-allowed opacity-50"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

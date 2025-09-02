@@ -89,7 +89,7 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
             {title}
           </h2>
 
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl whitespace-pre-wrap text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             {description}
           </p>
         </div>
@@ -127,7 +127,7 @@ export const ModernFeatureSection: React.FC<ModernFeatureSectionProps> = ({
                   <h3 className="text-xl font-semibold text-foreground">
                     {point.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
                     {point.text}
                   </p>
                 </div>

@@ -114,15 +114,14 @@ export const SandboxDemoComponent: React.FC<SandboxDemoComponentProps> = ({ clas
     <div className={cn("w-full h-full p-4 pb-6", className)}>
       <style>{animationStyles}</style>
       {/* AI Election Sandbox Interface */}
-      <div className="w-full h-full min-h-[480px] flex flex-col">
-        <div className="flex-1 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
+      <div className="w-full h-full min-h-[480px] max-h-[500px] flex flex-col">
+        <div className="flex-1 relative bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-primary text-white px-4 py-2">
+          <div className="bg-primary text-white px-4 py-2 ">
             <div className="flex items-center gap-3">
-              <BarChart3 className="size-5" />
+              <BarChart3 className="w-5 h-5" />
               <div>
-                <h3 className="text-lg font-medium">Lens Sandbox</h3>
-                <p className="text-sm text-primary-foreground/80">智慧選情分析與策略模擬平台</p>
+                <h3 className="text-sm font-medium">Lens Sandbox</h3>
               </div>
             </div>
           </div>

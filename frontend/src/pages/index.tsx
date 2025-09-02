@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Monitor, Building, BarChart3, User, LogOut, MessageCircle, Hash, AtSign, Plane, ShoppingCart, Vote, Briefcase, TrendingUp, ArrowRight } from 'lucide-react';
+import { Globe, Monitor, Building, BarChart3, User, LogOut, MessageCircle, Hash, AtSign, Plane, ShoppingCart, Vote, Briefcase, TrendingUp, ArrowRight, Zap, Sparkles, Target } from 'lucide-react';
+import { BsArrowRightSquareFill } from "react-icons/bs";
 import { useRouter } from 'next/router';
 import Header, { ViewMode } from '@/components/ui/header';
 import { LensOSLogo } from '@/components/animation/LensLogo';
-import { cn } from '@/utils/cn';
-import { RainbowButton } from '@/components/animation/RainbowButton';
 import AuthManager, { AuthStatus } from '@/utils/authManager';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguageStore } from '@/stores/languageStore';
@@ -119,83 +118,83 @@ const HomePage: React.FC = () => {
 
   const features = [
     {
-      icon: MessageCircle,
+      icon: Zap,
       title: language === 'zh' ? 'DM as Service' : 'DM as Service',
       description: language === 'zh'
-        ? '像使用任何通訊軟體一樣，只要 DM Supervisor Agent，Agent 就會幫你 Take Actions。比如 DM「華航旅遊規劃」，Agent 就會在華航 domain 下搜尋規劃並直接找到訂票頁面。'
-        : 'Just like using any messaging app, simply DM the Supervisor Agent and it will Take Actions for you. For example, DM "China Airlines travel planning" and the Agent will search and plan within the China Airlines domain, directly finding the booking page.',
+        ? '像使用任何通訊軟體一樣，即開即用。\n只要 DM Supervisor Agent，Agent 直接為你做到任何服務\nOpen →  AGI'
+        : 'Just like using any messaging app, DM the Supervisor Agent and it will take actions for you. For example, DM \"China Airlines travel planning\" and the Agent will search and plan within the China Airlines domain, directly finding the booking page.',
       points: [
         {
-          title: language === 'zh' ? '專屬的個人體驗' : 'Personalized Experience',
+          title: language === 'zh' ? '現有系統即刻AGI化' : 'Instant AGI-fication of Existing Systems',
           text: language === 'zh'
-            ? '每個用戶看到的內容都不一樣，不是模板化的頁面，而是根據他的背景和需求特別製作。'
-            : 'Every user sees different content, not templated pages, but specially crafted based on their background and needs.'
+            ? 'LensOS 直接驅動你的網站、系統。\n不用學新工具，讓 AGI 直接操控你現有的每個系統。'
+            : 'LensOS directly drives your websites, systems. No need to learn new tools, AGI directly controls every existing system you have.'
         },
         {
-          title: language === 'zh' ? '智能適配' : 'Smart Adaptation',
+          title: language === 'zh' ? '一開機就有 AGI' : 'AGI Ready from Boot',
           text: language === 'zh'
-            ? '不需要手動設定，系統自動分析用戶的职業、行業、需求，推導最適合的內容和功能。'
-            : 'No manual setup needed, the system automatically analyzes user profession, industry, needs, and delivers the most suitable content and features.'
+            ? '不用等待部署、不用複雜設定。打開 LensOS，企業立刻擁有完整的 AGI 能力。'
+            : 'No waiting for deployment, no complex setup. Open LensOS and your enterprise immediately has complete AGI capabilities.'
         },
         {
-          title: language === 'zh' ? '實時調整' : 'Real-time Adjustment',
+          title: language === 'zh' ? '直說需求，跳過複雜操作' : 'Tell Your Need, Skip Complex Navigation',
           text: language === 'zh'
-            ? '随用戶不斷使用，系統持續學習和優化，提供越來越精準的服務。'
-            : 'As users continue using, the system continuously learns and optimizes, providing increasingly precise services.'
+            ? '不用翻找選單、不用記住複雜的操作路徑。\n直接告訴 Agent 你要什麼，它自動找到正確功能並完成。'
+            : 'No need to navigate menus or remember complex operation paths. Simply tell the Agent what you want, it automatically finds the right function and completes it.'
         }
       ]
     },
     {
-      icon: Hash,
-      title: language === 'zh' ? 'Slash for Talent (/)' : 'Slash for Talent (/)',
+      icon: Sparkles,
+      title: language === 'zh' ? 'Agentic Generation' : 'Agentic Generation',
       description: language === 'zh'
-        ? '輸入 / 即可啟動各種 Talent 功能。每個 Talent 都是一個專業能力，就像你的專家團隊一樣，隨時可供呼叫。這就是我們的 Rules 精神。'
-        : 'Type / to activate various Talent functions. Each Talent is a professional capability, like your expert team, always available on demand. This is the essence of our Rules system.',
+        ? '用戶只要DM需求，系統完全自主生成專屬內容和UI。\n行銷團隊設定好Rules，每個用戶都能收到為他量身打造的頁面和體驗。不是模板，是真正的 Agentic Generation。'
+        : 'Users just DM their needs, system autonomously generates personalized content and UI. Marketing teams set Rules, every user receives truly customized pages and experiences. Not templates, but genuine custom generation.',
       points: [
         {
-          title: language === 'zh' ? '專業 Talent 庫' : 'Professional Talent Library',
+          title: language === 'zh' ? '為每個客戶量身打造' : 'Tailored for Every Customer',
           text: language === 'zh'
-            ? '從資料分析、內容生成到自動化流程，每個 Talent 都是領域專家級的能力。不需訓練，直接使用。'
-            : 'From data analysis and content generation to automation workflows, each Talent is domain-expert level capability. No training required, use immediately.'
+            ? '每個客戶看到完全不同的頁面。系統根據客戶背景、需求、行為自主生成專屬內容。不只是推薦，是重新創造。'
+            : 'Every customer sees completely different pages. System autonomously generates exclusive content based on customer background, needs, and behavior. Not just recommendations, but recreation.'
         },
         {
-          title: language === 'zh' ? '快速功能啟動' : 'Quick Function Activation',
+          title: language === 'zh' ? 'Rules驅動的創造力' : 'Rules-Driven Creativity',
           text: language === 'zh'
-            ? '像使用 Slack 指令一樣簡單，/ + 功能名稱即可啟動。直覺的介面，零學習成本。'
-            : 'Simple as using Slack commands, / + function name to activate. Intuitive interface with zero learning curve.'
+            ? '行銷設定策略Rules，Agent自主判斷並生成。從文案到設計，從流程到功能，完全按照用戶需求重新組合。'
+            : 'Marketing sets strategic Rules, Agent autonomously judges and generates. From copy to design, from processes to features, completely recombined according to user needs.'
         },
         {
-          title: language === 'zh' ? '客製化 Talent' : 'Customizable Talents',
+          title: language === 'zh' ? '即時適應進化' : 'Real-time Adaptive Evolution',
           text: language === 'zh'
-            ? '根據企業需求定製專屬 Talent，從通用能力到行業專精，無限擴展可能。'
-            : 'Customize exclusive Talents based on enterprise needs, from general capabilities to industry specialization, unlimited expansion possibilities.'
+            ? '不只生成一次，而是持續觀察用戶反應，即時調整內容和介面。每次互動都讓體驗更精準。'
+            : 'Not just one-time generation, but continuous observation of user reactions, real-time content and interface adjustments. Every interaction makes the experience more precise.'
         }
       ]
     },
     {
-      icon: AtSign,
-      title: language === 'zh' ? 'AT for Connect (@)' : 'AT for Connect (@)',
+      icon: Target,
+      title: language === 'zh' ? 'Sandbox Intelligence' : 'Sandbox Intelligence',
       description: language === 'zh'
-        ? '只要輸入 @ 就可以與任何網頁資料做 Connect。無需 API 整合，無需權限申請，直接連接任何系統，讓所有資訊成為 AI 的 Context。'
-        : 'Simply type @ to Connect with any webpage data. No API integration, no permission requests needed, directly connect to any system and make all information AI Context.',
+        ? '建立專屬沙盒，讓多個Agent在虛擬環境中模擬真實情境。\n沙盒收集所有相關情報作為Context，支援策略推演和決策模擬。不只是分析，是預演未來。'
+        : 'Create dedicated sandboxes where multiple Agents simulate real scenarios in virtual environments. Sandbox collects all relevant intelligence as Context, supporting strategic deduction and decision simulation. Not just analysis, but rehearsing the future.',
       points: [
         {
-          title: language === 'zh' ? '無需 API 整合' : 'No API Integration Required',
+          title: language === 'zh' ? 'Multi-Agent 情境模擬' : 'Multi-Agent Scenario Simulation',
           text: language === 'zh'
-            ? '省去複雜的 API 整合流程，直接讀取網頁內容。從 Excel 到 CRM，從 ERP 到社群媒體，一次連接所有。'
-            : 'Skip complex API integration processes, directly read webpage content. From Excel to CRM, from ERP to social media, connect everything at once.'
+            ? '不同角色的Agent在沙盒中模擬真實互動。從市場競爭到內部協作，從客戶反應到供應鏈變化，全面預演。'
+            : 'Different role Agents simulate real interactions in sandbox. From market competition to internal collaboration, from customer reactions to supply chain changes, comprehensive rehearsal.'
         },
         {
-          title: language === 'zh' ? '即時資料同步' : 'Real-time Data Sync',
+          title: language === 'zh' ? 'Context 驅動的推演' : 'Context-Driven Deduction',
           text: language === 'zh'
-            ? '資料更新即時同步，無需擔心資訊時效性。AI 始終使用最新、最準確的資料進行判斷。'
-            : 'Data updates sync in real-time, no need to worry about information timeliness. AI always uses the latest and most accurate data for decisions.'
+            ? '沙盒自動收集所有相關資訊作為推演基礎。從產業報告到競爭動態，從內部數據到外部趨勢，形成完整情報網。'
+            : 'Sandbox automatically collects all relevant information as deduction foundation. From industry reports to competitive dynamics, from internal data to external trends, forming complete intelligence network.'
         },
         {
-          title: language === 'zh' ? '全域情境感知' : 'Global Context Awareness',
+          title: language === 'zh' ? '策略方案自動生成' : 'Strategic Solution Auto-Generation',
           text: language === 'zh'
-            ? '打破系統間的壁壘，讓 AI 擁有全域視野。一個 Agent，理解所有系統，做出更智能的決策。'
-            : 'Break down barriers between systems, give AI a global perspective. One Agent understands all systems, making smarter decisions.'
+            ? '基於模擬結果，系統自動產生可執行的行動方案。不只告訴你會發生什麼，還告訴你該怎麼做。'
+            : 'Based on simulation results, system automatically generates executable action plans. Not just telling you what will happen, but what you should do.'
         }
       ]
     }
@@ -431,7 +430,7 @@ const HomePage: React.FC = () => {
           <FeatureComponent
             key={featureIndex}
             icon={feature.icon}
-            title={feature.title}
+            title={feature.title as string}
             description={feature.description}
             points={feature.points}
             index={featureIndex}

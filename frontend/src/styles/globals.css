@@ -129,7 +129,6 @@
   --neomorphism-inset: inset 6px 6px 12px hsl(0 0% 0% / 0.08), inset -6px -6px 12px hsl(0 0% 100% / 0.6);
   --neomorphism-inset-sm: inset 3px 3px 6px hsl(0 0% 0% / 0.08), inset -3px -3px 6px hsl(0 0% 100% / 0.6);
   --neomorphism-inset-lg: inset 8px 8px 16px hsl(0 0% 0% / 0.1), inset -8px -8px 16px hsl(0 0% 100% / 0.7);
-
   /* Typographic defaults */
   --tracking-normal: 0em;
 
@@ -495,4 +494,60 @@ th span {
     transform: scale(1);
     opacity: 0.8;
   }
+}
+
+/* Form animation effects */
+@keyframes form-focus-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: var(--neomorphism-inset);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: var(--neomorphism-inset), 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: var(--neomorphism-inset);
+  }
+}
+
+@keyframes form-glow-pulse {
+  0% {
+    box-shadow: var(--neomorphism-inset);
+  }
+  50% {
+    box-shadow: var(--neomorphism-inset), 0 0 25px hsl(var(--primary) / 0.4), inset 0 0 10px hsl(var(--primary) / 0.1);
+  }
+  100% {
+    box-shadow: var(--neomorphism-inset);
+  }
+}
+
+.form-animate-focus {
+  animation: form-focus-pulse 0.6s ease-in-out;
+}
+
+.form-animate-glow {
+  animation: form-glow-pulse 0.8s ease-in-out;
+}
+
+/* Button click animation */
+@keyframes button-click-ripple {
+  0% {
+    transform: scale(1);
+    box-shadow: var(--neomorphism-raised-sm);
+  }
+  30% {
+    transform: scale(0.95);
+    box-shadow: var(--neomorphism-inset-sm);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: var(--neomorphism-raised-sm), 0 0 15px hsl(var(--primary) / 0.4);
+  }
+}
+
+.button-click-animate {
+  animation: button-click-ripple 0.3s ease-out;
 }

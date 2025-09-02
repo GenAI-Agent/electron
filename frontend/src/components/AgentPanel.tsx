@@ -67,6 +67,25 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
   const [availableRules, setAvailableRules] = useState<{ name: string; category?: string }[]>([]);
   const [selectedRuleIndex, setSelectedRuleIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [formAnimating, setFormAnimating] = useState(false);
+  const [clickedButton, setClickedButton] = useState<string | null>(null);
+
+  // 觸發 form 動畫效果
+  const triggerFormAnimation = () => {
+    setFormAnimating(true);
+    // 動畫結束後重置狀態
+    setTimeout(() => {
+      setFormAnimating(false);
+    }, 800); // 對應 form-glow-pulse 動畫時長
+  };
+
+  // 觸發按鈕點擊動畫
+  const triggerButtonAnimation = (ruleName: string) => {
+    setClickedButton(ruleName);
+    setTimeout(() => {
+      setClickedButton(null);
+    }, 300); // 對應 button-click-ripple 動畫時長
+  };
 
   // 刷新 session 功能
   const handleRefreshSession = () => {
@@ -786,14 +805,25 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
                   <button
                     key={rule.name}
                     onClick={() => {
+                      // 觸發按鈕點擊動畫
+                      triggerButtonAnimation(rule.name);
+                      // 設置輸入值
                       setInput(`/${rule.name} `);
-                      const textarea = document.querySelector('textarea');
-                      if (textarea) {
-                        textarea.focus();
-                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-                      }
+                      // 觸發 form 動畫效果
+                      triggerFormAnimation();
+                      // 聚焦到輸入框
+                      setTimeout(() => {
+                        const textarea = document.querySelector('textarea');
+                        if (textarea) {
+                          textarea.focus();
+                          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                        }
+                      }, 150); // 稍微延遲以讓動畫先開始
                     }}
-                    className="neomorphism-button px-3 py-1.5 rounded-full text-xs text-foreground hover:text-primary transition-colors"
+                    className={cn(
+                      "neomorphism-button px-3 py-1.5 rounded-full text-xs text-foreground hover:text-primary hover:scale-105 transition-all duration-200",
+                      clickedButton === rule.name && "button-click-animate"
+                    )}
                   >
                     {rule.name}
                   </button>
@@ -807,7 +837,10 @@ const AgentPanel: React.FC<AgentPanelProps> = ({
           >
             <div className="relative flex-1 flex flex-col min-h-0">
               {/* Neumorphism input container */}
-              <div className="flex-1 relative neomorphism-inset rounded-xl flex flex-col min-h-[100px]">
+              <div className={cn(
+                "flex-1 relative neomorphism-inset rounded-xl flex flex-col min-h-[100px] transition-all duration-300",
+                formAnimating && "form-animate-glow"
+              )}>
                 {/* Text input area */}
                 <div className="flex-1 relative overflow-hidden mb-12 min-h-0">
                   <textarea

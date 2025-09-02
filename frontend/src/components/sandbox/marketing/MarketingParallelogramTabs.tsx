@@ -33,28 +33,28 @@ interface MarketingParallelogramTabsProps {
 }
 
 const staticMarketingTabs: MarketingTab[] = [
-  { 
-    id: 'dashboard', 
-    name: '用戶儀錶板',
+  {
+    id: 'dashboard',
+    name: '營運儀錶板',
     icon: <Users className="w-4 h-4" />
   },
-  { 
-    id: 'strategy', 
+  {
+    id: 'strategy',
     name: '策略推演',
     icon: <Target className="w-4 h-4" />
   },
-  { 
-    id: 'action', 
+  {
+    id: 'action',
     name: '行動建議',
     icon: <Zap className="w-4 h-4" />
   },
-  { 
-    id: 'intelligence', 
+  {
+    id: 'intelligence',
     name: '智庫',
     icon: <Globe className="w-4 h-4" />
   },
-  { 
-    id: 'competitor', 
+  {
+    id: 'competitor',
     name: '競爭者',
     icon: <TrendingUp className="w-4 h-4" />
   },

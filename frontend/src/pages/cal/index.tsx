@@ -100,12 +100,12 @@ const ChinaAirlinesPage: React.FC = () => {
       title: '華航官網',
       tagText: 'Webpage',
       icon: Globe,
-      mainText: '即刻接入華航生態',
-      subText: '無需 API 整合，LensOS 直接理解華航官網所有內容。透過自然語言對話，Supervisor Agent 即時幫您查詢航班、規劃行程、比較價格，甚至完成訂票。萬物皆 Context，華航的一切資訊都是您的 AI 助手。',
+      mainText: '即插即用 華航AGI',
+      subText: '華航無需改變任何系統，直接成為 AGI 的一部分。\n用戶 DM Agent，即時在華航環境中查詢航班、規劃行程，甚至完成訂票。\n華航的一切功都能直接為AGI所用',
       demoContent: {
         type: 'webpage',
         data: {
-          sections: ['即時航班查詢', '智能行程規劃', '一鍵比價訂票', 'VIP 會員服務'],
+          sections: ['即時航班查詢', '行程規劃', '一鍵比價訂票', 'VIP 會員服務'],
           aiCapabilities: [
             '「幫我查明天台北到東京的航班」- AI 即時搜尋並比較所有選項',
             '「安排一個5天東京行程，包含商務艙」- 自動規劃並預算',
@@ -158,7 +158,7 @@ const ChinaAirlinesPage: React.FC = () => {
       tagText: 'Lens Sandbox',
       icon: BarChart3,
       mainText: '未來決策的模擬實驗室',
-      subText: 'Lens Sandbox 讓華航在虛擬環境中測試各種策略。透過 AI 模擬市場反應、競爭對手動態、旅客行為，Supervisor Agent 提供數據驅動的決策建議，讓每個重大決定都經過科學驗證。',
+      subText: 'Lens Sandbox 讓華航在虛擬環境中測試各種策略。\n透過 AI 模擬市場反應、競爭對手動態、旅客行為。\nSupervisor Agent 提供數據驅動的決策建議，讓每個重大決定都經過科學驗證。',
       demoContent: {
         type: 'sandbox',
         data: {
@@ -278,7 +278,6 @@ const ChinaAirlinesPage: React.FC = () => {
           <div className="grid lg:grid-cols-2 gap-8 items-start my-6">
             {/* Left: Demo Content - Screenshots moved here */}
             <div className=''>
-
               <div
                 className={cn(
                   "transition-opacity duration-300",
@@ -288,7 +287,7 @@ const ChinaAirlinesPage: React.FC = () => {
                 <h2 className="text-3xl font-bold text-foreground mb-4">
                   {chinaAirlinesContent[selectedTag]?.mainText}
                 </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+                <p className="text-lg text-muted-foreground whitespace-pre-wrap leading-relaxed mb-6">
                   {chinaAirlinesContent[selectedTag]?.subText}
                 </p>
               </div>
@@ -298,7 +297,7 @@ const ChinaAirlinesPage: React.FC = () => {
                 className="inline-flex"
               >
                 <span className="flex items-center gap-2">
-                  開始 AI 之旅
+                  開始華航 AGI
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </RainbowButton>
@@ -343,7 +342,7 @@ const ChinaAirlinesPage: React.FC = () => {
             <div className="space-y-6">
               {selectedTag === 0 && chinaAirlinesContent[0] && (
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-foreground">智能功能</h4>
+                  <h4 className="text-lg font-medium text-foreground">Multi-Agent 協作</h4>
                   <div className="space-y-3">
                     {chinaAirlinesContent[0].demoContent.data.sections?.map((section, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
@@ -354,7 +353,7 @@ const ChinaAirlinesPage: React.FC = () => {
                   </div>
 
                   <div className="mt-6">
-                    <h4 className="text-lg font-semibold text-foreground mb-4">AI 對話範例</h4>
+                    <h4 className="text-lg font-medium text-foreground mb-4">華航 x DM x AGI</h4>
                     <div className="space-y-3">
                       {chinaAirlinesContent[0].demoContent.data.aiCapabilities?.map((capability, idx) => (
                         <div key={idx} className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border-l-4 border-blue-500">
@@ -432,7 +431,7 @@ const ChinaAirlinesPage: React.FC = () => {
                   </div>
 
                   <div className="mt-6">
-                    <h4 className="text-lg font-semibold text-foreground mb-4">AI 預測與建議</h4>
+                    <h4 className="text-lg font-semibold text-foreground mb-4">重大事件預演</h4>
                     <div className="space-y-3">
                       {chinaAirlinesContent[3].demoContent.data.aiPredictions?.map((prediction, idx) => (
                         <div key={idx} className="p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-l-4 border-orange-500">
